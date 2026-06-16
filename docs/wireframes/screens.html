@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Thrive Member App — Wireframes</title>
+<style>
+  :root{
+    --bg:#000000;
+    --bg2:#0c0c0e;
+    --card:#1c1c1e;
+    --card2:#2c2c2e;
+    --hair:#38383a;
+    --txt:#ffffff;
+    --txt2:#9a9aa0;
+    --txt3:#6c6c70;
+    --pink:#fa2d48;      /* play / primary action (Apple Music) */
+    --green:#30d158;     /* vitality / score */
+    --blue:#0a84ff;      /* links */
+    --orange:#ff9f0a;
+    --purple:#bf5af2;
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased;margin:0;padding:0}
+  body{
+    background:#161618;
+    font-family:-apple-system,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+    color:var(--txt);
+    padding:40px;
+  }
+  h1.page{color:#fff;font-size:22px;margin-bottom:24px;font-weight:700;letter-spacing:-.3px}
+  .grid{display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start}
+  .cell{display:flex;flex-direction:column;gap:10px}
+  .cap{color:#cfcfd4;font-size:13px;font-weight:600;text-align:center;letter-spacing:.2px}
+  .cap small{display:block;color:#8a8a90;font-weight:400;font-size:11px;margin-top:2px}
+
+  /* ---- phone frame ---- */
+  .screen{
+    width:390px;height:844px;background:var(--bg);
+    border-radius:44px;position:relative;overflow:hidden;
+    box-shadow:0 0 0 11px #1a1a1c,0 0 0 13px #2a2a2c,0 26px 60px rgba(0,0,0,.6);
+  }
+  .notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);
+    width:124px;height:34px;background:#000;border-radius:20px;z-index:60}
+  .statusbar{position:absolute;top:0;left:0;right:0;height:54px;z-index:55;
+    display:flex;align-items:center;justify-content:space-between;padding:18px 30px 0}
+  .statusbar .t{font-weight:600;font-size:15px;letter-spacing:.3px}
+  .statusbar .r{display:flex;gap:7px;align-items:center;font-size:13px}
+  .statusbar svg{display:block}
+
+  .body{position:absolute;top:54px;left:0;right:0;bottom:0;overflow:hidden}
+  .scroll{position:absolute;inset:0;overflow:hidden}
+  .pad{padding:0 20px}
+
+  .largetitle{font-size:32px;font-weight:800;letter-spacing:-.6px;padding:6px 20px 12px}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:10px 18px 4px}
+  .nav .lead{font-size:17px;color:var(--blue);display:flex;align-items:center;gap:4px}
+  .nav .title{font-size:17px;font-weight:600}
+  .nav .trail{font-size:17px;color:var(--blue);display:flex;gap:16px;align-items:center}
+
+  .sectionhdr{display:flex;align-items:baseline;justify-content:space-between;padding:22px 20px 12px}
+  .sectionhdr .h{font-size:22px;font-weight:800;letter-spacing:-.4px}
+  .sectionhdr .more{color:var(--blue);font-size:15px}
+
+  .muted{color:var(--txt2)}
+  .muted3{color:var(--txt3)}
+
+  /* artwork */
+  .art{border-radius:10px;position:relative;overflow:hidden;flex:none;
+    display:flex;align-items:flex-end;color:#fff}
+  .art .lab{font-size:11px;font-weight:700;padding:8px;line-height:1.15;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+  .g1{background:linear-gradient(135deg,#ff6a3d,#fa2d48 70%)}
+  .g2{background:linear-gradient(135deg,#0a84ff,#30d1c8)}
+  .g3{background:linear-gradient(135deg,#bf5af2,#fa2d48)}
+  .g4{background:linear-gradient(135deg,#30d158,#0a84ff)}
+  .g5{background:linear-gradient(135deg,#ff9f0a,#ff375f)}
+  .g6{background:linear-gradient(135deg,#5e5ce6,#0a84ff)}
+  .g7{background:linear-gradient(160deg,#2c2c2e,#3a3a3c)}
+  .gscore{background:linear-gradient(135deg,#30d158,#0a84ff 90%)}
+
+  .hscroll{display:flex;gap:14px;overflow:hidden;padding:2px 20px 4px}
+
+  /* track rows */
+  .row{display:flex;align-items:center;gap:12px;padding:9px 20px}
+  .row .num{width:18px;color:var(--txt3);font-size:14px;text-align:center;flex:none}
+  .row .meta{flex:1;min-width:0}
+  .row .meta .t1{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .meta .t2{font-size:13px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .tr{color:var(--txt3);font-size:13px}
+  .rowline{height:1px;background:var(--hair);margin-left:50px;opacity:.6}
+  .rowline.full{margin-left:20px}
+
+  .listcard{background:var(--card);border-radius:14px;margin:0 20px;overflow:hidden}
+
+  /* mini player */
+  .mini{position:absolute;left:8px;right:8px;bottom:84px;height:64px;z-index:40;
+    background:rgba(40,40,43,.86);backdrop-filter:blur(20px);border-radius:16px;
+    display:flex;align-items:center;gap:11px;padding:8px 14px 8px 8px;
+    box-shadow:0 6px 24px rgba(0,0,0,.4)}
+  .mini .pa{width:48px;height:48px;border-radius:8px;flex:none}
+  .mini .mt{flex:1;min-width:0}
+  .mini .mt .a{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini .mt .b{font-size:12px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini .ic{color:#fff;display:flex;gap:18px;padding-right:6px}
+  .livedot{display:inline-flex;align-items:center;gap:5px;color:var(--pink);font-size:11px;font-weight:700}
+  .livedot::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--pink)}
+
+  /* tab bar */
+  .tabbar{position:absolute;left:0;right:0;bottom:0;height:84px;z-index:50;
+    background:rgba(22,22,24,.9);backdrop-filter:blur(20px);
+    border-top:1px solid rgba(255,255,255,.08);
+    display:flex;padding:8px 0 22px}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+    color:var(--txt3);font-size:10px;font-weight:500}
+  .tab.on{color:var(--pink)}
+  .tab svg{display:block}
+
+  .pill{display:inline-flex;align-items:center;gap:7px;background:var(--card);
+    border-radius:999px;padding:9px 14px;color:var(--txt2);font-size:15px}
+  .pill.search{margin:6px 20px 0;width:calc(100% - 40px)}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;
+    border-radius:14px;font-weight:600;font-size:17px;height:50px}
+  .btn.primary{background:var(--pink);color:#fff}
+  .btn.green{background:var(--green);color:#04210e}
+  .btn.ghost{background:var(--card2);color:#fff}
+  .btn.tint{background:rgba(250,45,72,.16);color:var(--pink)}
+
+  .chip{display:inline-block;background:var(--card2);color:var(--txt);font-size:13px;
+    padding:7px 13px;border-radius:999px}
+  .chip.on{background:#fff;color:#000;font-weight:600}
+
+  .badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px}
+  .badge.locked{background:#3a3a3c;color:#b0b0b6}
+  .badge.live{background:var(--pink);color:#fff}
+
+  /* generic helpers */
+  .center{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .fill{position:absolute;inset:0}
+  .stack{display:flex;flex-direction:column}
+  .between{display:flex;align-items:center;justify-content:space-between}
+  .gap8{gap:8px}.gap12{gap:12px}.gap16{gap:16px}
+</style>
+</head>
+<body>
+<h1 class="page">Thrive Member App — Apple Music-style rebuild · Wireframes (iPhone, dark)</h1>
+<div class="grid" id="grid"></div>
+
+<script>
+/* ----- shared chrome ----- */
+function statusbar(){return `
+  <div class="notch"></div>
+  <div class="statusbar"><div class="t">9:41</div>
+   <div class="r">
+     <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#fff">
+       <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4" width="3" height="8" rx="1"/>
+       <rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+     <svg width="17" height="12" viewBox="0 0 17 12" fill="#fff"><path d="M8.5 2.6c2 0 3.9.8 5.3 2.1l1.2-1.3C13.3 1.6 11 .7 8.5.7S3.7 1.6 2 3.4l1.2 1.3C4.6 3.4 6.5 2.6 8.5 2.6zM8.5 6c1 0 2 .4 2.7 1.1l1.2-1.3C11.3 4.7 10 4.2 8.5 4.2S5.7 4.7 4.6 5.8L5.8 7.1C6.5 6.4 7.5 6 8.5 6zm0 3.1l1.7-1.8c-.4-.5-1-.8-1.7-.8s-1.3.3-1.7.8z"/></svg>
+     <svg width="26" height="13" viewBox="0 0 26 13"><rect x="1" y="1" width="21" height="11" rx="3" fill="none" stroke="#fff" stroke-opacity=".5"/><rect x="2.5" y="2.5" width="16" height="8" rx="1.5" fill="#fff"/><rect x="23" y="4.5" width="1.6" height="4" rx="1" fill="#fff" fill-opacity=".5"/></svg>
+   </div>
+  </div>`;}
+
+const TAB_ICONS = {
+  home:'<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 3 10v10h6v-6h6v6h6V10z"/></svg>',
+  radio:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M7.5 7.5a6.4 6.4 0 000 9M16.5 7.5a6.4 6.4 0 010 9M4.7 4.7a10.3 10.3 0 000 14.6M19.3 4.7a10.3 10.3 0 010 14.6"/></svg>',
+  library:'<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="18" height="14" rx="2.5" opacity=".35"/><rect x="3" y="5" width="18" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 9h8M8 12h8M8 15h5" stroke="#000" stroke-width="0"/></svg>',
+  search:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>'
+};
+function tabbar(active){
+  const tabs=[['home','Home'],['radio','Radio'],['library','Library'],['search','Search']];
+  return `<div class="tabbar">${tabs.map(([k,l])=>
+    `<div class="tab ${k===active?'on':''}">${TAB_ICONS[k]}<span>${l}</span></div>`).join('')}</div>`;
+}
+function mini(art,a,b,live){return `
+  <div class="mini">
+    <div class="pa ${art}"></div>
+    <div class="mt"><div class="a">${a}</div><div class="b">${live?'<span class="livedot">LIVE</span> ':''}${b}</div></div>
+    <div class="ic">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M5 5v14l5-5h4l5 5V5l-5 5h-4z" opacity="0"/><path d="M4 18V6l8 6zM14 6h2v12h-2z"/></svg>
+    </div>
+  </div>`;}
+
+const ICN = {
+  play:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>',
+  pausebig:'<svg width="30" height="30" viewBox="0 0 24 24" fill="#000"><rect x="6" y="5" width="4" height="14" rx="1.4"/><rect x="14" y="5" width="4" height="14" rx="1.4"/></svg>',
+  shuffle:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h4l9 10h5M3 17h4l3-3.2M21 7h-5l-3 3.2M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>',
+  ellipsis:'<svg width="22" height="6" viewBox="0 0 22 6" fill="currentColor"><circle cx="3" cy="3" r="2.4"/><circle cx="11" cy="3" r="2.4"/><circle cx="19" cy="3" r="2.4"/></svg>',
+  back:'<svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M10 2 2 10l8 8"/></svg>',
+  mic:'<svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M6 11a6 6 0 0012 0M12 17v4M8 21h8" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>'
+};
+
+/* ============ SCREENS ============ */
+const S=[];
+function add(id,name,group,html){S.push({id,name,group,html});}
+
+/* ---------- 1. WELCOME ---------- */
+add('welcome','Welcome','Onboarding & Auth',`
+  ${statusbar()}
+  <div class="body" style="background:radial-gradient(120% 70% at 50% 0%,#2a0d16 0%,#000 60%)">
+    <div class="fill center" style="justify-content:space-between;padding:90px 32px 56px">
+      <div class="center gap16">
+        <div class="art gscore" style="width:96px;height:96px;border-radius:24px"></div>
+        <div style="font-size:30px;font-weight:800;letter-spacing:-.5px;margin-top:18px">Thrive</div>
+        <div class="muted" style="font-size:17px;max-width:260px">Your provider's stations, playlists, and voice wellness — in one place.</div>
+      </div>
+      <div class="stack gap12" style="width:100%">
+        <div class="btn primary">Sign in with email</div>
+        <div class="center muted3" style="font-size:13px;margin-top:6px">Access is provided by your care provider.</div>
+      </div>
+    </div>
+  </div>`);
+
+/* ---------- 2. SIGN-IN (email code) ---------- */
+add('signin','Sign in — email code','Onboarding & Auth',`
+  ${statusbar()}
+  <div class="body">
+    <div class="nav"><div class="lead">${ICN.back} <span>Back</span></div><div class="title"></div><div class="trail"></div></div>
+    <div class="pad" style="padding-top:18px">
+      <div style="font-size:28px;font-weight:800;letter-spacing:-.5px">Enter your code</div>
+      <div class="muted" style="font-size:15px;margin-top:8px;line-height:1.4">We sent a 6-digit code to<br><b style="color:#fff">jamie@email.com</b></div>
+      <div style="display:flex;gap:10px;margin-top:30px;justify-content:space-between">
+        ${['4','7','2','','',''].map((d,i)=>`<div style="flex:1;height:60px;border-radius:12px;background:var(--card);border:1.5px solid ${i===3?'var(--pink)':'transparent'};display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:600">${d}</div>`).join('')}
+      </div>
+      <div class="muted3" style="font-size:14px;margin-top:24px;text-align:center">Didn't get it? <span style="color:var(--blue)">Resend code</span></div>
+      <label style="display:flex;align-items:center;gap:10px;margin-top:30px;color:var(--txt2);font-size:14px">
+        <span style="width:22px;height:22px;border-radius:6px;background:var(--green);display:flex;align-items:center;justify-content:center;color:#000;font-size:14px">✓</span>
+        Trust this device (stay signed in)
+      </label>
+    </div>
+    <div class="pad" style="position:absolute;bottom:40px;left:0;right:0"><div class="btn primary">Continue</div></div>
+  </div>`);
+
+/* ---------- 3. PROFILE SETUP WIZARD ---------- */
+add('profile-setup','Profile setup (health context)','Onboarding & Auth',`
+  ${statusbar()}
+  <div class="body">
+    <div class="nav"><div class="lead"></div><div class="title">Set up your profile</div><div class="trail" style="color:var(--txt2)">2 / 5</div></div>
+    <div style="height:3px;background:var(--card2);margin:8px 20px 0;border-radius:2px"><div style="width:40%;height:3px;background:var(--green);border-radius:2px"></div></div>
+    <div class="pad" style="padding-top:24px">
+      <div style="font-size:24px;font-weight:800;letter-spacing:-.4px">A few health details</div>
+      <div class="muted" style="font-size:14px;margin-top:8px;line-height:1.4">This helps tailor your voice analysis. You can edit it anytime in Settings.</div>
+
+      <div style="margin-top:26px" class="stack gap16">
+        <div><div class="muted" style="font-size:13px;margin-bottom:8px">YEAR OF BIRTH</div>
+          <div class="pill" style="width:100%;justify-content:space-between;color:#fff">1986 <span class="muted3">▾</span></div></div>
+        <div><div class="muted" style="font-size:13px;margin-bottom:8px">BIOLOGICAL SEX</div>
+          <div style="display:flex;gap:8px"><div class="chip on">Female</div><div class="chip">Male</div><div class="chip">Intersex</div></div></div>
+        <div><div class="muted" style="font-size:13px;margin-bottom:8px">SMOKING STATUS</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><div class="chip">Never</div><div class="chip on">Former</div><div class="chip">Current</div></div></div>
+        <div><div class="muted" style="font-size:13px;margin-bottom:8px">PREFERRED LANGUAGE</div>
+          <div style="display:flex;gap:8px"><div class="chip on">English</div><div class="chip">Español</div></div></div>
+      </div>
+    </div>
+    <div class="pad" style="position:absolute;bottom:40px;left:0;right:0">
+      <div class="btn primary">Continue</div>
+      <div class="center muted3" style="font-size:13px;margin-top:14px">Skip for now</div>
+    </div>
+  </div>`);
+
+/* ---------- 4. HOME ---------- */
+add('home','Home','Main tabs',`
+  ${statusbar()}
+  <div class="body">
+    <div class="scroll">
+      <div class="nav" style="padding-top:6px"><div class="lead"></div><div class="title"></div>
+        <div class="trail"><div class="art g3" style="width:30px;height:30px;border-radius:50%"></div></div></div>
+      <div class="largetitle" style="padding-top:0">Home</div>
+
+      <!-- Vitality + voice cards -->
+      <div class="hscroll">
+        <div class="art gscore" style="width:230px;height:130px;border-radius:16px;padding:14px;color:#04210e">
+          <div><div style="font-size:12px;font-weight:700;opacity:.8">YOUR VITALITY SCORE</div>
+          <div style="font-size:40px;font-weight:800;line-height:1.1;margin-top:6px">82</div>
+          <div style="font-size:12px;font-weight:600">+3 since last check · Tap to view</div></div>
+        </div>
+        <div class="art g3" style="width:230px;height:130px;border-radius:16px;padding:14px">
+          <div><div style="font-size:12px;font-weight:700;opacity:.85">VOICE CHECK-IN</div>
+          <div style="font-size:19px;font-weight:700;line-height:1.2;margin-top:8px">Record your weekly sample</div>
+          <div style="font-size:12px;margin-top:8px;opacity:.9">~2 min · 3 short recordings</div></div>
+        </div>
+      </div>
+
+      <div class="sectionhdr"><div class="h">Recently Played</div></div>
+      <div class="hscroll">
+        ${[['g1','Calm Mornings','Playlist'],['g2','Thrive Live','Station'],['g4','Focus Flow','Playlist'],['g5','Sleep Sounds','Playlist']].map(([g,t,s])=>
+          `<div class="cell" style="width:148px;gap:8px"><div class="art ${g}" style="width:148px;height:148px"></div>
+           <div><div style="font-size:14px;font-weight:600">${t}</div><div class="muted" style="font-size:13px">${s}</div></div></div>`).join('')}
+      </div>
+
+      <div class="sectionhdr"><div class="h">From Your Provider</div></div>
+      <div class="hscroll">
+        ${[['g6','Wellness Radio','Live now'],['g7','Recovery Mix','24 tracks']].map(([g,t,s])=>
+          `<div class="cell" style="width:300px;gap:8px"><div class="art ${g}" style="width:300px;height:150px;border-radius:14px"><div class="lab">${t}</div></div>
+           <div class="muted" style="font-size:13px">${s}</div></div>`).join('')}
+      </div>
+      <div style="height:170px"></div>
+    </div>
+    ${mini('g2','Thrive Live','Now: "Weightless" — Marconi Union',true)}
+    ${tabbar('home')}
+  </div>`);
+
+/* ---------- 5. RADIO ---------- */
+add('radio','Radio (live stations)','Main tabs',`
+  ${statusbar()}
+  <div class="body">
+    <div class="scroll">
+      <div class="largetitle" style="padding-top:8px">Radio</div>
+      <div class="pad muted" style="font-size:14px;margin-top:-6px;margin-bottom:6px">Live stations your provider authorized</div>
+
+      <div class="hscroll" style="margin-top:8px">
+        <div class="art g2" style="width:330px;height:180px;border-radius:16px;padding:16px">
+          <div><span class="badge live">● LIVE</span><div style="font-size:24px;font-weight:800;margin-top:10px">Thrive Live</div>
+          <div style="font-size:13px;opacity:.9">Now: Weightless — Marconi Union</div></div>
+        </div>
+      </div>
+
+      <div class="sectionhdr"><div class="h">All Stations</div></div>
+      ${[['g1','Calm Channel','Ambient · LIVE',true],['g4','Focus FM','Instrumental · LIVE',true],['g5','Recovery Radio','Spoken word · LIVE',true],['g6','Sleep Stream','Soundscapes · LIVE',true]].map(([g,t,s])=>`
+        <div class="row"><div class="art ${g}" style="width:54px;height:54px;border-radius:8px"></div>
+          <div class="meta"><div class="t1">${t}</div><div class="t2"><span class="livedot">LIVE</span> &nbsp;${s.replace(' · LIVE','')}</div></div>
+          <div class="tr">${ICN.play}</div></div>
+        <div class="rowline"></div>`).join('')}
+
+      <div class="row" style="opacity:.55"><div class="art g7" style="width:54px;height:54px;border-radius:8px"></div>
+        <div class="meta"><div class="t1">Premium Therapy Station</div><div class="t2">Requires upgraded plan</div></div>
+        <span class="badge locked">🔒 Locked</span></div>
+      <div style="height:170px"></div>
+    </div>
+    ${mini('g2','Thrive Live','Now: "Weightless" — Marconi Union',true)}
+    ${tabbar('radio')}
+  </div>`);
+
+/* ---------- 6. LIBRARY ---------- */
+add('library','Library','Main tabs',`
+  ${statusbar()}
+  <div class="body">
+    <div class="scroll">
+      <div class="largetitle" style="padding-top:8px">Library</div>
+      <div class="listcard" style="margin-top:4px">
+        ${[['▤','Playlists'],['◎','Stations'],['♪','On-Demand'],['↧','Recently Added']].map(([i,t])=>
+          `<div class="row" style="padding:13px 16px"><span style="color:var(--pink);width:24px;text-align:center;font-size:18px">${i}</span>
+            <div class="meta"><div class="t1" style="font-weight:600">${t}</div></div>
+            <span class="muted3">›</span></div>`).join('<div class="rowline full"></div>')}
+      </div>
+
+      <div class="sectionhdr"><div class="h">Playlists</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:0 20px">
+        ${[['g1','Calm Mornings','18 tracks'],['g4','Focus Flow','32 tracks'],['g5','Sleep Sounds','12 tracks'],['g3','Recovery Mix','24 tracks']].map(([g,t,s])=>
+          `<div class="cell" style="gap:7px"><div class="art ${g}" style="width:100%;aspect-ratio:1;height:auto"></div>
+           <div><div style="font-size:14px;font-weight:600">${t}</div><div class="muted" style="font-size:13px">${s}</div></div></div>`).join('')}
+      </div>
+      <div style="height:170px"></div>
+    </div>
+    ${mini('g2','Thrive Live','Now: "Weightless" — Marconi Union',true)}
+    ${tabbar('library')}
+  </div>`);
+
+/* ---------- 7. SEARCH ---------- */
+add('search','Search','Main tabs',`
+  ${statusbar()}
+  <div class="body">
+    <div class="scroll">
+      <div class="largetitle" style="padding-top:8px">Search</div>
+      <div class="pill search"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg> Stations, playlists, tracks</div>
+      <div class="pad" style="margin-top:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          ${['Calm','Focus','Sleep','Recovery','Breathing'].map(c=>`<div class="chip">${c}</div>`).join('')}
+        </div>
+      </div>
+
+      <div class="sectionhdr"><div class="h">Top Results</div></div>
+      ${[['g1','Calm Mornings','Playlist · 18 tracks'],['g2','Thrive Live','Station · LIVE'],['g5','Sleep Sounds','Playlist · 12 tracks']].map(([g,t,s])=>`
+        <div class="row"><div class="art ${g}" style="width:50px;height:50px;border-radius:8px"></div>
+          <div class="meta"><div class="t1">${t}</div><div class="t2">${s}</div></div>
+          <span class="muted3">›</span></div><div class="rowline"></div>`).join('')}
+      <div class="pad muted3" style="font-size:13px;margin-top:14px">Showing only content you're authorized for.</div>
+      <div style="height:170px"></div>
+    </div>
+    ${mini('g2','Thrive Live','Now: "Weightless" — Marconi Union',true)}
+    ${tabbar('search')}
+  </div>`);
+
+/* ---------- 8. STATION PAGE ---------- */
+add('station','Station page','Detail pages',`
+  ${statusbar()}
+  <div class="body">
+    <div class="scroll">
+      <div class="nav" style="position:absolute;z-index:30;left:0;right:0">
+        <div class="lead">${ICN.back}</div><div class="title"></div>
+        <div class="trail"><span style="color:var(--pink)">${ICN.ellipsis}</span></div></div>
+
+      <div class="art g2" style="height:330px;border-radius:0;align-items:flex-end;padding:20px">
+        <div><span class="badge live">● LIVE</span>
+        <div style="font-size:30px;font-weight:800;margin-top:10px">Thrive Live</div>
+        <div style="font-size:14px;opacity:.92">Ambient wellness radio · Provider station</div></div>
+      </div>
+
+      <div class="pad" style="display:flex;gap:12px;margin-top:16px">
+        <div class="btn green" style="flex:1">${ICN.play.replace('currentColor','#04210e')} Play Live</div>
+        <div class="btn ghost" style="width:54px">${ICN.shuffle}</div>
+      </div>
+      <div class="pad muted" style="font-size:14px;margin-top:16px;line-height:1.45">
+        Curated calm for stress relief and recovery. Streaming 24/7 with live now-playing metadata. Authorized by Dr. Patel.</div>
+
+      <div class="sectionhdr"><div class="h">On-Demand Episodes</div></div>
+      ${[['1','Morning Reset','12:04'],['2','Deep Breathing Guide','08:31'],['3','Evening Wind-Down','15:20'],['4','Stress Relief Session','10:45'],['5','Focus & Flow','22:10']].map(([n,t,d])=>`
+        <div class="row"><div class="num">${n}</div>
+          <div class="meta"><div class="t1">${t}</div><div class="t2">Thrive Live</div></div>
+          <span class="tr">${d}</span><span class="muted3" style="margin-left:10px">${ICN.ellipsis.replace('22','16').replace('height="6"','height="5"')}</span></div>
+        <div class="rowline"></div>`).join('')}
+      <div style="height:170px"></div>
+    </div>
+    ${mini('g2','Thrive Live','Now: "Weightless" — Marconi Union',true)}
+    ${tabbar('radio')}
+  </div>`);
+
+/* ---------- 9. PLAYLIST PAGE ---------- */
+add('playlist','Playlist page','Detail pages',`
+  ${statusbar()}
+  <div class="body">
+    <div class="scroll">
+      <div class="nav" style="position:absolute;z-index:30;left:0;right:0">
+        <div class="lead">${ICN.back}</div><div class="title"></div>
+        <div class="trail"><span style="color:var(--pink)">${ICN.ellipsis}</span></div></div>
+      <div class="center" style="padding:54px 20px 0">
+        <div class="art g1" style="width:210px;height:210px;border-radius:14px;box-shadow:0 14px 40px rgba(250,45,72,.3)"></div>
+        <div style="font-size:22px;font-weight:800;margin-top:18px">Calm Mornings</div>
+        <div class="muted" style="font-size:14px">Provider playlist · 18 tracks · 1 hr 12 min</div>
+      </div>
+      <div class="pad" style="display:flex;gap:12px;margin-top:18px">
+        <div class="btn tint" style="flex:1">${ICN.play} Play</div>
+        <div class="btn tint" style="flex:1">${ICN.shuffle} Shuffle</div>
+      </div>
+      ${[['Weightless','Marconi Union','8:10'],['Sunset Lover','Petit Biscuit','3:58'],['Intro','The xx','2:07'],['Cirrus','Bonobo','7:02'],['Avril 14th','Aphex Twin','2:05'],['An Ending','Brian Eno','4:01']].map(([t,a,d])=>`
+        <div class="row" style="padding-top:11px;padding-bottom:11px"><div class="art g7" style="width:44px;height:44px;border-radius:6px"></div>
+          <div class="meta"><div class="t1">${t}</div><div class="t2">${a}</div></div>
+          <span class="tr">${d}</span></div>
+        <div class="rowline" style="margin-left:76px"></div>`).join('')}
+      <div style="height:170px"></div>
+    </div>
+    ${mini('g1','Weightless','Marconi Union',false)}
+    ${tabbar('library')}
+  </div>`);
+
+/* ---------- 10. NOW PLAYING ---------- */
+add('now-playing','Now Playing (full screen)','Player',`
+  ${statusbar()}
+  <div class="body" style="background:linear-gradient(180deg,#1a3a52 0%,#0a1a26 55%,#000 100%)">
+    <div class="center" style="padding:14px 0 0"><div style="width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.35)"></div></div>
+    <div class="center" style="padding:30px 28px 0">
+      <div class="art g2" style="width:320px;height:320px;border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.55)"></div>
+    </div>
+    <div class="pad" style="margin-top:34px">
+      <div class="between">
+        <div><div style="font-size:22px;font-weight:700">Weightless</div>
+          <div class="muted" style="font-size:18px">Marconi Union · Thrive Live</div></div>
+        <div class="art g7" style="width:30px;height:30px;border-radius:50%;color:var(--pink);align-items:center;justify-content:center;display:flex">${ICN.ellipsis.replace('22','16').replace('height="6"','height="5"')}</div>
+      </div>
+      <!-- progress / live -->
+      <div style="margin-top:22px">
+        <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.2)"><div style="width:46%;height:5px;border-radius:3px;background:#fff"></div></div>
+        <div class="between" style="margin-top:7px"><span class="muted3" style="font-size:12px">3:42</span><span class="livedot" style="font-size:11px">LIVE</span></div>
+      </div>
+      <!-- transport -->
+      <div class="between" style="padding:24px 18px 0">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M6 6h2v12H6zM20 6 9 12l11 6z"/></svg>
+        <div style="width:74px;height:74px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center">${ICN.pausebig}</div>
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M18 6h-2v12h2zM4 6l11 6L4 18z"/></svg>
+      </div>
+      <!-- volume -->
+      <div style="display:flex;align-items:center;gap:12px;margin-top:28px;color:var(--txt2)">
+        <span>🔈</span><div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.2)"><div style="width:60%;height:5px;border-radius:3px;background:#fff"></div></div><span>🔊</span>
+      </div>
+      <!-- bottom actions -->
+      <div class="between" style="padding:26px 38px 0;color:#fff">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M12 21s-7-4.5-9.5-8A4.7 4.7 0 0112 6a4.7 4.7 0 019.5 7C19 16.5 12 21 12 21z"/></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>
+        <svg width="26" height="20" viewBox="0 0 24 18" fill="none" stroke="#fff" stroke-width="1.8"><path d="M2 4h20v9H2zM7 17h10l-5-4z" fill="#fff"/></svg>
+      </div>
+    </div>
+  </div>`);
+
+/* ---------- 11. VOICE INTRO ---------- */
+add('voice-intro','Voice check-in — intro','Voice & Score',`
+  ${statusbar()}
+  <div class="body">
+    <div class="nav"><div class="lead" style="color:var(--blue)">Close</div><div class="title">Voice Check-In</div><div class="trail"></div></div>
+    <div class="pad center" style="padding-top:36px">
+      <div class="art g3" style="width:88px;height:88px;border-radius:24px;align-items:center;justify-content:center;display:flex">${ICN.mic}</div>
+      <div style="font-size:24px;font-weight:800;margin-top:22px">Let's record your voice</div>
+      <div class="muted" style="font-size:15px;margin-top:10px;line-height:1.5">Three short recordings, about 2 minutes total. Find a quiet spot — radio playback will pause automatically.</div>
+    </div>
+    <div class="listcard" style="margin-top:30px">
+      ${[['1','Sustained "ahh"','Hold one steady note · 30 sec'],['2','Reading passage','Read aloud · ~35 sec'],['3','"Pa-ta-ka"','Repeat quickly · 10 sec']].map(([n,t,s])=>`
+        <div class="row" style="padding:14px 16px"><div style="width:28px;height:28px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--pink)">${n}</div>
+          <div class="meta"><div class="t1" style="font-weight:600">${t}</div><div class="t2">${s}</div></div></div>${n!=='3'?'<div class="rowline full"></div>':''}`).join('')}
+    </div>
+    <div class="pad center muted3" style="font-size:13px;margin-top:18px">3 of 4 monthly check-ins remaining</div>
+    <div class="pad" style="position:absolute;bottom:40px;left:0;right:0"><div class="btn primary">Start mic test</div></div>
+  </div>`);
+
+/* ---------- 12. MIC TEST ---------- */
+add('mic-test','Mic test','Voice & Score',`
+  ${statusbar()}
+  <div class="body">
+    <div class="nav"><div class="lead" style="color:var(--blue)">Back</div><div class="title">Mic Test</div><div class="trail"></div></div>
+    <div class="pad center" style="padding-top:40px">
+      <div style="font-size:22px;font-weight:800">Say something out loud</div>
+      <div class="muted" style="font-size:15px;margin-top:8px">We're checking your microphone and background noise.</div>
+      <!-- waveform -->
+      <div style="display:flex;align-items:center;gap:5px;height:120px;margin-top:40px">
+        ${Array.from({length:27}).map((_,i)=>{const h=10+Math.round(70*Math.abs(Math.sin(i*0.7)))+(i%3?12:0);return `<div style="width:6px;height:${Math.min(h,96)}px;border-radius:3px;background:${i<19?'var(--green)':'var(--card2)'}"></div>`}).join('')}
+      </div>
+      <div style="margin-top:36px;display:flex;flex-direction:column;gap:14px;width:100%">
+        <div class="between"><span class="muted">Input level</span><span style="color:var(--green);font-weight:600">Good ✓</span></div>
+        <div class="between"><span class="muted">Background noise</span><span style="color:var(--green);font-weight:600">Quiet ✓</span></div>
+        <div class="between"><span class="muted">Microphone</span><span style="color:var(--green);font-weight:600">iPhone Mic ✓</span></div>
+      </div>
+    </div>
+    <div class="pad" style="position:absolute;bottom:40px;left:0;right:0"><div class="btn green">Looks good — continue</div></div>
+  </div>`);
+
+/* ---------- 13. RECORDING ---------- */
+add('voice-record','Recording — sustained "ahh"','Voice & Score',`
+  ${statusbar()}
+  <div class="body" style="background:radial-gradient(120% 60% at 50% 30%,#2a0d16,#000 70%)">
+    <div class="nav"><div class="lead" style="color:var(--blue)">Cancel</div><div class="title" style="color:var(--txt2)">Recording 1 of 3</div><div class="trail"></div></div>
+    <div class="center" style="padding:30px 28px 0">
+      <div class="chip on" style="font-weight:700">Sustained "ahh"</div>
+      <div style="font-size:20px;font-weight:700;margin-top:24px;text-align:center;line-height:1.4">Take a breath, then hold a steady<br>"ahhh" for as long as you can</div>
+    </div>
+    <!-- ring timer -->
+    <div class="center" style="margin-top:42px">
+      <div style="position:relative;width:220px;height:220px">
+        <svg width="220" height="220" viewBox="0 0 220 220">
+          <circle cx="110" cy="110" r="100" fill="none" stroke="#2c2c2e" stroke-width="10"/>
+          <circle cx="110" cy="110" r="100" fill="none" stroke="#fa2d48" stroke-width="10" stroke-linecap="round"
+            stroke-dasharray="628" stroke-dashoffset="270" transform="rotate(-90 110 110)"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div style="font-size:46px;font-weight:800;letter-spacing:-1px">0:17</div>
+          <div class="muted" style="font-size:14px">of 30 sec</div>
+        </div>
+      </div>
+    </div>
+    <!-- live wave -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:4px;height:50px;margin-top:30px">
+      ${Array.from({length:31}).map((_,i)=>{const h=8+Math.round(34*Math.abs(Math.sin(i*0.9)));return `<div style="width:4px;height:${h}px;border-radius:2px;background:rgba(255,255,255,.5)"></div>`}).join('')}
+    </div>
+    <div class="center" style="margin-top:34px">
+      <div style="width:74px;height:74px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center">
+        <div style="width:26px;height:26px;border-radius:6px;background:var(--pink)"></div></div>
+      <div class="muted3" style="font-size:13px;margin-top:14px">Tap to stop</div>
+    </div>
+  </div>`);
+
+/* ---------- 14. REVIEW / RE-RECORD ---------- */
+add('voice-review','Review & re-record','Voice & Score',`
+  ${statusbar()}
+  <div class="body">
+    <div class="nav"><div class="lead" style="color:var(--blue)">Back</div><div class="title">Review</div><div class="trail"></div></div>
+    <div class="pad" style="padding-top:14px">
+      <div style="font-size:22px;font-weight:800">Check your recordings</div>
+      <div class="muted" style="font-size:14px;margin-top:6px">Re-record any that didn't pass before you submit.</div>
+    </div>
+    <div style="margin-top:18px;display:flex;flex-direction:column;gap:14px;padding:0 20px">
+      ${[['Sustained "ahh"','30 sec','pass','Passed'],['Reading passage (EN-02)','34 sec','warn','Pass — a little quiet'],['"Pa-ta-ka"','6 sec','fail','Too short — please retry']].map(([t,d,st,msg])=>{
+        const col=st==='pass'?'var(--green)':st==='warn'?'var(--orange)':'var(--pink)';
+        const ico=st==='pass'?'✓':st==='warn'?'!':'✕';
+        return `<div style="background:var(--card);border-radius:14px;padding:14px 16px">
+          <div class="between"><div style="display:flex;align-items:center;gap:10px">
+            <div style="width:26px;height:26px;border-radius:50%;background:${col};color:#04210e;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">${ico}</div>
+            <div><div style="font-size:15px;font-weight:600">${t}</div><div style="font-size:12.5px;color:${col}">${msg}</div></div></div>
+            <span class="muted">${d}</span></div>
+          <div class="between" style="margin-top:12px">
+            <div style="display:flex;align-items:center;gap:10px;color:var(--txt2)">${ICN.play.replace('20','17')}
+              <div style="width:150px;height:4px;border-radius:2px;background:var(--card2)"><div style="width:30%;height:4px;border-radius:2px;background:#fff"></div></div></div>
+            <span style="color:${st==='pass'?'var(--txt3)':'var(--pink)'};font-size:14px;font-weight:600">Re-record</span></div>
+        </div>`}).join('')}
+    </div>
+    <div class="pad" style="position:absolute;bottom:40px;left:0;right:0">
+      <div class="btn primary">Submit for analysis</div>
+      <div class="center muted3" style="font-size:12.5px;margin-top:12px">Recordings upload securely. Analysis takes a few minutes.</div>
+    </div>
+  </div>`);
+
+/* ---------- 15. UPLOAD / SUCCESS ---------- */
+add('voice-upload','Submitting & success','Voice & Score',`
+  ${statusbar()}
+  <div class="body">
+    <div class="nav"><div class="lead"></div><div class="title">Submitting</div><div class="trail"></div></div>
+    <div class="center" style="padding:70px 30px 0">
+      <div style="width:104px;height:104px;border-radius:50%;background:rgba(48,209,88,.16);display:flex;align-items:center;justify-content:center">
+        <div style="width:72px;height:72px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#04210e;font-size:38px;font-weight:800">✓</div>
+      </div>
+      <div style="font-size:24px;font-weight:800;margin-top:26px">Recordings uploaded</div>
+      <div class="muted" style="font-size:15px;margin-top:10px;line-height:1.5">All three samples were sent securely. Your provider's system is analyzing them now.</div>
+    </div>
+    <div class="listcard" style="margin-top:30px">
+      ${[['Sustained "ahh"','Uploaded'],['Reading passage','Uploaded'],['"Pa-ta-ka"','Uploaded']].map(([t,s])=>`
+        <div class="row" style="padding:13px 16px"><span style="color:var(--green)">✓</span>
+          <div class="meta"><div class="t1">${t}</div></div><span class="muted" style="font-size:13px">${s}</span></div>`).join('<div class="rowline full"></div>')}
+    </div>
+    <div class="pad center" style="margin-top:22px">
+      <div style="background:rgba(10,132,255,.12);color:var(--blue);border-radius:12px;padding:12px 14px;font-size:13.5px;text-align:center">
+        We'll update your Vitality Score when analysis finishes. Check back in a few minutes.</div>
+    </div>
+    <div class="pad" style="position:absolute;bottom:40px;left:0;right:0">
+      <div class="btn ghost">View My Score</div>
+      <div class="center muted3" style="font-size:13px;margin-top:14px">3 of 4 monthly check-ins remaining</div>
+    </div>
+  </div>`);
+
+/* ---------- 16. MY SCORE ---------- */
+add('my-score','My Score','Voice & Score',`
+  ${statusbar()}
+  <div class="body">
+    <div class="scroll">
+      <div class="nav"><div class="lead" style="color:var(--blue)">${ICN.back}</div><div class="title">My Score</div><div class="trail" style="color:var(--blue)">ⓘ</div></div>
+      <!-- vitality ring -->
+      <div class="center" style="padding:18px 0 0">
+        <div style="position:relative;width:200px;height:200px">
+          <svg width="200" height="200" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="86" fill="none" stroke="#2c2c2e" stroke-width="14"/>
+            <circle cx="100" cy="100" r="86" fill="none" stroke="url(#sg)" stroke-width="14" stroke-linecap="round"
+              stroke-dasharray="540" stroke-dashoffset="97" transform="rotate(-90 100 100)"/>
+            <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#30d158"/><stop offset="1" stop-color="#0a84ff"/></linearGradient></defs>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <div style="font-size:56px;font-weight:800;letter-spacing:-2px">82</div>
+            <div class="muted" style="font-size:13px;letter-spacing:.5px">VITALITY SCORE</div>
+          </div>
+        </div>
+        <div style="color:var(--green);font-size:14px;font-weight:600;margin-top:14px">▲ 3 points since last check-in</div>
+      </div>
+
+      <div class="sectionhdr"><div class="h">Sub-scores</div><div class="more">What's this?</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 20px">
+        ${[['Respiratory','86','var(--green)'],['Vocal Stability','78','var(--blue)'],['Articulation','84','var(--purple)'],['Energy','79','var(--orange)']].map(([t,v,c])=>`
+          <div style="background:var(--card);border-radius:14px;padding:14px">
+            <div class="between"><span class="muted" style="font-size:13px">${t}</span><span class="muted3">ⓘ</span></div>
+            <div style="font-size:30px;font-weight:800;margin-top:6px">${v}</div>
+            <div style="height:5px;border-radius:3px;background:var(--card2);margin-top:8px"><div style="width:${v}%;height:5px;border-radius:3px;background:${c}"></div></div>
+          </div>`).join('')}
+      </div>
+      <div class="pad muted3" style="font-size:13px;margin-top:18px;line-height:1.4">Last analyzed today. Scores reflect your most recent voice check-in and are not a medical diagnosis.</div>
+      <div style="height:40px"></div>
+    </div>
+  </div>`);
+
+/* ---------- 17. SETTINGS / PROFILE ---------- */
+add('settings','Settings & Profile','Settings',`
+  ${statusbar()}
+  <div class="body">
+    <div class="scroll">
+      <div class="largetitle" style="padding-top:8px">Settings</div>
+      <div class="row" style="padding:8px 20px 18px"><div class="art g3" style="width:60px;height:60px;border-radius:50%"></div>
+        <div class="meta"><div class="t1" style="font-size:18px;font-weight:700">Jamie Rivera</div><div class="t2">jamie@email.com · Dr. Patel's practice</div></div></div>
+
+      <div class="pad muted" style="font-size:13px;letter-spacing:.4px;margin:6px 0 8px">PROFILE</div>
+      <div class="listcard">
+        ${[['Health details','Edit'],['Preferred language','English'],['Voice check-in quota','3 of 4 left']].map(([t,v])=>
+          `<div class="row" style="padding:13px 16px"><div class="meta"><div class="t1">${t}</div></div><span class="muted">${v} ›</span></div>`).join('<div class="rowline full"></div>')}
+      </div>
+
+      <div class="pad muted" style="font-size:13px;letter-spacing:.4px;margin:22px 0 8px">PLAYBACK</div>
+      <div class="listcard">
+        <div class="row" style="padding:13px 16px"><div class="meta"><div class="t1">Appearance</div></div><span class="muted">System ›</span></div>
+        <div class="rowline full"></div>
+        <div class="row" style="padding:13px 16px"><div class="meta"><div class="t1">Stream quality</div></div><span class="muted">Auto (HLS) ›</span></div>
+        <div class="rowline full"></div>
+        <div class="row" style="padding:13px 16px"><div class="meta"><div class="t1">Send diagnostic report</div></div><span class="muted3">›</span></div>
+      </div>
+
+      <div class="pad muted" style="font-size:13px;letter-spacing:.4px;margin:22px 0 8px">ACCOUNT</div>
+      <div class="listcard">
+        <div class="row" style="padding:13px 16px"><div class="meta"><div class="t1" style="color:var(--pink)">Sign out</div></div></div>
+      </div>
+      <div class="pad muted3" style="font-size:12px;margin-top:20px">Thrive Member · v1.0.0 · Content authorized by your provider</div>
+      <div style="height:40px"></div>
+    </div>
+  </div>`);
+
+/* ---- render gallery ---- */
+const grid=document.getElementById('grid');
+S.forEach(s=>{
+  const cell=document.createElement('div');cell.className='cell';
+  cell.innerHTML=`<div class="screen" id="scr-${s.id}">${s.html}</div>
+    <div class="cap">${s.name}<small>${s.group}</small></div>`;
+  grid.appendChild(cell);
+});
+window.__SCREENS__=S.map(s=>({id:s.id,name:s.name,group:s.group}));
+</script>
+</body>
+</html>
+`}
