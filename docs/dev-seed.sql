@@ -6,14 +6,14 @@
 -- server's /api/stations. HLS works only on the `ladder_to_thrive` station; the main
 -- `thrive_radio` is an Icecast relay with NO HLS.
 
--- 1) One playable radio station (Ladder to THRIVE — has working HLS).
+-- 1) One playable radio station (THRIVE Radio HLS Test — non-public, HLS via Liquidsoap).
 insert into public.content_assets (code, asset_type, name, description, stream_url, is_active)
 values (
-  'ladder_to_thrive',
+  'hls_test',
   'radio_station',
-  'Ladder to THRIVE',
-  'Dev seed station (HLS).',
-  'https://azuracast-radio-u62352.vm.elestio.app/hls/ladder_to_thrive/live.m3u8',
+  'THRIVE Radio (HLS)',
+  'Dev seed station — non-public AzuraCast station, HLS output of the live stream.',
+  'https://azuracast-radio-u62352.vm.elestio.app/hls/hls_test/live.m3u8',
   true
 )
 on conflict (code) do update
@@ -27,7 +27,7 @@ insert into public.member_content_grants (practice_membership_id, content_asset_
 select pm.id, ca.id, 'grant', 'dev seed'
 from public.practice_memberships pm
 join public.roles r          on r.id = pm.role_id and r.code = 'practice_client'
-cross join lateral (select id from public.content_assets where code = 'ladder_to_thrive') ca
+cross join lateral (select id from public.content_assets where code = 'hls_test') ca
 where pm.status = 'active'
   and not exists (
     select 1 from public.member_content_grants g
