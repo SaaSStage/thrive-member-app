@@ -19,14 +19,14 @@ signed with the existing upload keystore (`C:\Users\youon\thrive-radio-key.jks`)
 |---|---|
 | UI / nav | React Native + Expo Router (typed routes) |
 | Auth | `@clerk/clerk-expo` (replaces the hand-rolled Flutter Clerk client) |
-| Playback | `react-native-track-player` (iOS AVPlayer / Android Media3) over **HLS** |
+| Playback | `expo-audio` (iOS AVPlayer / Android ExoPlayer-Media3) over **HLS** — NOT react-native-track-player (no stable RN 0.85 build). See `AUDIO-PLAYBACK.md`. |
 | Voice capture | WAV 44.1 kHz / 16-bit / mono + on-device validation |
 | Server state | TanStack Query over `@supabase/supabase-js` + AzuraCast REST |
 | Client state | Zustand |
 | Local store | `react-native-mmkv` + `expo-secure-store` (Clerk session) |
 | Builds | EAS Build (cloud iOS from Windows) + EAS Update |
 
-> Native modules (track-player, mmkv) are **not** in Expo Go — use a dev build (`expo prebuild` /
+> Native modules (the audio engine, mmkv) are **not** in Expo Go — use a dev build (`expo prebuild` /
 > EAS dev client).
 
 ---

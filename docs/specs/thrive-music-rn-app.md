@@ -35,7 +35,8 @@ ONE TypeScript codebase (Expo)
 │     • Clerk JWT → Supabase via accessToken callback (third-party integration,
 │       same wiring the v3 Flutter app proved out)
 │     • public.users.id (uuid joined to Clerk sub) used for all FK writes
-├── Audio playback: react-native-track-player (RNTP)
+├── Audio playback: expo-audio  (NOT react-native-track-player — RNTP has no stable
+│     RN 0.85 build; New-Arch TurboModule incompat. See docs/AUDIO-PLAYBACK-LESSONS.md)
 │     • iOS: AVPlayer under the hood — the same engine the custom
 │       LiveRadioPlayer native fix converged on after the stuttering saga
 │     • Android: ExoPlayer/Media3 with foreground service
@@ -43,12 +44,12 @@ ONE TypeScript codebase (Expo)
 ├── Audio capture (voice samples): WAV 44.1 kHz / 16-bit / mono recorder
 │     with on-device quality validation (port of the v3 implementation)
 ├── Server state: TanStack Query over Supabase JS + AzuraCast REST
-├── Client state: Zustand (player UI state, theme) — RNTP owns playback state
+├── Client state: Zustand (player UI state, theme) — expo-audio owns playback state
 ├── Local persistence: react-native-mmkv + expo-secure-store (Clerk session)
 └── Builds: EAS Build (cloud iOS builds from Windows) + EAS Update for OTA JS fixes
 ```
 
-Key insight from the Flutter app's history: the iOS playback work converged on a **native AVPlayer** path. RNTP's iOS backend *is* AVPlayer — the new stack lands on that architecture by default instead of via a custom Objective-C plugin and kill-switch. But AVPlayer alone is **not** the whole fix — see the next section.
+Key insight from the Flutter app's history: the iOS playback work converged on a **native AVPlayer** path. expo-audio's iOS backend *is* AVPlayer — the new stack lands on that architecture by default instead of via a custom Objective-C plugin and kill-switch. But AVPlayer alone is **not** the whole fix — see the next section, and **`docs/AUDIO-PLAYBACK-LESSONS.md`** for the evidence-based audio architecture (which workarounds HLS makes obsolete vs. which still hold).
 
 ### The iOS cold-start stutter — STILL UNSOLVED, must be fixed in v1
 
@@ -59,7 +60,7 @@ Key insight from the Flutter app's history: the iOS playback work converged on a
 **The industry-standard fix: serve HLS, not raw Icecast, to the apps.**
 
 1. **Enable HLS on the AzuraCast stations** (built-in: station profile → AutoDJ tab; streams served at `/hls/{station}/live.m3u8`, sub-stream bitrates configurable under Broadcasting → HLS Streams). No new infrastructure.
-2. **Play the HLS URL in RNTP.** AVPlayer is *the* reference HLS client (it's what Apple Music radio uses); ExoPlayer/Media3 on Android has first-class HLS support. Segmented delivery gives the player declared durations and real buffer accounting — the stall logic finally works as designed.
+2. **Play the HLS URL in expo-audio.** AVPlayer (iOS) and ExoPlayer/Media3 (Android) are reference HLS clients that **self-manage** buffering and live-edge latency by default — segmented delivery makes the stall logic work as designed. Add **no** buffer tuning up front; measure first. (Details + the per-workaround verdict matrix: `docs/AUDIO-PLAYBACK-LESSONS.md`.)
 3. **Metadata** continues to come from the AzuraCast now-playing API (HLS doesn't carry ICY `StreamTitle`; the app already polls the API, so nothing is lost).
 4. **Stream selection is data + config, not code**: `content_assets.stream_url` carries the HLS URL per station; a remote-config flag allows falling back to the Icecast URL per platform if HLS misbehaves — same kill-switch pattern as `ios_use_native_live_player`.
 5. **Defense in depth — preroll gate**: if the Icecast fallback is ever active, do not start playback until N seconds are buffered (new `cold_start_preroll_seconds` tunable in `mobile_app_settings`) — automating the manual pause-trick instead of relying on the user to discover it.
@@ -114,7 +115,7 @@ The v3 Flutter app (`lib/voice/`, `lib/score/`) is the reference implementation 
 
 ### Non-negotiable carry-over: the remote-config tuning layer
 
-`public.mobile_app_settings` (v3 Supabase, key/jsonb, anon-readable, admin-written) is the playback tuning layer and **must be wired into the new player from day one**. The v3 seed already carries the migrated buffering-saga values. Mapping:
+`public.mobile_app_settings` (v3 Supabase, key/jsonb, anon-readable, admin-written) is the playback tuning layer and **must be wired into the new player from day one**. The v3 seed already carries the migrated buffering-saga values. **⚠️ The RNTP-specific mapping below is superseded — see `docs/AUDIO-PLAYBACK-LESSONS.md` §6:** under HLS + expo-audio the engines self-manage buffering, so most buffer-second keys are now *vestigial* (keep the rows, don't wire them unless a measured problem appears); the keys that still port are `retry_*`/`reconnect_delay`/`listen_heartbeat_seconds`/`stream_probe_timeout_seconds`. Original mapping kept for reference:
 
 | `mobile_app_settings` key | Where it lands in RNTP |
 |---|---|
