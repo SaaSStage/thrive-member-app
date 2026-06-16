@@ -4,11 +4,10 @@
  */
 
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export function useTheme() {
-  const scheme = useColorScheme();
-  const theme = scheme === 'unspecified' ? 'light' : scheme;
-
-  return Colors[theme];
+  // The app is dark-only for now (the wireframe is dark). Lock to the dark
+  // palette regardless of the system/emulator setting so the aesthetic stays
+  // consistent. When a light design exists, switch back to useColorScheme().
+  return Colors.dark;
 }

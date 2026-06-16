@@ -19,7 +19,7 @@ signed with the existing upload keystore (`C:\Users\youon\thrive-radio-key.jks`)
 |---|---|
 | UI / nav | React Native + Expo Router (typed routes) |
 | Auth | `@clerk/clerk-expo` (replaces the hand-rolled Flutter Clerk client) |
-| Playback | `react-native-track-player` (iOS AVPlayer / Android Media3) over **HLS** |
+| Playback | `expo-audio` (iOS AVPlayer / Android ExoPlayer-Media3) over **HLS** — NOT react-native-track-player (no stable RN 0.85 build). See `AUDIO-PLAYBACK.md`. |
 | Voice capture | WAV 44.1 kHz / 16-bit / mono + on-device validation |
 | Server state | TanStack Query over `@supabase/supabase-js` + AzuraCast REST |
 | Client state | Zustand |
@@ -78,6 +78,6 @@ signed with the existing upload keystore (`C:\Users\youon\thrive-radio-key.jks`)
 1. **Validate HLS in iPhone Safari** — open `https://<azuracast>/hls/<station>/live.m3u8`. No build.
    Confirms the cold-start stutter fix before any player code (see spec §"iOS cold-start stutter").
 2. **Auth** — `@clerk/clerk-expo` sign-in → Supabase session via Clerk JWT.
-3. **Content + playback** — entitlement-filtered list → RNTP over HLS.
+3. **Content + playback** — entitlement-filtered list → `expo-audio` over HLS (read `AUDIO-PLAYBACK.md`).
 4. **Voice** — capture → validate → upload via edge function.
 5. **Score** — read + present.
