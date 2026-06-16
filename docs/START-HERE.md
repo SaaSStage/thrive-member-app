@@ -2,9 +2,7 @@
 
 > Read this first. It exists so a fresh session can be productive without re-discovering everything.
 > Companion docs: [`specs/thrive-music-rn-app.md`](specs/thrive-music-rn-app.md) (the plan),
-> [`PORTING.md`](PORTING.md) (Flutter→RN map), [`SCHEMA.md`](SCHEMA.md) (backend),
-> **[`AUDIO-PLAYBACK.md`](AUDIO-PLAYBACK.md) (READ before touching the player — months of
-> hard-won iOS/Android stutter fixes; the failed approaches are listed so you don't repeat them).**
+> [`PORTING.md`](PORTING.md) (Flutter→RN map), [`SCHEMA.md`](SCHEMA.md) (backend).
 
 ## What this is
 
@@ -24,12 +22,9 @@ It ships as an **update to the existing store listings**, not a new app:
 - Expo SDK 56, RN 0.85, Expo Router, TypeScript — scaffolded, branch `main`, pushed to
   `github.com/SaaSStage/thrive-member-app`.
 - Deps installed: `@clerk/clerk-expo`, `@supabase/supabase-js`, `@tanstack/react-query`, `zustand`,
-  `expo-audio`, `react-native-mmkv`, `expo-secure-store`.
-  - **Audio = `expo-audio`, NOT react-native-track-player.** RNTP has no stable build for RN 0.85
-    (4.1.2 broken; only a 5.0.0-alpha). expo-audio is first-party, SDK-56 compatible, and rides the
-    same AVPlayer/ExoPlayer engines, so the HLS fix still applies. See `AUDIO-PLAYBACK.md`.
-  - ⚠️ `react-native-mmkv` is **not** in Expo Go — you need a **dev build** (`npx expo prebuild` +
-    EAS dev client).
+  `react-native-track-player`, `react-native-mmkv`, `expo-secure-store`.
+  - ⚠️ track-player + mmkv are **not** in Expo Go — you need a **dev build** (`npx expo prebuild` +
+    EAS dev client). Expo Go won't run them.
 - `reference/flutter-v3/` — the Flutter app's `voice/`, `score/`, `auth/` source to **port from**
   (read-only; it's Dart, not runnable here).
 - `reference/supabase-migrations/` — the mobile_app_settings migration. Full schema lives in the
@@ -71,8 +66,8 @@ seeding is a **portal** responsibility long-term.
    `https://azuracast-radio-u62352.vm.elestio.app/hls/ladder_to_thrive/live.m3u8`. If it plays
    continuously, the iOS cold-start stutter fix is confirmed before any player code.
 2. **Auth** — Clerk sign-in → Supabase session via JWT. Get a member logged in.
-3. **Content + playback** — list `content_assets` filtered by the member's grants → play the HLS
-   `stream_url` with `expo-audio`. **Read `AUDIO-PLAYBACK.md` first** — don't tune buffers; the fix is HLS.
+3. **Content + playback** — list `content_assets` filtered by the member's grants → play HLS with
+   react-native-track-player.
 4. **Voice** — capture (WAV 44.1k/16/mono) → validate (port `voice_validator.dart`, RIFF parsing) →
    upload via the `voice-upload-urls` edge function (signed URLs; not direct Storage).
 5. **Score** — read `analysis_results`, present Vitality + 4 sub-scores.
@@ -83,7 +78,7 @@ Screen-by-screen Flutter references and RN target paths are in `PORTING.md`; wir
 ## Immediate next steps
 
 - [ ] Seed content (`dev-seed.sql`) so screens render.
-- [ ] `npx expo prebuild` + set up an EAS dev client (mmkv needs native code; expo-audio config plugin already added).
+- [ ] `npx expo prebuild` + set up an EAS dev client (track-player/mmkv need native code).
 - [ ] Build the Clerk provider + supabase-js client with the `accessToken` (Clerk JWT) wiring.
 - [ ] Do the iPhone-Safari HLS check before writing the player.
 

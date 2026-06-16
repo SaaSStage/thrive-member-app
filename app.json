@@ -9,12 +9,7 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.thriveradio.app",
-      "infoPlist": {
-        "UIBackgroundModes": [
-          "audio"
-        ]
-      }
+      "bundleIdentifier": "com.thriveradio.app"
     },
     "android": {
       "package": "com.thriveradio.app",
@@ -42,8 +37,7 @@
           }
         }
       ],
-      "expo-secure-store",
-      "expo-audio"
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
