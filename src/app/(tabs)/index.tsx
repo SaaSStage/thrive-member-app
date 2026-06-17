@@ -10,8 +10,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useGrantedContent, type ContentAsset } from '@/api/content';
+import { isProfileComplete, useVoiceProfile } from '@/api/profile';
 import { ArtTile } from '@/components/ui/art-tile';
 import { SectionHeader } from '@/components/ui/section-header';
+import { ProfileBanner } from '@/components/voice/profile-banner';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -32,6 +34,7 @@ export default function Home() {
   const t = useTheme();
   const router = useRouter();
   const { data, isLoading } = useGrantedContent();
+  const { data: profile } = useVoiceProfile();
 
   function open(asset: ContentAsset) {
     if (asset.asset_type === 'radio_station') {
@@ -40,30 +43,44 @@ export default function Home() {
     // playlist/frequency/on-demand detail pages: TODO (future slice).
   }
 
+  // Voice entry (both Home cards). Gate on a complete profile: if incomplete,
+  // run Profile Setup first, then continue into the flow (§3.1 pre-flight, §8).
+  function openVoice() {
+    if (isProfileComplete(profile)) {
+      router.push({ pathname: '/voice', params: { lang: profile?.preferred_language ?? 'en' } } as Href);
+    } else {
+      router.push({ pathname: '/profile-setup', params: { then: 'voice' } } as Href);
+    }
+  }
+
   return (
     <View style={[styles.fill, { backgroundColor: t.background }]}>
       <SafeAreaView style={styles.fill} edges={['top']}>
         <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
           <View style={styles.headerRow}>
             <Text style={[styles.title, { color: t.text }]}>Home</Text>
-            <ArtTile seed="me" style={styles.avatar} radius={18} />
+            <Pressable onPress={() => router.push('/account' as Href)} hitSlop={10}>
+              <ArtTile seed="me" style={styles.avatar} radius={18} />
+            </Pressable>
           </View>
 
-          {/* Vitality + Voice entry cards (wired to Score/Voice flows in a later slice). */}
+          <ProfileBanner />
+
+          {/* Vitality + Voice entry cards — both launch the voice flow (gated). */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.cardRow}>
-            <View style={[styles.bigCard, { backgroundColor: t.vitality }]}>
+            <Pressable style={[styles.bigCard, { backgroundColor: t.vitality }]} onPress={openVoice}>
               <Text style={[styles.cardKicker, { color: t.onVitality }]}>YOUR VITALITY SCORE</Text>
               <Text style={[styles.cardScore, { color: t.onVitality }]}>—</Text>
               <Text style={[styles.cardSub, { color: t.onVitality }]}>Take a voice check-in to see it</Text>
-            </View>
-            <View style={[styles.bigCard, { backgroundColor: '#bf5af2' }]}>
+            </Pressable>
+            <Pressable style={[styles.bigCard, { backgroundColor: '#bf5af2' }]} onPress={openVoice}>
               <Text style={styles.cardKickerLight}>VOICE CHECK-IN</Text>
               <Text style={styles.cardTitleLight}>Record your weekly sample</Text>
               <Text style={styles.cardSubLight}>~2 min · 3 short recordings</Text>
-            </View>
+            </Pressable>
           </ScrollView>
 
           <SectionHeader title="From Your Provider" />
