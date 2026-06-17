@@ -84,7 +84,7 @@ public class VoiceRecorderModule: Module {
       "durationMs": durationMs,
       "sampleRate": sampleRate,
       "channels": channels,
-      "bytes": bytes ?? 0,
+      "bytes": bytes,
     ]
   }
 }

@@ -76,10 +76,10 @@ export default function Home() {
               <Text style={[styles.cardScore, { color: t.onVitality }]}>—</Text>
               <Text style={[styles.cardSub, { color: t.onVitality }]}>Take a voice check-in to see it</Text>
             </Pressable>
-            <Pressable style={[styles.bigCard, { backgroundColor: '#bf5af2' }]} onPress={openVoice}>
-              <Text style={styles.cardKickerLight}>VOICE CHECK-IN</Text>
-              <Text style={styles.cardTitleLight}>Record your weekly sample</Text>
-              <Text style={styles.cardSubLight}>~2 min · 3 short recordings</Text>
+            <Pressable style={[styles.bigCard, { backgroundColor: t.voice }]} onPress={openVoice}>
+              <Text style={[styles.cardKickerLight, { color: t.onVoice }]}>VOICE CHECK-IN</Text>
+              <Text style={[styles.cardTitleLight, { color: t.onVoice }]}>Record your weekly sample</Text>
+              <Text style={[styles.cardSubLight, { color: t.onVoice }]}>~2 min · 3 short recordings</Text>
             </Pressable>
           </ScrollView>
 
@@ -133,9 +133,9 @@ const styles = StyleSheet.create({
   cardKicker: { fontSize: 12, fontWeight: '700', opacity: 0.85 },
   cardScore: { fontSize: 40, fontWeight: '800', marginTop: 4 },
   cardSub: { fontSize: 12, fontWeight: '600', opacity: 0.9 },
-  cardKickerLight: { fontSize: 12, fontWeight: '700', color: '#fff', opacity: 0.9 },
-  cardTitleLight: { fontSize: 19, fontWeight: '700', color: '#fff', marginTop: 8, lineHeight: 23 },
-  cardSubLight: { fontSize: 12, color: '#fff', opacity: 0.9, marginTop: 8 },
+  cardKickerLight: { fontSize: 12, fontWeight: '700', opacity: 0.9 },
+  cardTitleLight: { fontSize: 19, fontWeight: '700', marginTop: 8, lineHeight: 23 },
+  cardSubLight: { fontSize: 12, opacity: 0.9, marginTop: 8 },
   loading: { paddingVertical: 30, alignItems: 'center' },
   empty: { fontSize: 15, paddingHorizontal: 20, paddingVertical: 16, lineHeight: 21 },
   tileRow: { paddingHorizontal: 20, gap: 14 },

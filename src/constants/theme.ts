@@ -72,6 +72,8 @@ export const Colors = {
     primarySoft: palette.pinkSoft,
     vitality: palette.green,
     onVitality: palette.onGreen,
+    voice: palette.purple, // voice check-in accent
+    onVoice: palette.white,
     link: palette.blue,
     linkSoft: palette.blueSoft,
     live: palette.pink,
@@ -100,6 +102,8 @@ export const Colors = {
     primarySoft: palette.pinkSoft,
     vitality: palette.green,
     onVitality: palette.onGreen,
+    voice: palette.purple,
+    onVoice: palette.white,
     link: palette.blue,
     linkSoft: palette.blueSoft,
     live: palette.pink,

@@ -37,6 +37,12 @@ export function VoiceRecordingView() {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const ticker = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Refs decouple the interval from the render that created it: the timer must
+  // see the *current* recording state + the latest onStop (not a stale closure),
+  // otherwise auto-stop at target duration silently no-ops.
+  const isRecordingRef = useRef(false);
+  const elapsedRef = useRef(0);
+  const onStopRef = useRef<() => void>(() => {});
 
   // Clear the timer if the view unmounts mid-recording.
   useEffect(() => () => {
@@ -60,15 +66,15 @@ export function VoiceRecordingView() {
         return;
       }
       await startRecording(recordingType);
+      isRecordingRef.current = true;
+      elapsedRef.current = 0;
       setIsRecording(true);
       setBusy(false);
       setElapsedMs(0);
       ticker.current = setInterval(() => {
-        setElapsedMs((prev) => {
-          const next = prev + TICK_MS;
-          if (next >= cfg.targetMs) void onStop(); // auto-stop at target
-          return next;
-        });
+        elapsedRef.current += TICK_MS;
+        setElapsedMs(elapsedRef.current);
+        if (elapsedRef.current >= cfg.targetMs) onStopRef.current(); // auto-stop
       }, TICK_MS);
     } catch (e) {
       fail(`Could not start recording: ${String(e)}`);
@@ -77,7 +83,8 @@ export function VoiceRecordingView() {
 
   async function onStop() {
     stopTicker();
-    if (!isRecording) return;
+    if (!isRecordingRef.current) return;
+    isRecordingRef.current = false;
     setIsRecording(false);
     setBusy(true);
     try {
@@ -109,10 +116,17 @@ export function VoiceRecordingView() {
 
   function fail(message: string) {
     stopTicker();
+    isRecordingRef.current = false;
     setIsRecording(false);
     setBusy(false);
     setError(message);
   }
+
+  // Keep the interval's stop callback pointed at the current closure (updating a
+  // ref must happen in an effect, not during render).
+  useEffect(() => {
+    onStopRef.current = onStop;
+  });
 
   const remainingMs = Math.max(0, cfg.targetMs - elapsedMs);
   const secondsLeft = Math.ceil(remainingMs / 1000);

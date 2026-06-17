@@ -96,7 +96,7 @@ export function VoiceReviewView() {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   body: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24 },
-  title: { ...Type.sectionTitle, color: '#fff' },
+  title: { ...Type.sectionTitle },
   sub: { ...Type.subhead, marginTop: 4, marginBottom: 16 },
   error: { borderRadius: Radius.lg, padding: 12, marginBottom: 16 },
   errorText: { ...Type.callout },
