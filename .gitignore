@@ -47,3 +47,8 @@ example
 
 # Local Claude Code permission overrides (machine-specific)
 .claude/settings.local.json
+
+# Local Expo module build artifacts
+modules/*/android/build/
+modules/*/android/.cxx/
+modules/*/ios/build/

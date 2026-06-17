@@ -9,7 +9,10 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.thriveradio.app"
+      "bundleIdentifier": "com.thriveradio.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "THRIVE uses your microphone to record voice samples for your provider."
+      }
     },
     "android": {
       "package": "com.thriveradio.app",
