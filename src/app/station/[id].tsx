@@ -12,11 +12,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useGrantedContent } from '@/api/content';
-import { getActiveStationId, playStation, radioPlayer, stopPlayback } from '@/audio/player';
+import { playStation, radioPlayer, togglePlayPause } from '@/audio/player';
 import { ArtTile } from '@/components/ui/art-tile';
 import { SectionHeader } from '@/components/ui/section-header';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { usePlayerStore } from '@/stores/player-store';
 
 export default function StationDetail() {
   const t = useTheme();
@@ -24,16 +25,17 @@ export default function StationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, isLoading } = useGrantedContent();
   const status = useAudioPlayerStatus(radioPlayer);
+  const activeStation = usePlayerStore((s) => s.activeStation);
 
   const asset = data?.find((a) => a.id === id);
-  const isThis = getActiveStationId() === id;
+  const isThis = activeStation?.id === id;
   const playing = isThis && status.playing;
   const buffering = isThis && status.isBuffering && !status.playing;
 
   function togglePlay() {
     if (!asset?.stream_url) return;
-    if (playing) {
-      stopPlayback();
+    if (isThis) {
+      togglePlayPause();
     } else {
       void playStation({
         id: asset.id,

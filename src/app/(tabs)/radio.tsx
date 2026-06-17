@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayerStatus } from 'expo-audio';
-import { useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -12,36 +11,29 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useGrantedStations, type ContentAsset } from '@/api/content';
-import { playStation, radioPlayer, stopPlayback } from '@/audio/player';
-import { Radius } from '@/constants/theme';
+import { playStation, radioPlayer, togglePlayPause } from '@/audio/player';
+import { BottomTabInset, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { usePlayerStore } from '@/stores/player-store';
 
 export default function Radio() {
   const t = useTheme();
   const { data, isLoading, error, refetch, isRefetching } = useGrantedStations();
   const status = useAudioPlayerStatus(radioPlayer);
-  const [playingId, setPlayingId] = useState<string | null>(null);
-  const [pending, setPending] = useState<string | null>(null);
+  const activeStation = usePlayerStore((s) => s.activeStation);
 
-  async function toggle(asset: ContentAsset) {
+  function toggle(asset: ContentAsset) {
     if (!asset.stream_url) return;
-    if (playingId === asset.id) {
-      stopPlayback();
-      setPlayingId(null);
-      return;
-    }
-    setPending(asset.id);
-    try {
-      await playStation({
+    if (activeStation?.id === asset.id) {
+      togglePlayPause();
+    } else {
+      void playStation({
         id: asset.id,
         code: asset.code,
         name: asset.name,
         stream_url: asset.stream_url,
         description: asset.description,
       });
-      setPlayingId(asset.id);
-    } finally {
-      setPending(null);
     }
   }
 
@@ -78,46 +70,36 @@ export default function Radio() {
             keyExtractor={(a) => a.id}
             onRefresh={refetch}
             refreshing={isRefetching}
-            contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+            contentContainerStyle={{ paddingTop: 12, paddingBottom: BottomTabInset + 90 }}
             ItemSeparatorComponent={() => (
               <View style={[styles.sep, { backgroundColor: t.hairline }]} />
             )}
             renderItem={({ item }) => {
-              const isActive = playingId === item.id;
-              const isPending = pending === item.id;
+              const isActive = activeStation?.id === item.id;
               const buffering = isActive && status.isBuffering && !status.playing;
               return (
-                <>
-                  <Pressable style={styles.row} onPress={() => toggle(item)} disabled={isPending}>
-                    <View style={[styles.art, { backgroundColor: t.surfaceElevated }]}>
-                      <Ionicons name="radio" size={26} color={t.textSecondary} />
-                    </View>
-                    <View style={styles.meta}>
-                      <Text style={[styles.name, { color: t.text }]} numberOfLines={1}>
-                        {item.name}
-                      </Text>
-                      <Text style={[styles.live, { color: t.live }]} numberOfLines={1}>
-                        ● LIVE{item.description ? `  ·  ${item.description}` : ''}
-                      </Text>
-                    </View>
-                    {isPending || buffering ? (
-                      <ActivityIndicator color={t.primary} />
-                    ) : (
-                      <Ionicons
-                        name={isActive && status.playing ? 'pause-circle' : 'play-circle'}
-                        size={34}
-                        color={t.primary}
-                      />
-                    )}
-                  </Pressable>
-                  {__DEV__ && isActive ? (
-                    <Text style={[styles.debug, { color: t.textTertiary }]}>
-                      {`playing=${status.playing} buffering=${status.isBuffering} live=${status.isLive}`}
-                      {`\noffsetFromLive=${status.currentOffsetFromLive ?? '—'} t=${status.currentTime.toFixed(1)}s`}
-                      {status.error ? `\nerror=${status.error}` : ''}
+                <Pressable style={styles.row} onPress={() => toggle(item)}>
+                  <View style={[styles.art, { backgroundColor: t.surfaceElevated }]}>
+                    <Ionicons name="radio" size={26} color={t.textSecondary} />
+                  </View>
+                  <View style={styles.meta}>
+                    <Text style={[styles.name, { color: t.text }]} numberOfLines={1}>
+                      {item.name}
                     </Text>
-                  ) : null}
-                </>
+                    <Text style={[styles.live, { color: t.live }]} numberOfLines={1}>
+                      ● LIVE{item.description ? `  ·  ${item.description}` : ''}
+                    </Text>
+                  </View>
+                  {buffering ? (
+                    <ActivityIndicator color={t.primary} />
+                  ) : (
+                    <Ionicons
+                      name={isActive && status.playing ? 'pause-circle' : 'play-circle'}
+                      size={34}
+                      color={t.primary}
+                    />
+                  )}
+                </Pressable>
               );
             }}
           />
