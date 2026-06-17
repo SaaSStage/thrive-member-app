@@ -1,10 +1,41 @@
 import { useRouter, type Href } from 'expo-router';
+import { useAudioPlayerStatus } from 'expo-audio';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { playStation, radioPlayer, stopPlayback } from '@/audio/player';
 import { Button } from '@/components/ui/button';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+
+// TEMP (__DEV__ only): the AUDIO-PLAYBACK.md Day-1 gate — confirm expo-audio
+// plays the seeded HLS station before/without the full auth path. Remove once
+// playback is verified and wired through the real Radio screen.
+const HLS_TEST = {
+  id: 'hls_test',
+  code: 'hls_test',
+  name: 'THRIVE Radio (HLS)',
+  stream_url: 'https://azuracast-radio-u62352.vm.elestio.app/hls/hls_test/live.m3u8',
+};
+
+function DevAudioTest() {
+  const t = useTheme();
+  const status = useAudioPlayerStatus(radioPlayer);
+  return (
+    <View style={{ gap: 8, marginTop: 20 }}>
+      <Button
+        label={status.playing ? 'DEV: Stop' : 'DEV: Play hls_test'}
+        variant="ghost"
+        onPress={() => (status.playing ? stopPlayback() : playStation(HLS_TEST))}
+      />
+      <Text style={{ color: t.textTertiary, fontSize: 11, textAlign: 'center', lineHeight: 16 }}>
+        {`playing=${status.playing}  buffering=${status.isBuffering}  live=${status.isLive}`}
+        {`\noffsetFromLive=${status.currentOffsetFromLive ?? '—'}  t=${status.currentTime.toFixed(1)}s`}
+        {`\nerror=${status.error ?? 'none'}`}
+      </Text>
+    </View>
+  );
+}
 
 export default function Welcome() {
   const t = useTheme();
@@ -29,6 +60,7 @@ export default function Welcome() {
           <Text style={[styles.fine, { color: t.textTertiary }]}>
             Access is provided by your care provider.
           </Text>
+          {__DEV__ ? <DevAudioTest /> : null}
         </View>
       </SafeAreaView>
     </View>
