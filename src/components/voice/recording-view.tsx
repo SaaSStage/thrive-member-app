@@ -5,12 +5,13 @@
  * store (which advances the flow). Re-implemented from the v3 Flutter
  * `voice_recording_view.dart`.
  */
+import { useRouter } from 'expo-router';
 import { File } from 'expo-file-system';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ensureRecordingPermission, startRecording, stopRecording } from '@/audio/recorder';
+import { cancelRecording, ensureRecordingPermission, startRecording, stopRecording } from '@/audio/recorder';
 import { Button } from '@/components/ui/button';
 import { Radius, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -22,6 +23,7 @@ const TICK_MS = 100;
 
 export function VoiceRecordingView() {
   const t = useTheme();
+  const router = useRouter();
   const currentIndex = useVoiceStore((s) => s.currentIndex);
   const passage = useVoiceStore((s) => s.passage);
   const captureRecording = useVoiceStore((s) => s.captureRecording);
@@ -44,9 +46,13 @@ export function VoiceRecordingView() {
   const elapsedRef = useRef(0);
   const onStopRef = useRef<() => void>(() => {});
 
-  // Clear the timer if the view unmounts mid-recording.
+  // Safety net: if the view leaves mid-recording by ANY path (Cancel, hardware
+  // back, swipe-to-dismiss), stop the native recorder and discard the partial
+  // file — otherwise the mic keeps running. (On normal advance, onStop already
+  // cleared isRecordingRef, so this won't cancel a completed recording.)
   useEffect(() => () => {
     if (ticker.current) clearInterval(ticker.current);
+    if (isRecordingRef.current) void cancelRecording();
   }, []);
 
   function stopTicker() {
@@ -122,6 +128,22 @@ export function VoiceRecordingView() {
     setError(message);
   }
 
+  // Abort the whole submission: stop + discard any in-progress recording and
+  // close the modal. (Captured clips from earlier steps are dropped; the flow
+  // resets the next time it's opened.)
+  async function onCancel() {
+    stopTicker();
+    if (isRecordingRef.current) {
+      isRecordingRef.current = false;
+      try {
+        await cancelRecording();
+      } catch {
+        /* best-effort */
+      }
+    }
+    router.back();
+  }
+
   // Keep the interval's stop callback pointed at the current closure (updating a
   // ref must happen in an effect, not during render).
   useEffect(() => {
@@ -176,6 +198,7 @@ export function VoiceRecordingView() {
           {cfg.hasAudioExample && !isRecording ? (
             <Button label="Hear example (coming soon)" variant="ghost" onPress={() => {}} disabled />
           ) : null}
+          <Button label={isRecording ? 'Cancel recording' : 'Cancel'} variant="ghost" onPress={() => void onCancel()} />
         </View>
       </SafeAreaView>
     </View>

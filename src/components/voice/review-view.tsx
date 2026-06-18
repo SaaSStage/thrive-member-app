@@ -5,6 +5,7 @@
  * Flutter `voice_review_view.dart`.
  */
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +19,7 @@ import { configFor, RECORDING_ORDER } from '@/voice/recording-type';
 
 export function VoiceReviewView() {
   const t = useTheme();
+  const router = useRouter();
   const captured = useVoiceStore((s) => s.captured);
   const uploadError = useVoiceStore((s) => s.uploadError);
   const reRecord = useVoiceStore((s) => s.reRecord);
@@ -87,6 +89,7 @@ export function VoiceReviewView() {
 
         <View style={styles.footer}>
           <Button label="Submit all three" variant="primary" disabled={!allPass} onPress={() => void submit()} />
+          <Button label="Cancel and start over" variant="ghost" onPress={() => router.back()} />
         </View>
       </SafeAreaView>
     </View>
@@ -114,5 +117,5 @@ const styles = StyleSheet.create({
   rowMeta: { ...Type.subhead, marginTop: 2 },
   iconBtn: { paddingHorizontal: 6, paddingVertical: 4 },
   icon: { fontSize: 20 },
-  footer: { paddingHorizontal: 20, paddingBottom: 12 },
+  footer: { paddingHorizontal: 20, paddingBottom: 12, gap: 10 },
 });
