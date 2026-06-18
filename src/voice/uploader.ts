@@ -13,6 +13,7 @@
  * Re-implemented from the v3 Flutter `VoiceUploaderService`.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
+import * as Crypto from 'expo-crypto';
 import * as Device from 'expo-device';
 import { File } from 'expo-file-system';
 
@@ -40,7 +41,7 @@ export async function submitRecordings(
 
   const clientId = await resolveClientId(supabase);
   const practiceId = await resolvePracticeId(supabase);
-  const submissionId = uuidV4();
+  const submissionId = Crypto.randomUUID();
 
   // 1. Service-role signed upload URLs (sidesteps the Clerk owner_id problem).
   const signed = await fetchSignedUploadUrls(
@@ -225,14 +226,4 @@ async function triggerAnalyzeVoice(supabase: SupabaseClient, submissionId: strin
 
 function delay(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
-}
-
-function uuidV4(): string {
-  const b = new Uint8Array(16);
-  for (let i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256);
-  b[6] = (b[6] & 0x0f) | 0x40;
-  b[8] = (b[8] & 0x3f) | 0x80;
-  const h = (x: number) => x.toString(16).padStart(2, '0');
-  const s = Array.from(b, h).join('');
-  return `${s.slice(0, 8)}-${s.slice(8, 12)}-${s.slice(12, 16)}-${s.slice(16, 20)}-${s.slice(20)}`;
 }

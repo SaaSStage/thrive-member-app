@@ -12,7 +12,7 @@
  * Samsung/Xiaomi audio HAL variance). Keep them centralized so a pass is a
  * one-object change.
  */
-import type { VoiceRecordingType } from './recording-type';
+import { configFor, type VoiceRecordingType } from './recording-type';
 
 export type VoiceCheckId =
   | 'readable'
@@ -71,17 +71,6 @@ function maxSilenceRatioFor(type: VoiceRecordingType): number {
       return 0.7; // lots of natural pauses + trailing quiet
     case 'diadochokinetic':
       return 0.65; // gaps between syllable bursts
-  }
-}
-
-function minValidSeconds(type: VoiceRecordingType): number {
-  switch (type) {
-    case 'sustained_vowel':
-      return 20;
-    case 'reading_passage':
-      return 15;
-    case 'diadochokinetic':
-      return 6;
   }
 }
 
@@ -224,7 +213,7 @@ export function validateWav(
   const clipRatio = clippedCount / total;
   const overallRms = Math.sqrt(sumSquares / total);
   const noiseRms = Number.isFinite(minWindowMeanSquare) ? Math.sqrt(minWindowMeanSquare) : 0;
-  const minSeconds = minValidSeconds(type);
+  const minSeconds = configFor(type).minValidMs / 1000;
 
   return buildResult([
     {
