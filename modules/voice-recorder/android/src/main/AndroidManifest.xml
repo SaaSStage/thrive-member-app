@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- The recorder needs microphone access; declared here so the module is
+       self-contained (expo-audio's recordAudioAndroid:false omits it). -->
+  <uses-permission android:name="android.permission.RECORD_AUDIO" />
+</manifest>

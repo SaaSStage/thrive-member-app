@@ -54,6 +54,12 @@ function RootNavigator() {
       <Stack.Screen name="index" />
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="player" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="voice" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="score" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="profile-setup" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="account" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

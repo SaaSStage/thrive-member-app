@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useAudioPlayerStatus } from 'expo-audio';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Pressable,
   StyleSheet,
@@ -11,22 +11,30 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useGrantedStations, type ContentAsset } from '@/api/content';
-import { Radius } from '@/constants/theme';
+import { playStation, radioPlayer, togglePlayPause } from '@/audio/player';
+import { BottomTabInset, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { usePlayerStore } from '@/stores/player-store';
 
 export default function Radio() {
   const t = useTheme();
   const { data, isLoading, error, refetch, isRefetching } = useGrantedStations();
+  const status = useAudioPlayerStatus(radioPlayer);
+  const activeStation = usePlayerStore((s) => s.activeStation);
 
-  function onPlay(asset: ContentAsset) {
+  function toggle(asset: ContentAsset) {
     if (!asset.stream_url) return;
-    // TODO(playback): re-enable src/audio/player once the player library is
-    // upgraded/replaced. RNTP 4.1.2 is incompatible with RN 0.85's New-Arch
-    // TurboModule interop. The data path below (granted stations) is verified.
-    Alert.alert(
-      'Playback coming next',
-      'Your sign-in and authorized station list work. Audio playback is being upgraded for React Native 0.85.',
-    );
+    if (activeStation?.id === asset.id) {
+      togglePlayPause();
+    } else {
+      void playStation({
+        id: asset.id,
+        code: asset.code,
+        name: asset.name,
+        stream_url: asset.stream_url,
+        description: asset.description,
+      });
+    }
   }
 
   return (
@@ -62,26 +70,38 @@ export default function Radio() {
             keyExtractor={(a) => a.id}
             onRefresh={refetch}
             refreshing={isRefetching}
-            contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+            contentContainerStyle={{ paddingTop: 12, paddingBottom: BottomTabInset + 90 }}
             ItemSeparatorComponent={() => (
               <View style={[styles.sep, { backgroundColor: t.hairline }]} />
             )}
-            renderItem={({ item }) => (
-              <Pressable style={styles.row} onPress={() => onPlay(item)}>
-                <View style={[styles.art, { backgroundColor: t.surfaceElevated }]}>
-                  <Ionicons name="radio" size={26} color={t.textSecondary} />
-                </View>
-                <View style={styles.meta}>
-                  <Text style={[styles.name, { color: t.text }]} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <Text style={[styles.live, { color: t.live }]} numberOfLines={1}>
-                    ● LIVE{item.description ? `  ·  ${item.description}` : ''}
-                  </Text>
-                </View>
-                <Ionicons name="play-circle" size={34} color={t.primary} />
-              </Pressable>
-            )}
+            renderItem={({ item }) => {
+              const isActive = activeStation?.id === item.id;
+              const buffering = isActive && status.isBuffering && !status.playing;
+              return (
+                <Pressable style={styles.row} onPress={() => toggle(item)}>
+                  <View style={[styles.art, { backgroundColor: t.surfaceElevated }]}>
+                    <Ionicons name="radio" size={26} color={t.textSecondary} />
+                  </View>
+                  <View style={styles.meta}>
+                    <Text style={[styles.name, { color: t.text }]} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    <Text style={[styles.live, { color: t.live }]} numberOfLines={1}>
+                      ● LIVE{item.description ? `  ·  ${item.description}` : ''}
+                    </Text>
+                  </View>
+                  {buffering ? (
+                    <ActivityIndicator color={t.primary} />
+                  ) : (
+                    <Ionicons
+                      name={isActive && status.playing ? 'pause-circle' : 'play-circle'}
+                      size={34}
+                      color={t.primary}
+                    />
+                  )}
+                </Pressable>
+              );
+            }}
           />
         )}
       </SafeAreaView>
@@ -101,5 +121,6 @@ const styles = StyleSheet.create({
   meta: { flex: 1, minWidth: 0 },
   name: { fontSize: 16, fontWeight: '600' },
   live: { fontSize: 13, marginTop: 2 },
+  debug: { fontSize: 11, paddingHorizontal: 20, paddingBottom: 8, lineHeight: 15 },
   sep: { height: StyleSheet.hairlineWidth, marginLeft: 86 },
 });
