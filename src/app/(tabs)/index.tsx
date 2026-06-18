@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useGrantedContent, type ContentAsset } from '@/api/content';
 import { isProfileComplete, useVoiceProfile } from '@/api/profile';
+import { useLatestScore } from '@/api/score';
 import { ArtTile } from '@/components/ui/art-tile';
 import { SectionHeader } from '@/components/ui/section-header';
 import { ProfileBanner } from '@/components/voice/profile-banner';
@@ -35,6 +36,8 @@ export default function Home() {
   const router = useRouter();
   const { data, isLoading } = useGrantedContent();
   const { data: profile } = useVoiceProfile();
+  const { data: score } = useLatestScore();
+  const vitalityValue = score?.state === 'ready' ? String(score.vitalityScore) : '—';
 
   function open(asset: ContentAsset) {
     if (asset.asset_type === 'radio_station') {
@@ -66,15 +69,19 @@ export default function Home() {
 
           <ProfileBanner />
 
-          {/* Vitality + Voice entry cards — both launch the voice flow (gated). */}
+          {/* Vitality card → score breakdown; Voice card → the check-in flow (gated). */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.cardRow}>
-            <Pressable style={[styles.bigCard, { backgroundColor: t.vitality }]} onPress={openVoice}>
+            <Pressable
+              style={[styles.bigCard, { backgroundColor: t.vitality }]}
+              onPress={() => router.push('/score' as Href)}>
               <Text style={[styles.cardKicker, { color: t.onVitality }]}>YOUR VITALITY SCORE</Text>
-              <Text style={[styles.cardScore, { color: t.onVitality }]}>—</Text>
-              <Text style={[styles.cardSub, { color: t.onVitality }]}>Take a voice check-in to see it</Text>
+              <Text style={[styles.cardScore, { color: t.onVitality }]}>{vitalityValue}</Text>
+              <Text style={[styles.cardSub, { color: t.onVitality }]}>
+                {vitalityValue === '—' ? 'Take a voice check-in to see it' : 'Tap to see your breakdown'}
+              </Text>
             </Pressable>
             <Pressable style={[styles.bigCard, { backgroundColor: t.voice }]} onPress={openVoice}>
               <Text style={[styles.cardKickerLight, { color: t.onVoice }]}>VOICE CHECK-IN</Text>
