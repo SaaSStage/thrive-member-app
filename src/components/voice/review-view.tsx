@@ -26,7 +26,10 @@ export function VoiceReviewView() {
   const submit = useVoiceSubmission();
 
   const recordings = orderedRecordings(captured);
-  const allPass = recordings.length === RECORDING_ORDER.length && recordings.every((r) => r.validation.passed);
+  // Submit once all three slots are captured. A slot exists only if it passed OR
+  // was forced through after repeated failures, so length === 3 is sufficient; a
+  // forced (validation.passed === false) take still keeps its '!' badge below.
+  const allCaptured = recordings.length === RECORDING_ORDER.length;
 
   // One transient preview player; we swap its source per row.
   const player = useAudioPlayer();
@@ -88,7 +91,7 @@ export function VoiceReviewView() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <Button label="Submit all three" variant="primary" disabled={!allPass} onPress={() => void submit()} />
+          <Button label="Submit all three" variant="primary" disabled={!allCaptured} onPress={() => void submit()} />
           <Button label="Cancel and start over" variant="ghost" onPress={() => router.back()} />
         </View>
       </SafeAreaView>

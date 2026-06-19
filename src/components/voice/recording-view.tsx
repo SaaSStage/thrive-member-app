@@ -19,9 +19,14 @@ import { Gradients, Radius, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useVoiceStore } from '@/stores/voice-store';
 import { configFor, RECORDING_ORDER } from '@/voice/recording-type';
-import { validateWav } from '@/voice/validator';
+import { validateWav, type VoiceValidationResult } from '@/voice/validator';
 
 const TICK_MS = 100;
+/** After this many failed takes for a type, offer a force-through escape hatch. */
+const FORCE_THROUGH_AFTER = 3;
+
+/** A failed take held so the user can force it through instead of re-recording. */
+type ForcedTake = { uri: string; durationMs: number; validation: VoiceValidationResult };
 
 export function VoiceRecordingView() {
   const t = useTheme();
@@ -29,6 +34,7 @@ export function VoiceRecordingView() {
   const currentIndex = useVoiceStore((s) => s.currentIndex);
   const passage = useVoiceStore((s) => s.passage);
   const captureRecording = useVoiceStore((s) => s.captureRecording);
+  const registerFailure = useVoiceStore((s) => s.registerFailure);
 
   const recordingType = RECORDING_ORDER[currentIndex];
   const cfg = configFor(recordingType);
@@ -40,6 +46,9 @@ export function VoiceRecordingView() {
   const [busy, setBusy] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  // After 3 fails for this type we keep the failing file + validation so the user
+  // can force it through instead of being stuck re-recording forever.
+  const [forcedTake, setForcedTake] = useState<ForcedTake | null>(null);
   const ticker = useRef<ReturnType<typeof setInterval> | null>(null);
   // Refs decouple the interval from the render that created it: the timer must
   // see the *current* recording state + the latest onStop (not a stale closure),
@@ -67,6 +76,7 @@ export function VoiceRecordingView() {
   async function onStart() {
     setBusy(true);
     setError(null);
+    setForcedTake(null); // re-recording supersedes any held failing take
     try {
       const granted = await ensureRecordingPermission();
       if (!granted) {
@@ -100,12 +110,22 @@ export function VoiceRecordingView() {
       const bytes = await new File(rec.uri).arrayBuffer();
       const validation = validateWav(bytes, recordingType);
       if (!validation.passed) {
+        const failCount = registerFailure(recordingType);
+        const message =
+          validation.firstFailureMessage ??
+          'That recording didn’t pass our quality check. Please try again.';
+        if (failCount >= FORCE_THROUGH_AFTER) {
+          // Stop discarding: keep the file so the user can force it through.
+          setForcedTake({ uri: rec.uri, durationMs: rec.durationMs, validation });
+          fail(message);
+          return;
+        }
         try {
           new File(rec.uri).delete();
         } catch {
           /* best-effort */
         }
-        fail(validation.firstFailureMessage ?? 'That recording didn’t pass our quality check. Please try again.');
+        fail(message);
         return;
       }
       captureRecording({
@@ -120,6 +140,20 @@ export function VoiceRecordingView() {
     } catch (e) {
       fail(`Could not finish recording: ${String(e)}`);
     }
+  }
+
+  // Force-through: submit the held failing take (validation.passed === false) and
+  // advance the flow. The file is NOT deleted, so it survives to upload.
+  function forceThrough() {
+    if (!forcedTake) return;
+    captureRecording({
+      type: recordingType,
+      uri: forcedTake.uri,
+      durationMs: forcedTake.durationMs,
+      validation: forcedTake.validation,
+      passageCode: isReading ? passage.code : undefined,
+      languageUsed: isReading ? passage.language : undefined,
+    });
   }
 
   function fail(message: string) {
@@ -139,6 +173,16 @@ export function VoiceRecordingView() {
       isRecordingRef.current = false;
       try {
         await cancelRecording();
+      } catch {
+        /* best-effort */
+      }
+    }
+    // A held forced take has already stopped recording, so the branch above won't
+    // reach it — delete its file here so abandoning doesn't leak the WAV. (On the
+    // "Use this recording anyway" path the file is kept and uploaded, not here.)
+    if (forcedTake) {
+      try {
+        new File(forcedTake.uri).delete();
       } catch {
         /* best-effort */
       }
@@ -210,6 +254,9 @@ export function VoiceRecordingView() {
             loading={busy}
             onPress={isRecording ? onStop : onStart}
           />
+          {forcedTake && !isRecording ? (
+            <Button label="Use this recording anyway" variant="ghost" onPress={forceThrough} />
+          ) : null}
           {cfg.hasAudioExample && !isRecording ? (
             <Button label="Hear example (coming soon)" variant="ghost" onPress={() => {}} disabled />
           ) : null}
