@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Thrive — full app concept (mandala)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0814;--ink:#f5f2ee;--ink2:#a8a6c0;--ink3:#6e6b8a;
+    --glass:rgba(255,255,255,.055);--glass2:rgba(255,255,255,.10);--hair:rgba(255,255,255,.11);
+    --teal:#5eead4;--violet:#a78bfa;--gold:#f3cd8b;--rose:#f0a6d8;
+    --spectral:conic-gradient(from 210deg,#5eead4,#818cf8,#a78bfa,#f0a6d8,#f3cd8b,#5eead4);
+    --disp:"Sora",system-ui,sans-serif;--sans:"Inter",system-ui,sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+  body{background:#0a0712;font-family:var(--sans);color:var(--ink);padding:40px}
+  h1{font-family:var(--disp);font-size:23px;font-weight:600;margin-bottom:6px}
+  .sub{color:#b9b6d0;font-size:14px;max-width:880px;line-height:1.5;margin-bottom:28px}
+  .grid{display:flex;flex-wrap:wrap;gap:42px;align-items:flex-start}
+  .cell{display:flex;flex-direction:column;gap:10px}
+  .cap{color:#d6d3e8;font-size:13px;font-weight:600;text-align:center}
+
+  .screen{width:384px;height:832px;border-radius:46px;position:relative;overflow:hidden;background:var(--bg);
+    box-shadow:0 0 0 11px #181426,0 0 0 13px #2a2440,0 26px 70px rgba(0,0,0,.6)}
+  .aura{position:absolute;inset:0;z-index:0;background:
+    radial-gradient(55% 32% at 16% 5%,rgba(94,234,212,.16),transparent 70%),
+    radial-gradient(58% 34% at 90% 12%,rgba(167,139,250,.22),transparent 70%),
+    radial-gradient(75% 42% at 50% 100%,rgba(243,205,139,.14),transparent 72%),
+    linear-gradient(180deg,#0d0a1b,#0b0814 55%,#070510)}
+  .notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:118px;height:30px;background:#000;border-radius:16px;z-index:60}
+  .sbar{position:absolute;top:0;left:0;right:0;height:50px;z-index:55;display:flex;align-items:center;justify-content:space-between;padding:16px 28px 0;font-size:13px;font-weight:600}
+  .body{position:absolute;top:50px;left:0;right:0;bottom:0;z-index:2;overflow:hidden}
+  .pad{padding:0 20px}.muted{color:var(--ink2)}.muted3{color:var(--ink3)}
+  .center{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .between{display:flex;align-items:center;justify-content:space-between}
+  .disp{font-family:var(--disp)}
+  .score{font-family:var(--disp);font-weight:700;letter-spacing:-1px;line-height:.95}
+
+  .glass{background:var(--glass);border:1px solid var(--hair);border-radius:22px;position:relative;overflow:hidden;backdrop-filter:blur(14px)}
+  .wm{position:absolute;pointer-events:none}
+  .breathe{animation:breathe 7s ease-in-out infinite}
+  .spin{animation:spin 110s linear infinite}
+  .spinr{animation:spin 110s linear infinite reverse}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes breathe{0%,100%{transform:scale(.94);opacity:.7}50%{transform:scale(1.06);opacity:1}}
+
+  .btn{display:flex;align-items:center;justify-content:center;border-radius:18px;font-family:var(--disp);font-weight:600;font-size:16px;height:54px;
+    background:linear-gradient(120deg,#5eead4,#818cf8 55%,#a78bfa);color:#0a0814}
+  .yoy{font-family:var(--disp);font-weight:800;font-size:98px;line-height:.9;
+    background:linear-gradient(160deg,#c4b5fd,#8b5cf6 55%,#5b21b6);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 16px rgba(167,139,250,.55))}
+  .logoO{width:124px;height:124px;object-fit:contain;margin:0 -6px;
+    filter:drop-shadow(0 0 22px rgba(167,139,250,.5)) brightness(1.12) saturate(1.08)}
+  .logoO2{width:152px;height:152px;object-fit:contain;margin:0 -12px;
+    filter:drop-shadow(0 0 20px rgba(167,139,250,.45))}
+  .chip{display:inline-block;background:var(--glass2);border:1px solid var(--hair);font-size:12px;padding:7px 13px;border-radius:999px}
+  .live{display:inline-flex;align-items:center;gap:5px;color:var(--teal);font-size:11px;font-weight:700}
+  .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal)}
+  .field{background:var(--glass);border:1px solid var(--hair);border-radius:14px;height:44px;display:flex;align-items:center;padding:0 14px;color:var(--ink2);font-size:14px;gap:8px}
+  .sec{font-family:var(--disp);font-size:20px;font-weight:600;padding:22px 20px 12px}
+
+  .mini{position:absolute;left:10px;right:10px;bottom:82px;height:62px;z-index:40;background:rgba(20,16,34,.75);
+    border:1px solid var(--hair);backdrop-filter:blur(20px);border-radius:18px;display:flex;align-items:center;gap:11px;padding:7px 14px 7px 7px}
+  .mini .mt{flex:1;min-width:0}.mini .mt .a{font-family:var(--disp);font-size:13px;font-weight:600}.mini .mt .b{font-size:11px;color:var(--ink2)}
+  .tabbar{position:absolute;left:0;right:0;bottom:0;height:82px;z-index:50;background:rgba(13,10,27,.82);border-top:1px solid var(--hair);backdrop-filter:blur(20px);display:flex;padding:9px 0 20px}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--ink3);font-size:10px;font-weight:600}
+  .tab.on{color:var(--gold)}
+</style>
+</head>
+<body>
+<h1>Thrive — full app concept · sacred-geometry mandala</h1>
+<div class="sub">Dark canvas, dark glass cards, and all color radiating from the mandalas themselves. <b>Open in a browser</b> — focal score dials <b>breathe</b>; background mandalas behind cards <b>rotate slowly</b> (one motion per element, never both). Fatter score numerals. Type: Sora + Inter.</div>
+<div class="grid" id="grid"></div>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6d8"/><stop offset=".4" stop-color="#f3cd8b"/><stop offset=".75" stop-color="#c8961f"/><stop offset="1" stop-color="#8a5a0f"/></linearGradient>
+  <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd9a0"/><stop offset=".5" stop-color="#ff9f5a"/><stop offset="1" stop-color="#b5471a"/></linearGradient>
+  <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d6fff5"/><stop offset=".5" stop-color="#5eead4"/><stop offset="1" stop-color="#0e8f80"/></linearGradient>
+  <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#efe6ff"/><stop offset=".5" stop-color="#a78bfa"/><stop offset="1" stop-color="#5b3bb8"/></linearGradient>
+  <linearGradient id="rose" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe3f4"/><stop offset=".5" stop-color="#f0a6d8"/><stop offset="1" stop-color="#b13a86"/></linearGradient>
+  <linearGradient id="spec" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5eead4"/><stop offset=".4" stop-color="#a78bfa"/><stop offset="1" stop-color="#f3cd8b"/></linearGradient>
+  <linearGradient id="yg" x1="0" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#5e3897"/><stop offset=".5" stop-color="#331760"/><stop offset="1" stop-color="#1e0c3d"/></linearGradient>
+  <filter id="gA" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.2"/></filter>
+  <filter id="gB" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="5"/></filter>
+</defs></svg>
+
+<script>
+function ring(size,n,dF,rF,phase){const c=size/2,b=size/2,d=b*dF,r=b*rF;let s='';
+  for(let i=0;i<n;i++){const a=2*Math.PI*i/n+(phase||0);
+    s+=`<circle cx="${(c+d*Math.cos(a)).toFixed(2)}" cy="${(c+d*Math.sin(a)).toFixed(2)}" r="${r.toFixed(2)}"/>`;}return s;}
+function mandala(size,grad,op,glowOp){op=op==null?0.6:op;glowOp=glowOp==null?0.7:glowOp;
+  const c=size/2,b=size/2;
+  const geo=ring(size,24,0.46,0.46)+ring(size,12,0.30,0.30,Math.PI/12)+ring(size,12,0.62,0.20);
+  const fr=`<circle cx="${c}" cy="${c}" r="${(b*0.84).toFixed(1)}"/><circle cx="${c}" cy="${c}" r="${(b*0.97).toFixed(1)}"/>`;
+  const sw=(size*0.0030).toFixed(2);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none" style="overflow:visible">
+    <g stroke="url(#${grad})" stroke-width="${(sw*1.9).toFixed(2)}" filter="url(#gB)" opacity="${(glowOp*0.85).toFixed(2)}">${fr}${geo}</g>
+    <g stroke="url(#${grad})" stroke-width="${(sw*1.1).toFixed(2)}" filter="url(#gA)" opacity="${glowOp}">${fr}${geo}</g>
+    <g stroke="url(#${grad})" stroke-width="${sw}" opacity="${op}">${fr}${geo}</g>
+    <circle cx="${c}" cy="${c}" r="${(b*0.05).toFixed(1)}" fill="url(#${grad})" filter="url(#gA)"/></svg>`;}
+
+/* corner watermark behind a card (rotates) */
+function cardWM(grad,dir){return `<div class="wm ${dir||'spin'}" style="right:-50px;top:-50px;width:170px;height:170px">${mandala(170,grad,0.5,0.6)}</div>`;}
+
+/* Custom vector Y: arms flow straight into the stem (round joins, no squared junction). */
+function yLetter(h,n){const w=h*0.64,sw=h*0.155,jx=w*0.5,jy=h*0.52,top=h*0.05,over=h*0.17,lx=w*0.06,rx=w*0.94;
+  const tt=(top-over-jy)/(top-jy),slx=(jx+tt*(lx-jx)).toFixed(1),srx=(jx+tt*(rx-jx)).toFixed(1),sty=(top-over).toFixed(1),J=`${jx.toFixed(1)},${jy.toFixed(1)}`;
+  const d=`M${slx},${sty} L${J} L${jx.toFixed(1)},${h} M${srx},${sty} L${J}`;
+  return `<svg width="${w.toFixed(1)}" height="${h}" viewBox="0 0 ${w.toFixed(1)} ${h}" fill="none" style="overflow:visible">
+    <defs><clipPath id="yc${n}"><rect x="-30" y="${top.toFixed(1)}" width="${(w+60).toFixed(1)}" height="${h}"/></clipPath></defs>
+    <path d="${d}" stroke="url(#yg)" stroke-width="${(sw*1.6).toFixed(1)}" stroke-linejoin="round" filter="url(#gB)" opacity=".28"/>
+    <g clip-path="url(#yc${n})"><path d="${d}" stroke="url(#yg)" stroke-width="${sw.toFixed(1)}" stroke-linecap="butt" stroke-linejoin="round"/></g></svg>`;}
+
+const SB=`<div class="notch"></div><div class="sbar"><div>9:41</div><div>📶 100%</div></div>`;
+const TAB={home:'<svg width="23" height="23" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 3 10v10h6v-6h6v6h6V10z"/></svg>',
+ freq:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M7.5 7.5a6.4 6.4 0 000 9M16.5 7.5a6.4 6.4 0 010 9M4.7 4.7a10.3 10.3 0 000 14.6M19.3 4.7a10.3 10.3 0 010 14.6"/></svg>',
+ lib:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 9h10M7 12h10M7 15h6"/></svg>',
+ search:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/></svg>'};
+const tabbar=a=>`<div class="tabbar">${[['home','Home'],['freq','Frequencies'],['lib','Library'],['search','Search']].map(([k,l])=>`<div class="tab ${k===a?'on':''}">${TAB[k]}<span>${l}</span></div>`).join('')}</div>`;
+const mini=()=>`<div class="mini"><div style="width:48px;height:48px;border-radius:13px;overflow:hidden;position:relative;background:#120e22"><div class="wm spin" style="inset:-14px">${mandala(76,'gold',0.6,0.7)}</div></div>
+  <div class="mt"><div class="a">528 Hz · Renewal</div><div class="b"><span class="live">LIVE</span></div></div>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--gold)"><rect x="6" y="5" width="4" height="14" rx="1.3"/><rect x="14" y="5" width="4" height="14" rx="1.3"/></svg></div>`;
+
+const S=[];const add=(n,h)=>S.push({n,h});
+
+/* 1 — ENTRY · YOY (nothing behind) */
+add('Entry · YOY (nothing behind)',`${SB}<div class="body"><div class="center" style="height:100%;justify-content:space-between;padding:60px 30px 54px">
+  <div class="center">
+    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:330px;height:184px">
+      <div style="position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(167,139,250,.55),transparent 64%);filter:blur(36px);opacity:.5"></div>
+      <div style="position:relative;display:flex;align-items:center;gap:0">
+        ${yLetter(120,'a')}<img src="../../assets/images/logo-cut2.png" class="logoO2" alt="thrive radio"/>${yLetter(120,'b')}
+      </div>
+    </div>
+    <div class="disp" style="font-size:34px;font-weight:600;margin-top:14px;letter-spacing:.5px">Thrive Radio</div>
+    <div class="muted" style="font-size:15px;max-width:248px;margin-top:8px;line-height:1.5">You Only Younger — healing frequencies, attuned to you.</div>
+  </div>
+  <div style="width:100%"><div class="btn">Tune in</div><div class="muted3 center" style="font-size:12px;margin-top:16px">Access is provided by your practitioner.</div></div>
+</div></div>`);
+
+/* 2 — ENTRY · YOY + breathing PURPLE mandala */
+add('Entry · YOY + purple mandala',`${SB}<div class="body"><div class="center" style="height:100%;justify-content:space-between;padding:60px 30px 54px">
+  <div class="center">
+    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:330px;height:204px">
+      <div style="position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(167,139,250,.7),transparent 64%);filter:blur(36px);opacity:.5"></div>
+      <div class="breathe" style="position:absolute;width:284px;height:284px;opacity:.45">${mandala(284,'violet',0.42,0.6)}</div>
+      <div style="position:relative;display:flex;align-items:center;gap:0">
+        ${yLetter(120,'c')}<img src="../../assets/images/logo-cut2.png" class="logoO2" alt="thrive radio"/>${yLetter(120,'d')}
+      </div>
+    </div>
+    <div class="disp" style="font-size:34px;font-weight:600;margin-top:14px;letter-spacing:.5px">Thrive Radio</div>
+    <div class="muted" style="font-size:15px;max-width:248px;margin-top:8px;line-height:1.5">You Only Younger — healing frequencies, attuned to you.</div>
+  </div>
+  <div style="width:100%"><div class="btn">Tune in to the frequency</div><div class="muted3 center" style="font-size:12px;margin-top:16px">Access is provided by your practitioner.</div></div>
+</div></div>`);
+
+/* 3 — ENTRY · YOY + breathing GOLD mandala */
+add('Entry · YOY + gold mandala',`${SB}<div class="body"><div class="center" style="height:100%;justify-content:space-between;padding:60px 30px 54px">
+  <div class="center">
+    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:330px;height:204px">
+      <div style="position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(243,205,139,.55),transparent 64%);filter:blur(36px);opacity:.5"></div>
+      <div class="breathe" style="position:absolute;width:284px;height:284px;opacity:.5">${mandala(284,'gold',0.45,0.65)}</div>
+      <div style="position:relative;display:flex;align-items:center;gap:0">
+        ${yLetter(120,'e')}<img src="../../assets/images/logo-cut2.png" class="logoO2" alt="thrive radio"/>${yLetter(120,'f')}
+      </div>
+    </div>
+    <div class="disp" style="font-size:34px;font-weight:600;margin-top:14px;letter-spacing:.5px">Thrive Radio</div>
+    <div class="muted" style="font-size:15px;max-width:248px;margin-top:8px;line-height:1.5">You Only Younger — healing frequencies, attuned to you.</div>
+  </div>
+  <div style="width:100%"><div class="btn">Attune yourself</div><div class="muted3 center" style="font-size:12px;margin-top:16px">Access is provided by your practitioner.</div></div>
+</div></div>`);
+
+/* 4 — HOME */
+add('Home',`${SB}<div class="body">
+  <div class="between pad" style="padding-top:6px"><div class="disp" style="font-size:30px;font-weight:600">Good evening</div>
+    <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;position:relative;background:#120e22"><div class="wm spin" style="inset:-10px">${mandala(56,'violet',0.6,0.7)}</div></div></div>
+  <div class="pad"><div class="glass" style="margin-top:14px;padding:16px;display:flex;align-items:center;gap:16px">
+    <div style="position:relative;width:92px;height:92px;display:flex;align-items:center;justify-content:center;flex:none">
+      <div class="breathe">${mandala(92,'gold',0.6,0.75)}</div>
+      <div class="score" style="position:absolute;font-size:30px">82</div></div>
+    <div style="flex:1"><div class="muted disp" style="font-size:11px;font-weight:700;letter-spacing:1px">VITALITY</div>
+      <div class="disp" style="font-size:22px;font-weight:600;margin-top:2px">Flourishing</div>
+      <div style="color:var(--gold);font-size:13px;font-weight:600;margin-top:4px">▲ 3 this week · tap for breakdown</div></div></div>
+    <div class="glass" style="margin-top:14px;padding:16px;height:104px;display:flex;flex-direction:column;justify-content:center">${cardWM('teal','spinr')}
+      <div class="muted disp" style="font-size:11px;font-weight:700;letter-spacing:1px;position:relative">VOICE CHECK-IN</div>
+      <div class="disp" style="font-size:19px;margin-top:6px;position:relative">Tune your weekly sample</div>
+      <div class="muted" style="font-size:12px;margin-top:5px;position:relative">~2 min · 3 recordings</div></div>
+  </div>
+  <div class="sec">Continue Listening</div>
+  <div style="display:flex;gap:14px;padding:0 20px;overflow:hidden">
+    ${[['violet','528 Hz','Renewal'],['rose','Theta Drift','Sleep'],['teal','Calm Focus','Work']].map(([g,t,s])=>
+      `<div style="width:142px;flex:none"><div class="glass" style="width:142px;height:142px">${cardWM(g,'spin')}<div style="position:absolute;left:13px;bottom:12px" class="disp">${t}</div></div>
+       <div class="muted" style="font-size:13px;margin-top:8px">${s}</div></div>`).join('')}
+  </div>
+  <div class="sec">From Your Provider</div>
+  <div class="pad"><div class="glass" style="height:120px;padding:16px;display:flex;flex-direction:column;justify-content:flex-end">${cardWM('amber','spin')}
+    <div class="disp" style="font-size:18px;position:relative">Wellness Frequencies</div><div class="position:relative" style="position:relative"><span class="live">LIVE</span></div></div></div>
+  <div style="height:160px"></div>${mini()}${tabbar('home')}</div>`);
+
+/* 3 — MY VITALITY */
+add('My Vitality',`${SB}<div class="body">
+  <div class="between pad" style="padding-top:8px"><div class="disp" style="color:var(--gold);font-size:15px">‹ Back</div><div class="disp" style="font-size:16px;font-weight:500">My Vitality</div><div style="width:30px"></div></div>
+  <div class="center" style="margin-top:6px">
+    <div style="position:relative;width:268px;height:268px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,#f3cd8b,#a78bfa);filter:blur(44px);opacity:.34"></div>
+      <div class="breathe">${mandala(268,'gold',0.6,0.78)}</div>
+      <div class="center" style="position:absolute"><div class="score" style="font-size:80px">82</div><div class="muted" style="letter-spacing:3px;font-size:11px;margin-top:2px">VITALITY</div></div></div>
+    <div class="disp" style="font-size:18px;margin-top:4px">Flourishing</div>
+    <div style="color:var(--gold);font-size:14px;font-weight:600;margin-top:2px">▲ 3 since your last check-in</div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:20px 20px 0">
+    ${[['Respiratory',86,'teal'],['Vocal Stability',78,'violet'],['Articulation',84,'spec'],['Energy',79,'amber']].map(([t,v,g])=>`
+      <div class="glass" style="padding:14px;height:112px">${cardWM(g,'spin')}
+        <div class="between" style="position:relative"><span class="muted" style="font-size:13px">${t}</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a8a6c0" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.5"/></svg></div>
+        <div class="score" style="font-size:32px;margin-top:8px;position:relative">${v}</div></div>`).join('')}
+  </div>
+  <div class="sec">Your summary</div>
+  <div class="pad"><div class="glass" style="padding:16px"><div class="muted" style="font-size:14px;line-height:1.55">Your vitality is in the flourishing range. Voice stability dipped slightly — the protocols below target breath support and resonance.</div></div></div>
+  <div style="height:24px"></div></div>`);
+
+/* 4 — FREQUENCIES (Radio tab) */
+add('Frequencies',`${SB}<div class="body">
+  <div class="disp pad" style="font-size:30px;font-weight:600;padding-top:6px">Frequencies</div>
+  <div class="pad" style="margin-top:10px"><div class="field"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/></svg>Search frequencies</div></div>
+  <div class="pad"><div class="glass" style="margin-top:14px;height:150px;padding:18px;display:flex;flex-direction:column;justify-content:space-between">${cardWM('spec','spin')}
+    <div style="position:relative"><span class="live">LIVE NOW</span></div>
+    <div style="position:relative"><div class="disp" style="font-size:24px">Wellness Live</div><div class="muted" style="font-size:13px">Continuous healing stream · Thrive</div></div></div></div>
+  <div class="sec">Explore</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 20px">
+    ${[['gold','528 Hz','Renewal'],['violet','432 Hz','Calm'],['teal','Theta','Deep sleep'],['rose','Alpha','Focus']].map(([g,t,s])=>
+      `<div class="glass" style="height:128px;padding:14px;display:flex;flex-direction:column;justify-content:flex-end">${cardWM(g,'spin')}
+        <div class="disp" style="font-size:17px;position:relative">${t}</div><div class="muted" style="font-size:12px;position:relative">${s}</div></div>`).join('')}
+  </div><div style="height:160px"></div>${mini()}${tabbar('freq')}</div>`);
+
+/* 5 — NOW PLAYING */
+add('Now Playing',`${SB}<div class="body"><div class="aura" style="background:radial-gradient(70% 50% at 50% 40%,rgba(243,205,139,.2),transparent 62%),#070510"></div>
+  <div class="center" style="margin-top:14px"><div style="width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.3)"></div></div>
+  <div class="center" style="margin-top:40px">
+    <div style="position:relative;width:320px;height:320px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,#f3cd8b,#a78bfa);filter:blur(50px);opacity:.42"></div>
+      <div class="breathe">${mandala(320,'gold',0.62,0.82)}</div>
+      <div class="center" style="position:absolute"><div class="score" style="font-size:62px">528</div><div class="muted" style="letter-spacing:4px;font-size:12px">HZ</div></div></div></div>
+  <div class="center" style="margin-top:30px"><div class="disp" style="font-size:23px">528 Hz · Renewal</div><div class="muted" style="font-size:14px;margin-top:2px">Solfeggio tone · Thrive Live</div></div>
+  <div class="pad" style="margin-top:24px"><div style="display:flex;align-items:center;gap:3px;height:30px">${Array.from({length:50}).map((_,i)=>`<div style="flex:1;height:${6+Math.round(18*Math.abs(Math.sin(i*.5)))}px;border-radius:2px;background:${i<24?'var(--gold)':'rgba(255,255,255,.22)'}"></div>`).join('')}</div>
+    <div class="between" style="margin-top:8px"><span class="muted3" style="font-size:12px">3:42</span><span class="live" style="font-size:11px">LIVE</span></div>
+    <div class="between" style="padding:22px 26px 0"><svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M6 6h2v12H6zM20 6 9 12l11 6z"/></svg>
+      <div style="width:78px;height:78px;border-radius:50%;background:linear-gradient(120deg,#f3cd8b,#a78bfa);display:flex;align-items:center;justify-content:center"><svg width="30" height="30" viewBox="0 0 24 24" fill="#0a0814"><rect x="6" y="5" width="4" height="14" rx="1.4"/><rect x="14" y="5" width="4" height="14" rx="1.4"/></svg></div>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M18 6h-2v12h2zM4 6l11 6L4 18z"/></svg></div></div></div>`);
+
+/* 6 — VOICE RECORDING */
+add('Voice · Recording',`${SB}<div class="body"><div class="aura" style="background:radial-gradient(60% 40% at 50% 32%,rgba(94,234,212,.2),transparent 64%),#070510"></div>
+  <div class="between pad" style="padding-top:8px"><div class="disp" style="color:var(--teal)">Cancel</div><div class="muted" style="font-size:14px">Recording 1 of 3</div><div style="width:40px"></div></div>
+  <div class="center" style="margin-top:18px"><div class="chip" style="border-color:var(--teal);color:var(--teal)">Sustained “ahh”</div>
+    <div class="disp" style="font-size:20px;margin-top:18px;line-height:1.4">Take a breath, then hold<br>a steady “ahhh”</div></div>
+  <div class="center" style="margin-top:26px">
+    <div style="position:relative;width:250px;height:250px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,#5eead4,#a78bfa);filter:blur(42px);opacity:.32"></div>
+      <div class="breathe">${mandala(250,'teal',0.6,0.78)}</div>
+      <div class="center" style="position:absolute"><div class="score" style="font-size:48px">0:17</div><div class="muted" style="font-size:12px">of 30 sec</div></div></div></div>
+  <div class="center" style="margin-top:28px"><div style="width:74px;height:74px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center"><div style="width:26px;height:26px;border-radius:7px;background:linear-gradient(120deg,#5eead4,#a78bfa)"></div></div>
+    <div class="muted3" style="font-size:13px;margin-top:14px">Tap to stop</div></div></div>`);
+
+/* 7 — LIBRARY */
+add('Library',`${SB}<div class="body">
+  <div class="disp pad" style="font-size:30px;font-weight:600;padding-top:6px">Library</div>
+  <div class="pad" style="display:flex;gap:9px;margin-top:12px"><span class="chip" style="background:var(--gold);color:#1a1206;border-color:transparent;font-weight:700">All</span><span class="chip">Frequencies</span><span class="chip">Playlists</span><span class="chip">Saved</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px 20px 0">
+    ${[['gold','528 Hz','Renewal'],['teal','Calm Focus','Playlist'],['violet','432 Hz','Calm'],['rose','Theta Drift','Sleep'],['amber','Morning Light','Playlist'],['spec','My Mix','Personal']].map(([g,t,s])=>
+      `<div><div class="glass" style="height:140px">${cardWM(g,'spin')}<div style="position:absolute;left:13px;bottom:12px" class="disp" style="font-size:15px">${t}</div></div>
+       <div class="muted" style="font-size:12px;margin-top:7px">${s}</div></div>`).join('')}
+  </div><div style="height:160px"></div>${mini()}${tabbar('lib')}</div>`);
+
+const grid=document.getElementById('grid');
+S.forEach(s=>{const c=document.createElement('div');c.className='cell';
+  c.innerHTML=`<div class="screen"><div class="aura"></div>${s.h}</div><div class="cap">${s.n}</div>`;grid.appendChild(c);});
+</script>
+</body>
+</html>

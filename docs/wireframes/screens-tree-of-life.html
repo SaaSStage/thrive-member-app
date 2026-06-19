@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Thrive — Tree of Life (real symbols)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0814;--ink:#f5f2ee;--ink2:#a8a6c0;--ink3:#6e6b8a;
+    --glass:rgba(255,255,255,.055);--glass2:rgba(255,255,255,.10);--hair:rgba(255,255,255,.12);
+    --teal:#5eead4;--violet:#a78bfa;--gold:#f3cd8b;
+    --spectral:conic-gradient(from 210deg,#5eead4,#818cf8,#a78bfa,#f0a6d8,#f3cd8b,#5eead4);
+    --disp:"Sora",system-ui,sans-serif;--sans:"Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased;margin:0;padding:0}
+  body{background:#14111f;font-family:var(--sans);color:var(--ink);padding:40px}
+  h1.page{font-family:var(--disp);color:#fff;font-size:23px;margin-bottom:6px;font-weight:600}
+  .sub{color:#b9b6d0;margin-bottom:26px;font-size:14px;max-width:820px;line-height:1.5}
+  .grid{display:flex;flex-wrap:wrap;gap:46px;align-items:flex-start}
+  .cell{display:flex;flex-direction:column;gap:10px}
+  .cap{color:#d6d3e8;font-size:13px;font-weight:600;text-align:center}
+  .cap small{display:block;color:#8a87a8;font-weight:400;font-size:11px;margin-top:3px}
+  .screen{width:390px;height:844px;background:var(--bg);border-radius:46px;position:relative;overflow:hidden;
+    box-shadow:0 0 0 11px #181426,0 0 0 13px #2a2440,0 26px 70px rgba(0,0,0,.6)}
+  .aura{position:absolute;inset:0;z-index:0;background:
+    radial-gradient(55% 34% at 18% 6%, rgba(94,234,212,.18), transparent 70%),
+    radial-gradient(60% 36% at 88% 14%, rgba(167,139,250,.24), transparent 70%),
+    radial-gradient(75% 45% at 50% 100%, rgba(243,205,139,.16), transparent 72%),
+    linear-gradient(180deg,#0d0a1b,#0b0814 55%,#070510)}
+  .statusbar{position:absolute;top:0;left:0;right:0;height:52px;z-index:55;display:flex;align-items:center;justify-content:space-between;padding:17px 30px 0;font-size:14px;font-weight:600}
+  .notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:32px;background:#000;border-radius:18px;z-index:60}
+  .body{position:absolute;top:52px;left:0;right:0;bottom:0;overflow:hidden;z-index:2}
+  .muted{color:var(--ink2)}.muted3{color:var(--ink3)}
+  .center{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .fill{position:absolute;inset:0}.between{display:flex;align-items:center;justify-content:space-between}
+  .card{background:var(--glass);border:1px solid var(--hair);border-radius:22px;backdrop-filter:blur(16px)}
+  .btn{display:flex;align-items:center;justify-content:center;border-radius:18px;font-family:var(--disp);font-weight:600;font-size:16px;height:54px;
+    background:linear-gradient(120deg,#5eead4,#818cf8 55%,#a78bfa);color:#0a0814;box-shadow:0 12px 30px rgba(129,140,248,.3)}
+</style>
+</head>
+<body>
+<h1 class="page">Thrive — the real Tree of Life symbol (two authentic forms)</h1>
+<div class="sub">Both drawn purely in vector with the glow treatment. <b>1 · Celtic Tree of Life</b> — branches up, roots down, joined in a circle (balance & interconnection). <b>2 · Kabbalah Tree of Life</b> — the 10 Sephirot + 22 paths in three pillars. <b>3 · Vitality</b> uses the Sephirot as a living symbol: the spheres light up from the ground up (Malkuth → Keter) as your score rises.</div>
+<div class="grid" id="grid"></div>
+
+<!-- shared gradient + glow defs -->
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="bark" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#5eead4"/><stop offset=".5" stop-color="#a78bfa"/><stop offset="1" stop-color="#f3cd8b"/></linearGradient>
+  <radialGradient id="leaf"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#a78bfa"/><stop offset="1" stop-color="#5eead4"/></radialGradient>
+  <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.1"/></filter>
+  <filter id="glowL" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter>
+  <filter id="soft" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="1.5"/></filter>
+</defs></svg>
+
+<script>
+const SB=`<div class="notch"></div><div class="statusbar"><div>9:41</div><div>📶 100%</div></div>`;
+
+/* ---------- 1) CELTIC TREE OF LIFE (branches + roots joined in a circle) ---------- */
+function celtic(size){
+  const cx=100,cy=108,R=90;
+  const seg=[],tips=[];
+  const can=[[0.20,86,0.94],[0.55,94,0.90],[0.92,104,0.80],[1.28,114,0.66]];
+  can.forEach(([a,sy,k])=>{const len=R*k;
+    const ex=cx+Math.sin(a)*len, ey=cy-Math.cos(a)*len;
+    const c1x=cx+Math.sin(a)*len*0.18, c1y=sy-len*0.52;
+    const c2x=ex-Math.sin(a)*len*0.28, c2y=ey+len*0.24;
+    seg.push(`M${cx},${sy} C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`);
+    tips.push([ex,ey]);
+    const mx=cx+Math.sin(a)*len*0.55, my=cy-Math.cos(a)*len*0.55;
+    const tex=mx+Math.sin(a-0.5)*len*0.3, tey=my-Math.cos(a-0.5)*len*0.3;
+    seg.push(`M${mx.toFixed(1)},${my.toFixed(1)} Q${((mx+tex)/2-6).toFixed(1)},${((my+tey)/2).toFixed(1)} ${tex.toFixed(1)},${tey.toFixed(1)}`);
+    tips.push([tex,tey]);
+  });
+  const root=[[0.35,126,0.72],[0.78,122,0.80],[1.15,118,0.66]];
+  root.forEach(([a,sy,k])=>{const len=R*k;
+    const ex=cx+Math.sin(a)*len, ey=cy+Math.cos(a)*len;
+    const c1x=cx+Math.sin(a)*len*0.18, c1y=sy+len*0.52;
+    const c2x=ex-Math.sin(a)*len*0.28, c2y=ey-len*0.24;
+    seg.push(`M${cx},${sy} C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`);
+    tips.push([ex,ey]);
+  });
+  const paths=seg.map(d=>`<path d="${d}"/>`).join('');
+  const tipN=tips.map(([x,y])=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2" fill="url(#leaf)" filter="url(#soft)"/>`).join('');
+  const M=`transform="translate(${2*cx},0) scale(-1,1)"`;
+  return `<svg width="${size}" height="${size*1.04}" viewBox="0 0 200 208">
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="url(#bark)" stroke-width="3.4" opacity=".35" filter="url(#glowL)"/>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="url(#bark)" stroke-width="2" opacity=".85"/>
+    <path d="M${cx-5.5},150 C${cx-3.5},132 ${cx-3},120 ${cx},98 C${cx+3},120 ${cx+3.5},132 ${cx+5.5},150 Z" fill="url(#bark)" opacity=".9"/>
+    <g stroke="url(#bark)" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".5" filter="url(#glowL)"><g>${paths}</g><g ${M}>${paths}</g></g>
+    <g stroke="url(#bark)" stroke-width="1.8" fill="none" stroke-linecap="round"><g>${paths}</g><g ${M}>${paths}</g></g>
+    <g>${tipN}</g><g ${M}>${tipN}</g></svg>`;
+}
+
+/* ---------- 2) KABBALAH TREE OF LIFE (10 Sephirot, 22 paths, 3 pillars) ---------- */
+const SEPH={keter:[50,11],chokmah:[78,29],binah:[22,29],chesed:[78,55],gevurah:[22,55],
+  tiferet:[50,70],netzach:[78,91],hod:[22,91],yesod:[50,107],malkuth:[50,131]};
+const PATHS=[['keter','chokmah'],['keter','binah'],['keter','tiferet'],
+  ['chokmah','binah'],['chokmah','tiferet'],['chokmah','chesed'],
+  ['binah','tiferet'],['binah','gevurah'],
+  ['chesed','gevurah'],['chesed','tiferet'],['chesed','netzach'],
+  ['gevurah','tiferet'],['gevurah','hod'],
+  ['tiferet','netzach'],['tiferet','hod'],['tiferet','yesod'],
+  ['netzach','hod'],['netzach','yesod'],['netzach','malkuth'],
+  ['hod','yesod'],['hod','malkuth'],['yesod','malkuth']];
+const RISE=['malkuth','yesod','hod','netzach','tiferet','gevurah','chesed','binah','chokmah','keter'];
+function sephirot(size,score=1){
+  const litN=Math.round(10*score);
+  const lit=k=>RISE.indexOf(k)<litN;
+  const lines=PATHS.map(([a,b])=>`<line x1="${SEPH[a][0]}" y1="${SEPH[a][1]}" x2="${SEPH[b][0]}" y2="${SEPH[b][1]}"/>`).join('');
+  const nodes=RISE.map(k=>{const x=SEPH[k][0],y=SEPH[k][1];const on=lit(k);
+    return `<circle cx="${x}" cy="${y}" r="${on?5.4:4.6}" fill="${on?'url(#leaf)':'#211c34'}" stroke="${on?'rgba(255,255,255,.75)':'rgba(255,255,255,.22)'}" stroke-width=".8" ${on?'filter="url(#soft)"':''}/>`;}).join('');
+  return `<svg width="${size}" height="${size*1.46}" viewBox="0 0 100 146">
+    <g stroke="url(#bark)" stroke-width="1.6" fill="none" opacity=".45" filter="url(#glow)">${lines}</g>
+    <g stroke="url(#bark)" stroke-width="1.1" fill="none">${lines}</g>${nodes}</svg>`;
+}
+
+const S=[];const add=(n,sub,h)=>S.push({n,sub,h});
+
+/* SCREEN 1 — Celtic emblem (welcome) */
+add('Celtic Tree of Life','welcome emblem',`${SB}<div class="body"><div class="fill center" style="justify-content:space-between;padding:54px 32px 56px">
+  <div class="center"><div style="position:relative;width:268px;height:278px;display:flex;align-items:center;justify-content:center">
+    <div style="position:absolute;width:230px;height:230px;border-radius:50%;background:var(--spectral);filter:blur(38px);opacity:.32"></div>
+    ${celtic(268)}</div>
+    <div style="font-family:var(--disp);font-size:34px;font-weight:500;margin-top:20px;letter-spacing:.5px">Thrive</div>
+    <div class="muted" style="font-size:16px;max-width:264px;margin-top:10px;line-height:1.5">Rooted in care, reaching toward wellbeing.</div></div>
+  <div style="width:100%"><div class="btn">Begin with email</div></div></div>`);
+
+/* SCREEN 2 — Kabbalah Sephirot emblem */
+add('Kabbalah Tree of Life','10 Sephirot · 22 paths',`${SB}<div class="body"><div class="fill center" style="justify-content:center;padding:30px 32px">
+  <div style="position:relative;width:230px;display:flex;align-items:center;justify-content:center">
+    <div style="position:absolute;width:200px;height:200px;border-radius:50%;background:var(--spectral);filter:blur(40px);opacity:.28"></div>
+    ${sephirot(196,1)}</div>
+  <div style="font-family:var(--disp);font-size:26px;font-weight:500;margin-top:24px">Tree of Life</div>
+  <div class="muted" style="font-size:14px;max-width:250px;margin-top:8px;line-height:1.5">Ten centers of vitality, three pillars of balance.</div></div></div>`);
+
+/* SCREEN 3 — Vitality as living Sephirot (lit by score) */
+add('My Vitality','Sephirot light up with score',`${SB}<div class="body">
+  <div class="between" style="padding:12px 20px 0;font-family:var(--disp)"><div style="color:var(--teal);font-size:16px">‹ Back</div><div style="font-size:17px;font-weight:500">My Vitality</div><div style="width:30px"></div></div>
+  <div class="center" style="padding:8px 0 0;position:relative">
+    <div style="position:relative;width:212px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;width:190px;height:190px;border-radius:50%;background:var(--spectral);filter:blur(38px);opacity:.26"></div>
+      ${sephirot(176,0.8)}</div>
+    <div style="font-family:var(--disp);font-size:46px;font-weight:300;line-height:1;margin-top:6px">82</div>
+    <div class="muted" style="font-size:12px;letter-spacing:3px">VITALITY · 8 OF 10 CENTERS LIT</div>
+    <div style="color:var(--teal);font-size:14px;font-weight:600;margin-top:6px">▲ 1 center since your last check-in</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:20px 22px 0">
+    ${[['Respiratory',86,'#5eead4'],['Vocal Stability',78,'#818cf8'],['Articulation',84,'#a78bfa'],['Energy',79,'#f3cd8b']].map(([t,v,c])=>`
+      <div class="card" style="padding:14px"><div class="between"><span class="muted" style="font-size:13px">${t}</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a8a6c0" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.5"/></svg></div>
+        <div style="font-family:var(--disp);font-size:28px;font-weight:400;margin-top:4px">${v}</div>
+        <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.1);margin-top:8px"><div style="width:${v}%;height:5px;border-radius:3px;background:${c}"></div></div></div>`).join('')}
+  </div></div>`);
+
+const grid=document.getElementById('grid');
+S.forEach(s=>{const c=document.createElement('div');c.className='cell';
+  c.innerHTML=`<div class="screen"><div class="aura"></div>${s.h}</div><div class="cap">${s.n}<small>${s.sub}</small></div>`;grid.appendChild(c);});
+</script>
+</body>
+</html>

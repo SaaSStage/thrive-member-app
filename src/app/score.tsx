@@ -1,8 +1,8 @@
 /**
- * Vitality score breakdown ("My Score"). Shows the composite Vitality Score, the
- * four subscores that make it up, the trend vs. prior check-ins, a plain-language
- * summary (wellness narrative), and recommended protocols. Opened from the Home
- * vitality card. Handles: no submissions, latest sample analyzing, score ready.
+ * Vitality score breakdown ("My Vitality"). The composite score sits inside a
+ * breathing gold mandala dial; the four sub-scores are glass cards each backed
+ * by a slowly-rotating hued mandala. Plus trend, plain-language summary, and
+ * recommended protocols. Handles: no submissions, analyzing, score ready.
  */
 import { useRouter, type Href } from 'expo-router';
 import { Fragment } from 'react';
@@ -10,9 +10,14 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useLatestScore, type ProtocolRec, type Subscore, type Trend } from '@/api/score';
+import { Aura } from '@/components/ui/aura';
 import { Button } from '@/components/ui/button';
-import { Radius, Type } from '@/constants/theme';
+import { CardMandala, Mandala } from '@/components/ui/mandala';
+import { MicGlyph } from '@/components/ui/mic-glyph';
+import { Gradients, Radius, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+
+const SUB_HUES = [Gradients.teal, Gradients.violet, Gradients.score, Gradients.gold] as unknown as string[][];
 
 export default function ScoreScreen() {
   const t = useTheme();
@@ -20,12 +25,12 @@ export default function ScoreScreen() {
   const { data, isLoading, isError, refetch } = useLatestScore();
 
   return (
-    <View style={[styles.fill, { backgroundColor: t.background }]}>
+    <Aura>
       <SafeAreaView style={styles.fill} edges={['top', 'bottom']}>
         <View style={styles.headerRow}>
-          <Text style={[styles.title, { color: t.text }]}>Vitality</Text>
+          <Text style={[styles.title, { color: t.text }]}>My Vitality</Text>
           <Pressable onPress={() => router.back()} hitSlop={12}>
-            <Text style={[styles.close, { color: t.textSecondary }]}>Done</Text>
+            <Text style={[styles.close, { color: t.link }]}>Done</Text>
           </Pressable>
         </View>
 
@@ -40,27 +45,40 @@ export default function ScoreScreen() {
           </View>
         ) : data?.state === 'ready' ? (
           <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-            <View style={[styles.scoreHero, { backgroundColor: t.vitality }]}>
-              <Text style={[styles.heroKicker, { color: t.onVitality }]}>YOUR VITALITY SCORE</Text>
-              <Text style={[styles.heroScore, { color: t.onVitality }]}>{data.vitalityScore}</Text>
-              <Text style={[styles.heroOutOf, { color: t.onVitality }]}>out of 100</Text>
-              {data.vitalityTrend ? (
-                <View style={styles.heroTrend}>
-                  <TrendBadge trend={data.vitalityTrend} on={t.onVitality} />
-                  <Text style={[styles.heroTrendText, { color: t.onVitality }]}>vs. your recent check-ins</Text>
-                </View>
-              ) : null}
+            {/* breathing mandala dial */}
+            <View style={styles.dial}>
+              <Mandala
+                size={272}
+                colors={Gradients.gold as unknown as string[]}
+                motion="breathe"
+                opacity={0.5}
+                glow={0.8}
+                breatheMs={5600}
+                dynamicBlur
+              />
+              <View style={styles.dialCenter}>
+                <Text style={[styles.score, { color: t.text }]}>{data.vitalityScore}</Text>
+                <Text style={[styles.scoreOf, { color: t.textSecondary }]}>VITALITY</Text>
+              </View>
             </View>
+            {data.vitalityTrend ? (
+              <View style={styles.trendRow}>
+                <TrendBadge trend={data.vitalityTrend} />
+                <Text style={[styles.trendText, { color: t.textSecondary }]}>since your last check-in</Text>
+              </View>
+            ) : null}
 
             <Text style={[styles.sectionTitle, { color: t.text }]}>What makes up your score</Text>
-            {data.subscores.map((s) => (
-              <SubscoreRow key={s.key} subscore={s} />
-            ))}
+            <View style={styles.grid}>
+              {data.subscores.map((s, i) => (
+                <SubscoreCard key={s.key} subscore={s} colors={SUB_HUES[i % SUB_HUES.length]} />
+              ))}
+            </View>
 
             {data.narrative ? (
               <>
                 <Text style={[styles.sectionTitle, { color: t.text }]}>Your summary</Text>
-                <View style={[styles.card, { backgroundColor: t.surface }]}>
+                <View style={[styles.card, styles.glass]}>
                   <Markdownish text={data.narrative} />
                 </View>
               </>
@@ -87,7 +105,11 @@ export default function ScoreScreen() {
           </ScrollView>
         ) : (
           <View style={styles.center}>
-            <Text style={styles.emoji}>{data?.state === 'analyzing' ? '⏳' : '🎙️'}</Text>
+            {data?.state === 'analyzing' ? (
+              <Text style={styles.emoji}>⏳</Text>
+            ) : (
+              <MicGlyph size={64} />
+            )}
             <Text style={[styles.emptyTitle, { color: t.text }]}>
               {data?.state === 'analyzing' ? 'Analyzing your latest sample' : 'No score yet'}
             </Text>
@@ -107,7 +129,7 @@ export default function ScoreScreen() {
           </View>
         )}
       </SafeAreaView>
-    </View>
+    </Aura>
   );
 }
 
@@ -115,37 +137,33 @@ function trendColor(direction: Trend['direction'], t: ReturnType<typeof useTheme
   return direction === 'improving' ? t.success : direction === 'declining' ? t.warning : t.textTertiary;
 }
 
-/** Compact ↑/↓/→ + signed magnitude badge. `on` overrides color (e.g. on the hero). */
-function TrendBadge({ trend, on }: { trend: Trend; on?: string }) {
+function TrendBadge({ trend }: { trend: Trend }) {
   const t = useTheme();
   const arrow = trend.direction === 'improving' ? '↑' : trend.direction === 'declining' ? '↓' : '→';
   const mag = Math.abs(trend.magnitude);
   const sign = trend.direction === 'improving' ? '+' : trend.direction === 'declining' ? '−' : '±';
-  const color = on ?? trendColor(trend.direction, t);
   return (
-    <Text style={[styles.trendBadge, { color }]}>
+    <Text style={[styles.trendBadge, { color: trendColor(trend.direction, t) }]}>
       {arrow} {sign}
       {mag}
     </Text>
   );
 }
 
-function SubscoreRow({ subscore }: { subscore: Subscore }) {
+function SubscoreCard({ subscore, colors }: { subscore: Subscore; colors: string[] }) {
   const t = useTheme();
-  const pct = Math.max(0, Math.min(100, subscore.value));
   return (
-    <View style={[styles.card, { backgroundColor: t.surface }]}>
-      <View style={styles.rowHead}>
-        <Text style={[styles.rowLabel, { color: t.text }]}>{subscore.label}</Text>
-        <View style={styles.rowRight}>
-          {subscore.trend ? <TrendBadge trend={subscore.trend} /> : null}
-          <Text style={[styles.rowValue, { color: t.vitality }]}>{subscore.value}</Text>
+    <View style={[styles.subCard, styles.glass]}>
+      <CardMandala colors={colors} size={190} opacity={0.42} glow={0.55} />
+      <View style={styles.subHead}>
+        <Text style={[styles.subLabel, { color: t.textSecondary }]} numberOfLines={1}>
+          {subscore.label}
+        </Text>
+        <View style={[styles.infoBtn, { borderColor: t.hairline }]}>
+          <Text style={[styles.infoI, { color: t.textTertiary }]}>i</Text>
         </View>
       </View>
-      <View style={[styles.track, { backgroundColor: t.surfaceElevated }]}>
-        <View style={[styles.fillBar, { width: `${pct}%`, backgroundColor: t.vitality }]} />
-      </View>
-      <Text style={[styles.rowDesc, { color: t.textTertiary }]}>{subscore.description}</Text>
+      <Text style={[styles.subValue, { color: t.text }]}>{subscore.value}</Text>
     </View>
   );
 }
@@ -159,7 +177,7 @@ function ProtocolCard({ protocol }: { protocol: ProtocolRec }) {
     .filter(Boolean)
     .join(' · ');
   return (
-    <View style={[styles.card, { backgroundColor: t.surface }]}>
+    <View style={[styles.card, styles.glass]}>
       <Text style={[styles.rowLabel, { color: t.text }]}>{protocol.name}</Text>
       {protocol.shortDescription ? (
         <Text style={[styles.rowDesc, { color: t.textSecondary, marginTop: 4 }]}>{protocol.shortDescription}</Text>
@@ -169,8 +187,6 @@ function ProtocolCard({ protocol }: { protocol: ProtocolRec }) {
   );
 }
 
-/** Minimal markdown renderer for the wellness narrative: ###/## headings, "- "
- * bullets, **bold** inline, and paragraphs. Avoids a markdown dependency. */
 function Markdownish({ text }: { text: string }) {
   const t = useTheme();
   const lines = text.replace(/\r\n/g, '\n').split('\n');
@@ -207,12 +223,11 @@ function Markdownish({ text }: { text: string }) {
   );
 }
 
-/** Split a line on **bold** and return Text spans. */
 function renderInline(line: string, t: ReturnType<typeof useTheme>) {
   const parts = line.split(/\*\*/);
   return parts.map((part, i) =>
     i % 2 === 1 ? (
-      <Text key={i} style={{ fontWeight: '700', color: t.text }}>
+      <Text key={i} style={{ color: t.text, fontFamily: Type.bodyStrong.fontFamily }}>
         {part}
       </Text>
     ) : (
@@ -230,26 +245,47 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
   },
-  title: { ...Type.largeTitle },
+  title: { ...Type.largeTitle, fontSize: 26 },
   close: { ...Type.bodyStrong },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 12 },
-  body: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 32 },
-  scoreHero: { borderRadius: Radius.xl, padding: 24, alignItems: 'center', marginBottom: 24 },
-  heroKicker: { ...Type.caption, opacity: 0.85 },
-  heroScore: { fontSize: 72, fontWeight: '800', marginTop: 4 },
-  heroOutOf: { ...Type.subhead, opacity: 0.9 },
-  heroTrend: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
-  heroTrendText: { ...Type.subhead, opacity: 0.9 },
-  sectionTitle: { ...Type.headline, marginBottom: 12, marginTop: 8 },
-  card: { borderRadius: Radius.lg, padding: 16, marginBottom: 12 },
-  rowHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  rowRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  body: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40 },
+  dial: { alignItems: 'center', justifyContent: 'center', height: 272, alignSelf: 'center' },
+  dialCenter: { position: 'absolute', alignItems: 'center' },
+  score: { ...Type.numeral, fontSize: 80 },
+  scoreOf: { ...Type.caption, marginTop: 2 },
+  trendRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 6 },
+  trendText: { ...Type.subhead },
+  sectionTitle: { ...Type.headline, marginBottom: 12, marginTop: 24 },
+  glass: {
+    backgroundColor: 'rgba(255,255,255,0.055)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.11)',
+  },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 13 },
+  subCard: {
+    width: '48%',
+    minHeight: 116,
+    borderRadius: Radius.xxl,
+    padding: 14,
+    overflow: 'hidden',
+    justifyContent: 'space-between',
+  },
+  subHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  subLabel: { ...Type.subhead, flex: 1 },
+  subValue: { ...Type.numeral, fontSize: 34 },
+  infoBtn: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoI: { ...Type.caption, fontSize: 11, letterSpacing: 0 },
+  card: { borderRadius: Radius.xxl, padding: 16, marginBottom: 12 },
   rowLabel: { ...Type.bodyStrong },
-  rowValue: { fontSize: 20, fontWeight: '800' },
-  trendBadge: { ...Type.subhead, fontWeight: '700' },
-  track: { height: 8, borderRadius: Radius.pill, marginTop: 10, overflow: 'hidden' },
-  fillBar: { height: 8, borderRadius: Radius.pill },
-  rowDesc: { ...Type.subhead, marginTop: 8 },
+  trendBadge: { ...Type.subhead, fontFamily: Type.bodyStrong.fontFamily },
+  rowDesc: { ...Type.subhead },
   protoMeta: { ...Type.footnote, marginTop: 8 },
   mdHeading: { ...Type.bodyStrong, marginTop: 8, marginBottom: 2 },
   mdText: { ...Type.body },

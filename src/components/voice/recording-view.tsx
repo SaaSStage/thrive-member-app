@@ -12,8 +12,10 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { cancelRecording, ensureRecordingPermission, startRecording, stopRecording } from '@/audio/recorder';
+import { Aura } from '@/components/ui/aura';
 import { Button } from '@/components/ui/button';
-import { Radius, Type } from '@/constants/theme';
+import { Mandala } from '@/components/ui/mandala';
+import { Gradients, Radius, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useVoiceStore } from '@/stores/voice-store';
 import { configFor, RECORDING_ORDER } from '@/voice/recording-type';
@@ -154,7 +156,7 @@ export function VoiceRecordingView() {
   const secondsLeft = Math.ceil(remainingMs / 1000);
 
   return (
-    <View style={[styles.fill, { backgroundColor: t.background }]}>
+    <Aura>
       <SafeAreaView style={styles.fill} edges={['top', 'bottom']}>
         <View style={styles.header}>
           <Text style={[styles.headerText, { color: t.textSecondary }]}>
@@ -172,14 +174,27 @@ export function VoiceRecordingView() {
             </View>
           ) : null}
 
-          <Text
-            style={[styles.count, { color: isRecording ? t.live : t.primary }]}
-            accessibilityLabel={`${secondsLeft} seconds`}>
-            {secondsLeft}
-          </Text>
-          <Text style={[styles.countLabel, { color: t.textTertiary }]}>
-            {isRecording ? 'seconds left' : 'seconds'}
-          </Text>
+          <View style={styles.dial}>
+            <Mandala
+              size={236}
+              colors={Gradients.teal as unknown as string[]}
+              motion="breathe"
+              opacity={0.5}
+              glow={0.78}
+              breatheMs={5600}
+              dynamicBlur
+            />
+            <View style={styles.dialCenter}>
+              <Text
+                style={[styles.count, { color: t.text }]}
+                accessibilityLabel={`${secondsLeft} seconds`}>
+                {secondsLeft}
+              </Text>
+              <Text style={[styles.countLabel, { color: t.textTertiary }]}>
+                {isRecording ? 'seconds left' : 'seconds'}
+              </Text>
+            </View>
+          </View>
 
           {error ? (
             <View style={[styles.error, { backgroundColor: t.primarySoft }]}>
@@ -201,7 +216,7 @@ export function VoiceRecordingView() {
           <Button label={isRecording ? 'Cancel recording' : 'Cancel'} variant="ghost" onPress={() => void onCancel()} />
         </View>
       </SafeAreaView>
-    </View>
+    </Aura>
   );
 }
 
@@ -215,8 +230,10 @@ const styles = StyleSheet.create({
   passage: { borderRadius: Radius.xl, padding: 20, marginTop: 20, alignSelf: 'stretch' },
   passageTitle: { ...Type.bodyStrong, marginBottom: 10 },
   passageBody: { fontSize: 18, lineHeight: 27 },
-  count: { fontSize: 72, fontWeight: '800', marginTop: 28, fontVariant: ['tabular-nums'] },
-  countLabel: { ...Type.subhead, marginTop: -4 },
+  dial: { width: 236, height: 236, alignItems: 'center', justifyContent: 'center', marginTop: 24 },
+  dialCenter: { position: 'absolute', alignItems: 'center' },
+  count: { ...Type.numeral, fontSize: 64, fontVariant: ['tabular-nums'] },
+  countLabel: { ...Type.subhead, marginTop: 2 },
   error: { borderRadius: Radius.lg, padding: 12, marginTop: 20, alignSelf: 'stretch' },
   errorText: { ...Type.callout, textAlign: 'center' },
   footer: { paddingHorizontal: 24, paddingBottom: 12, gap: 10 },

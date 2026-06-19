@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Thrive — mandala variations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#f5f2ee;--ink2:#a8a6c0;--teal:#5eead4;--violet:#a78bfa;--gold:#f3cd8b;
+    --spectral:conic-gradient(from 210deg,#5eead4,#818cf8,#a78bfa,#f0a6d8,#f3cd8b,#5eead4);
+    --disp:"Sora",system-ui,sans-serif;--sans:"Inter",system-ui,sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+  body{background:#0a0712;font-family:var(--sans);color:var(--ink);padding:40px}
+  h1{font-family:var(--disp);font-size:23px;font-weight:600;margin-bottom:6px}
+  h2{font-family:var(--disp);font-size:16px;font-weight:500;color:#cfc8e6;margin:34px 0 16px}
+  .sub{color:#b9b6d0;font-size:14px;max-width:860px;line-height:1.5;margin-bottom:8px}
+  .row{display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start}
+  .cell{display:flex;flex-direction:column;gap:10px;align-items:center}
+  .cap{color:#d6d3e8;font-size:12.5px;font-weight:600;text-align:center}
+  .cap small{display:block;color:#8a87a8;font-weight:400;font-size:11px;margin-top:2px}
+  .tile{width:280px;height:280px;border-radius:26px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .black{background:radial-gradient(circle at 50% 45%,#160f06,#050308)}
+  .deep{background:radial-gradient(circle at 50% 42%,#15122a,#06040e)}
+  .ink{background:radial-gradient(circle at 50% 45%,#0f0b1c,#070510)}
+  .mwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+  .spin{animation:spin 90s linear infinite}
+  .spinr{animation:spin 90s linear infinite reverse}
+  .breathe{animation:breathe 7s ease-in-out infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes breathe{0%,100%{transform:scale(.93);opacity:.55}50%{transform:scale(1.05);opacity:.95}}
+  /* phones */
+  .phone{width:380px;height:740px;border-radius:44px;position:relative;overflow:hidden;background:#0b0814;
+    box-shadow:0 0 0 10px #181426,0 0 0 12px #2a2440,0 24px 64px rgba(0,0,0,.6)}
+  .aura{position:absolute;inset:0;background:radial-gradient(60% 40% at 50% 26%,rgba(167,139,250,.24),transparent 65%),radial-gradient(70% 45% at 50% 96%,rgba(94,234,212,.14),transparent 68%),linear-gradient(180deg,#0d0a1b,#070510)}
+  .center{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .muted{color:var(--ink2)}
+  .glass{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.12);border-radius:22px;position:relative;overflow:hidden}
+  .cardwm{position:absolute;right:-46px;top:-46px;width:180px;height:180px;opacity:.5}
+  .disp{font-family:var(--disp)}
+</style>
+</head>
+<body>
+<h1>Thrive — sacred-geometry mandala · effect & color options</h1>
+<div class="sub">Same rosette, lifted glow + transparency, across hues and uses. <b>Open this file in a browser</b> — every mandala here actually <b>rotates slowly and breathes</b>; the screenshot only freezes one frame.</div>
+
+<h2>1 · Hues + glow (slowly rotating)</h2>
+<div class="row" id="hues"></div>
+
+<h2>2 · Transparency levels — for sitting behind content</h2>
+<div class="row" id="alpha"></div>
+
+<h2>3 · In the app — score dials & card backgrounds (breathing)</h2>
+<div class="row" id="app"></div>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6d8"/><stop offset=".4" stop-color="#f3cd8b"/><stop offset=".75" stop-color="#c8961f"/><stop offset="1" stop-color="#8a5a0f"/></linearGradient>
+  <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd9a0"/><stop offset=".5" stop-color="#ff9f5a"/><stop offset="1" stop-color="#b5471a"/></linearGradient>
+  <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d6fff5"/><stop offset=".5" stop-color="#5eead4"/><stop offset="1" stop-color="#0e8f80"/></linearGradient>
+  <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#efe6ff"/><stop offset=".5" stop-color="#a78bfa"/><stop offset="1" stop-color="#5b3bb8"/></linearGradient>
+  <linearGradient id="rose" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe3f4"/><stop offset=".5" stop-color="#f0a6d8"/><stop offset="1" stop-color="#b13a86"/></linearGradient>
+  <linearGradient id="spec" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5eead4"/><stop offset=".4" stop-color="#a78bfa"/><stop offset="1" stop-color="#f3cd8b"/></linearGradient>
+  <filter id="gA" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.4"/></filter>
+  <filter id="gB" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="5.5"/></filter>
+</defs></svg>
+
+<script>
+function ring(size,n,dF,rF,phase=0){const cx=size/2,b=size/2,d=b*dF,r=b*rF;let s='';
+  for(let i=0;i<n;i++){const a=2*Math.PI*i/n+phase;
+    s+=`<circle cx="${(cx+d*Math.cos(a)).toFixed(2)}" cy="${(cy=cx,cx+d*Math.sin(a)).toFixed(2)}" r="${r.toFixed(2)}"/>`;}
+  return s;}
+/* op = base opacity (transparency), glowOp = brightness of the blurred bloom layer */
+function mandala(size,grad,op=0.6,glowOp=0.7){
+  const cx=size/2,b=size/2;
+  const geo=ring(size,24,0.46,0.46)+ring(size,12,0.30,0.30,Math.PI/12)+ring(size,12,0.62,0.20);
+  const frame=`<circle cx="${cx}" cy="${cx}" r="${(b*0.84).toFixed(1)}"/><circle cx="${cx}" cy="${cx}" r="${(b*0.97).toFixed(1)}"/>`;
+  const sw=(size*0.0030).toFixed(2);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none" style="overflow:visible">
+    <g stroke="url(#${grad})" stroke-width="${(sw*1.9).toFixed(2)}" filter="url(#gB)" opacity="${(glowOp*0.85).toFixed(2)}">${frame}${geo}</g>
+    <g stroke="url(#${grad})" stroke-width="${(sw*1.1).toFixed(2)}" filter="url(#gA)" opacity="${(glowOp).toFixed(2)}">${frame}${geo}</g>
+    <g stroke="url(#${grad})" stroke-width="${sw}" opacity="${op}">${frame}${geo}</g>
+    <circle cx="${cx}" cy="${cx}" r="${(b*0.05).toFixed(1)}" fill="url(#${grad})" filter="url(#gA)"/>
+  </svg>`;}
+
+const M=(s,g,op,gop)=>`<div class="mwrap spin">${mandala(s,g,op,gop)}</div>`;
+const add=(id,html,name,sub)=>{const c=document.createElement('div');c.className='cell';
+  c.innerHTML=`${html}<div class="cap">${name}<small>${sub||''}</small></div>`;document.getElementById(id).appendChild(c);};
+
+/* 1 — hues */
+[['gold','Gold','more glow + transparency','black'],['amber','Ember','warm energy','black'],
+ ['teal','Teal','calm / renewal','deep'],['violet','Violet','brand · spirit','deep'],
+ ['rose','Rose','soothing','ink'],['spec','Spectral','multi-hue','deep']].forEach(([g,n,s,bg])=>
+  add('hues',`<div class="tile ${bg}">${M(240,g,0.62,0.7)}</div>`,n,s));
+
+/* 2 — transparency */
+[[0.95,0.85,'Foreground 95%','emblem / splash'],[0.55,0.6,'Mid 55%','score halo'],
+ [0.28,0.4,'Watermark 28%','behind cards'],[0.14,0.28,'Ghost 14%','full-screen wash']].forEach(([op,gop,n,s])=>
+  add('alpha',`<div class="tile black">${M(240,'gold',op,gop)}</div>`,n,s));
+
+/* 3 — app uses */
+/* (a) Vitality dial */
+add('app',`<div class="phone"><div class="aura"></div>
+  <div style="position:absolute;top:20px;left:0;right:0;text-align:center" class="disp">My Vitality</div>
+  <div class="center" style="margin-top:120px">
+    <div style="position:relative;width:300px;height:300px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;width:230px;height:230px;border-radius:50%;background:var(--spectral);filter:blur(46px);opacity:.32"></div>
+      <div class="mwrap breathe">${mandala(300,'gold',0.6,0.75)}</div>
+      <div style="position:absolute;text-align:center"><div class="disp" style="font-size:64px;font-weight:300;line-height:1">82</div><div class="muted" style="letter-spacing:3px;font-size:12px">VITALITY</div></div>
+    </div>
+    <div style="color:var(--teal);font-size:14px;font-weight:600;margin-top:20px">▲ 3 since your last check-in</div>
+  </div></div>`,'Vitality dial','gold mandala halo, breathing');
+
+/* (b) cards with mandala backgrounds */
+add('app',`<div class="phone"><div class="aura"></div>
+  <div style="padding:24px 20px 0" class="disp" style="font-size:26px">Good evening</div>
+  <div style="padding:0 20px">
+    <div class="glass" style="margin-top:16px;padding:18px;height:120px;display:flex;align-items:center">
+      <div class="cardwm spinr">${mandala(180,'teal',0.55,0.7)}</div>
+      <div style="position:relative"><div class="muted disp" style="font-size:12px;letter-spacing:1px">VOICE CHECK-IN</div><div class="disp" style="font-size:20px;margin-top:6px">Tune your weekly sample</div><div class="muted" style="font-size:12px;margin-top:6px">~2 min · 3 recordings</div></div>
+    </div>
+    <div style="display:flex;gap:14px;margin-top:14px">
+      <div class="glass" style="flex:1;height:150px;padding:16px"><div class="cardwm spin">${mandala(170,'violet',0.5,0.65)}</div><div style="position:relative" class="disp">528 Hz<br><span class="muted" style="font-size:12px;font-family:var(--sans)">Renewal</span></div></div>
+      <div class="glass" style="flex:1;height:150px;padding:16px"><div class="cardwm spinr">${mandala(170,'rose',0.5,0.65)}</div><div style="position:relative" class="disp">Theta<br><span class="muted" style="font-size:12px;font-family:var(--sans)">Drift</span></div></div>
+    </div>
+    <div class="glass" style="margin-top:14px;height:150px;padding:16px"><div class="cardwm spin">${mandala(210,'amber',0.5,0.65)}</div><div style="position:relative" class="disp" style="font-size:18px">Calm Mornings<br><span class="muted" style="font-size:12px;font-family:var(--sans)">From your provider</span></div></div>
+  </div></div>`,'Card backgrounds','a hue per card, gently rotating');
+
+/* (c) now playing */
+add('app',`<div class="phone"><div class="aura" style="background:radial-gradient(70% 50% at 50% 40%,rgba(243,205,139,.22),transparent 62%),#070510"></div>
+  <div class="center" style="margin-top:150px">
+    <div style="position:relative;width:330px;height:330px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,#f3cd8b,#a78bfa);filter:blur(50px);opacity:.4"></div>
+      <div class="mwrap breathe">${mandala(330,'gold',0.62,0.8)}</div>
+      <div style="position:absolute;text-align:center"><div class="disp" style="font-size:58px;font-weight:300">528</div><div class="muted" style="letter-spacing:4px;font-size:12px">HZ</div></div>
+    </div>
+    <div class="disp" style="font-size:22px;margin-top:28px">528 Hz · Renewal</div>
+    <div class="muted" style="font-size:14px;margin-top:2px">Solfeggio tone · Thrive Live</div>
+  </div></div>`,'Now Playing','large breathing emblem');
+
+</script>
+</body>
+</html>
