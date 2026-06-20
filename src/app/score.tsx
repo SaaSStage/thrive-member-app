@@ -68,6 +68,15 @@ export default function ScoreScreen() {
               </View>
             ) : null}
 
+            {data.newerSampleAnalyzing ? (
+              <View style={[styles.analyzingPill, styles.glass]}>
+                <ActivityIndicator color={t.primary} size="small" />
+                <Text style={[styles.analyzingText, { color: t.textSecondary }]}>
+                  Your newest sample is still analyzing — showing your last result.
+                </Text>
+              </View>
+            ) : null}
+
             <Text style={[styles.sectionTitle, { color: t.text }]}>What makes up your score</Text>
             <View style={styles.grid}>
               {data.subscores.map((s, i) => (
@@ -255,6 +264,17 @@ const styles = StyleSheet.create({
   scoreOf: { ...Type.caption, marginTop: 2 },
   trendRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 6 },
   trendText: { ...Type.subhead },
+  analyzingPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: Radius.lg,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginTop: 14,
+    alignSelf: 'stretch',
+  },
+  analyzingText: { ...Type.subhead, flex: 1 },
   sectionTitle: { ...Type.headline, marginBottom: 12, marginTop: 24 },
   glass: {
     backgroundColor: 'rgba(255,255,255,0.055)',

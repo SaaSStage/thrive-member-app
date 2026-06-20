@@ -4,6 +4,7 @@
  * outcome back into the store. Kept as a hook because the uploader needs the
  * Clerk-bound Supabase client (useSupabase). Mirrors the Flutter cubit's submit().
  */
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { useSupabase } from '@/api/supabase';
@@ -12,6 +13,7 @@ import { submitRecordings, VoiceUploadError } from '@/voice/uploader';
 
 export function useVoiceSubmission(): () => Promise<void> {
   const supabase = useSupabase();
+  const queryClient = useQueryClient();
 
   return useCallback(async () => {
     const store = useVoiceStore.getState();
@@ -26,9 +28,12 @@ export function useVoiceSubmission(): () => Promise<void> {
       );
       useVoiceStore.getState().setSubmissionId(id);
       useVoiceStore.getState().setStep('success');
+      // A new submission exists → refetch the score now so the screen picks up the
+      // 'analyzing' state and the gated polling starts (it stops once scored).
+      void queryClient.invalidateQueries({ queryKey: ['latest-score'] });
     } catch (e) {
       useVoiceStore.getState().setUploadError(e instanceof VoiceUploadError ? e.message : String(e));
       useVoiceStore.getState().setStep('review');
     }
-  }, [supabase]);
+  }, [supabase, queryClient]);
 }
