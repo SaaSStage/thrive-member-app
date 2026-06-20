@@ -2,7 +2,7 @@
   "expo": {
     "name": "thrive-member-app",
     "slug": "thrive-member-app",
-    "version": "1.0.0",
+    "version": "2.6.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "thrivememberapp",
@@ -16,6 +16,7 @@
     },
     "android": {
       "package": "com.thriveradio.app",
+      "versionCode": 26,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

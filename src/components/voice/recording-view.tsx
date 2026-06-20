@@ -12,14 +12,21 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { cancelRecording, ensureRecordingPermission, startRecording, stopRecording } from '@/audio/recorder';
+import { Aura } from '@/components/ui/aura';
 import { Button } from '@/components/ui/button';
-import { Radius, Type } from '@/constants/theme';
+import { Mandala } from '@/components/ui/mandala';
+import { Gradients, Radius, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useVoiceStore } from '@/stores/voice-store';
 import { configFor, RECORDING_ORDER } from '@/voice/recording-type';
-import { validateWav } from '@/voice/validator';
+import { validateWav, type VoiceValidationResult } from '@/voice/validator';
 
 const TICK_MS = 100;
+/** After this many failed takes for a type, offer a force-through escape hatch. */
+const FORCE_THROUGH_AFTER = 3;
+
+/** A failed take held so the user can force it through instead of re-recording. */
+type ForcedTake = { uri: string; durationMs: number; validation: VoiceValidationResult };
 
 export function VoiceRecordingView() {
   const t = useTheme();
@@ -27,6 +34,7 @@ export function VoiceRecordingView() {
   const currentIndex = useVoiceStore((s) => s.currentIndex);
   const passage = useVoiceStore((s) => s.passage);
   const captureRecording = useVoiceStore((s) => s.captureRecording);
+  const registerFailure = useVoiceStore((s) => s.registerFailure);
 
   const recordingType = RECORDING_ORDER[currentIndex];
   const cfg = configFor(recordingType);
@@ -38,6 +46,9 @@ export function VoiceRecordingView() {
   const [busy, setBusy] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  // After 3 fails for this type we keep the failing file + validation so the user
+  // can force it through instead of being stuck re-recording forever.
+  const [forcedTake, setForcedTake] = useState<ForcedTake | null>(null);
   const ticker = useRef<ReturnType<typeof setInterval> | null>(null);
   // Refs decouple the interval from the render that created it: the timer must
   // see the *current* recording state + the latest onStop (not a stale closure),
@@ -65,6 +76,7 @@ export function VoiceRecordingView() {
   async function onStart() {
     setBusy(true);
     setError(null);
+    setForcedTake(null); // re-recording supersedes any held failing take
     try {
       const granted = await ensureRecordingPermission();
       if (!granted) {
@@ -98,12 +110,22 @@ export function VoiceRecordingView() {
       const bytes = await new File(rec.uri).arrayBuffer();
       const validation = validateWav(bytes, recordingType);
       if (!validation.passed) {
+        const failCount = registerFailure(recordingType);
+        const message =
+          validation.firstFailureMessage ??
+          'That recording didn’t pass our quality check. Please try again.';
+        if (failCount >= FORCE_THROUGH_AFTER) {
+          // Stop discarding: keep the file so the user can force it through.
+          setForcedTake({ uri: rec.uri, durationMs: rec.durationMs, validation });
+          fail(message);
+          return;
+        }
         try {
           new File(rec.uri).delete();
         } catch {
           /* best-effort */
         }
-        fail(validation.firstFailureMessage ?? 'That recording didn’t pass our quality check. Please try again.');
+        fail(message);
         return;
       }
       captureRecording({
@@ -118,6 +140,20 @@ export function VoiceRecordingView() {
     } catch (e) {
       fail(`Could not finish recording: ${String(e)}`);
     }
+  }
+
+  // Force-through: submit the held failing take (validation.passed === false) and
+  // advance the flow. The file is NOT deleted, so it survives to upload.
+  function forceThrough() {
+    if (!forcedTake) return;
+    captureRecording({
+      type: recordingType,
+      uri: forcedTake.uri,
+      durationMs: forcedTake.durationMs,
+      validation: forcedTake.validation,
+      passageCode: isReading ? passage.code : undefined,
+      languageUsed: isReading ? passage.language : undefined,
+    });
   }
 
   function fail(message: string) {
@@ -141,6 +177,16 @@ export function VoiceRecordingView() {
         /* best-effort */
       }
     }
+    // A held forced take has already stopped recording, so the branch above won't
+    // reach it — delete its file here so abandoning doesn't leak the WAV. (On the
+    // "Use this recording anyway" path the file is kept and uploaded, not here.)
+    if (forcedTake) {
+      try {
+        new File(forcedTake.uri).delete();
+      } catch {
+        /* best-effort */
+      }
+    }
     router.back();
   }
 
@@ -154,7 +200,7 @@ export function VoiceRecordingView() {
   const secondsLeft = Math.ceil(remainingMs / 1000);
 
   return (
-    <View style={[styles.fill, { backgroundColor: t.background }]}>
+    <Aura>
       <SafeAreaView style={styles.fill} edges={['top', 'bottom']}>
         <View style={styles.header}>
           <Text style={[styles.headerText, { color: t.textSecondary }]}>
@@ -172,14 +218,27 @@ export function VoiceRecordingView() {
             </View>
           ) : null}
 
-          <Text
-            style={[styles.count, { color: isRecording ? t.live : t.primary }]}
-            accessibilityLabel={`${secondsLeft} seconds`}>
-            {secondsLeft}
-          </Text>
-          <Text style={[styles.countLabel, { color: t.textTertiary }]}>
-            {isRecording ? 'seconds left' : 'seconds'}
-          </Text>
+          <View style={styles.dial}>
+            <Mandala
+              size={236}
+              colors={Gradients.teal as unknown as string[]}
+              motion="breathe"
+              opacity={0.5}
+              glow={0.78}
+              breatheMs={5600}
+              dynamicBlur
+            />
+            <View style={styles.dialCenter}>
+              <Text
+                style={[styles.count, { color: t.text }]}
+                accessibilityLabel={`${secondsLeft} seconds`}>
+                {secondsLeft}
+              </Text>
+              <Text style={[styles.countLabel, { color: t.textTertiary }]}>
+                {isRecording ? 'seconds left' : 'seconds'}
+              </Text>
+            </View>
+          </View>
 
           {error ? (
             <View style={[styles.error, { backgroundColor: t.primarySoft }]}>
@@ -195,13 +254,16 @@ export function VoiceRecordingView() {
             loading={busy}
             onPress={isRecording ? onStop : onStart}
           />
+          {forcedTake && !isRecording ? (
+            <Button label="Use this recording anyway" variant="ghost" onPress={forceThrough} />
+          ) : null}
           {cfg.hasAudioExample && !isRecording ? (
             <Button label="Hear example (coming soon)" variant="ghost" onPress={() => {}} disabled />
           ) : null}
           <Button label={isRecording ? 'Cancel recording' : 'Cancel'} variant="ghost" onPress={() => void onCancel()} />
         </View>
       </SafeAreaView>
-    </View>
+    </Aura>
   );
 }
 
@@ -215,8 +277,10 @@ const styles = StyleSheet.create({
   passage: { borderRadius: Radius.xl, padding: 20, marginTop: 20, alignSelf: 'stretch' },
   passageTitle: { ...Type.bodyStrong, marginBottom: 10 },
   passageBody: { fontSize: 18, lineHeight: 27 },
-  count: { fontSize: 72, fontWeight: '800', marginTop: 28, fontVariant: ['tabular-nums'] },
-  countLabel: { ...Type.subhead, marginTop: -4 },
+  dial: { width: 236, height: 236, alignItems: 'center', justifyContent: 'center', marginTop: 24 },
+  dialCenter: { position: 'absolute', alignItems: 'center' },
+  count: { ...Type.numeral, fontSize: 64, fontVariant: ['tabular-nums'] },
+  countLabel: { ...Type.subhead, marginTop: 2 },
   error: { borderRadius: Radius.lg, padding: 12, marginTop: 20, alignSelf: 'stretch' },
   errorText: { ...Type.callout, textAlign: 'center' },
   footer: { paddingHorizontal: 24, paddingBottom: 12, gap: 10 },

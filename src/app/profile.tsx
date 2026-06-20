@@ -24,6 +24,7 @@ import {
   type SmokingStatus,
   type VocalCondition,
 } from '@/api/profile';
+import { Aura } from '@/components/ui/aura';
 import { Button } from '@/components/ui/button';
 import { MultiSelect, SingleSelect, YearField } from '@/components/voice/profile-fields';
 import { Type } from '@/constants/theme';
@@ -65,7 +66,7 @@ export default function ProfileEdit() {
   }
 
   return (
-    <View style={[styles.fill, { backgroundColor: t.background }]}>
+    <Aura>
       <SafeAreaView style={styles.fill} edges={['top', 'bottom']}>
         {isLoading ? (
           <View style={styles.loading}>
@@ -102,7 +103,7 @@ export default function ProfileEdit() {
           </>
         )}
       </SafeAreaView>
-    </View>
+    </Aura>
   );
 }
 

@@ -10,7 +10,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { VoiceRecordingView } from '@/components/voice/recording-view';
 import { VoiceReviewView } from '@/components/voice/review-view';
+import { Aura } from '@/components/ui/aura';
 import { Button } from '@/components/ui/button';
+import { MicGlyph } from '@/components/ui/mic-glyph';
 import { Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useVoiceStore } from '@/stores/voice-store';
@@ -47,10 +49,12 @@ function IntroView() {
   const router = useRouter();
   const begin = useVoiceStore((s) => s.begin);
   return (
-    <View style={[styles.fill, { backgroundColor: t.background }]}>
+    <Aura>
       <SafeAreaView style={styles.centered} edges={['top', 'bottom']}>
         <View style={styles.heroContent}>
-          <Text style={[styles.icon]}>🎙️</Text>
+          <View style={styles.micWrap}>
+            <MicGlyph size={84} />
+          </View>
           <Text style={[styles.title, { color: t.text }]}>Record three short samples</Text>
           <Text style={[styles.body, { color: t.textSecondary }]}>
             We’ll record three short audio samples. Total time is about 90 seconds. Find a quiet space
@@ -62,7 +66,7 @@ function IntroView() {
           <Button label="Cancel" variant="ghost" onPress={() => router.back()} />
         </View>
       </SafeAreaView>
-    </View>
+    </Aura>
   );
 }
 
@@ -72,7 +76,7 @@ function UploadingView() {
   const total = useVoiceStore((s) => Object.keys(s.captured).length);
   const stillUploading = uploaded < total;
   return (
-    <View style={[styles.fill, { backgroundColor: t.background }]}>
+    <Aura>
       <SafeAreaView style={styles.centered} edges={['top', 'bottom']}>
         <View style={styles.heroContent}>
           <ActivityIndicator color={t.primary} size="large" />
@@ -82,7 +86,7 @@ function UploadingView() {
           <Text style={[styles.body, { color: t.textSecondary }]}>Please keep the app open.</Text>
         </View>
       </SafeAreaView>
-    </View>
+    </Aura>
   );
 }
 
@@ -90,7 +94,7 @@ function SuccessView() {
   const t = useTheme();
   const router = useRouter();
   return (
-    <View style={[styles.fill, { backgroundColor: t.background }]}>
+    <Aura>
       <SafeAreaView style={styles.centered} edges={['top', 'bottom']}>
         <View style={styles.heroContent}>
           <Text style={[styles.icon, { color: t.success }]}>✓</Text>
@@ -103,7 +107,7 @@ function SuccessView() {
           <Button label="Done" variant="primary" onPress={() => router.back()} />
         </View>
       </SafeAreaView>
-    </View>
+    </Aura>
   );
 }
 
@@ -111,6 +115,8 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   centered: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 32 },
   heroContent: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
+  micWrap: { width: 210, height: 210, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  center: { alignItems: 'center', justifyContent: 'center' },
   icon: { fontSize: 64 },
   title: { ...Type.sectionTitle, textAlign: 'center' },
   body: { ...Type.body, textAlign: 'center', maxWidth: 300 },

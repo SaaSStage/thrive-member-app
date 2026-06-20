@@ -1,79 +1,80 @@
 import { useRouter, type Href } from 'expo-router';
-import { useAudioPlayerStatus } from 'expo-audio';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { playStation, radioPlayer, stopPlayback } from '@/audio/player';
+import { Aura } from '@/components/ui/aura';
 import { Button } from '@/components/ui/button';
-import { Radius } from '@/constants/theme';
+import { Mandala } from '@/components/ui/mandala';
+import { YGlyph } from '@/components/ui/y-glyph';
+import { Gradients, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-// TEMP (__DEV__ only): the AUDIO-PLAYBACK.md Day-1 gate — confirm expo-audio
-// plays the seeded HLS station before/without the full auth path. Remove once
-// playback is verified and wired through the real Radio screen.
-const HLS_TEST = {
-  id: 'hls_test',
-  code: 'hls_test',
-  name: 'THRIVE Radio (HLS)',
-  stream_url: 'https://azuracast-radio-u62352.vm.elestio.app/hls/hls_test/live.m3u8',
-};
-
-function DevAudioTest() {
-  const t = useTheme();
-  const status = useAudioPlayerStatus(radioPlayer);
-  return (
-    <View style={{ gap: 8, marginTop: 20 }}>
-      <Button
-        label={status.playing ? 'DEV: Stop' : 'DEV: Play hls_test'}
-        variant="ghost"
-        onPress={() => (status.playing ? stopPlayback() : playStation(HLS_TEST))}
-      />
-      <Text style={{ color: t.textTertiary, fontSize: 11, textAlign: 'center', lineHeight: 16 }}>
-        {`playing=${status.playing}  buffering=${status.isBuffering}  live=${status.isLive}`}
-        {`\noffsetFromLive=${status.currentOffsetFromLive ?? '—'}  t=${status.currentTime.toFixed(1)}s`}
-        {`\nerror=${status.error ?? 'none'}`}
-      </Text>
-    </View>
-  );
-}
+const LOGO = require('../../../assets/images/logo-cut2.png');
 
 export default function Welcome() {
   const t = useTheme();
   const router = useRouter();
 
   return (
-    <View style={[styles.fill, { backgroundColor: t.background }]}>
+    <Aura>
       <SafeAreaView style={styles.safe}>
         <View style={styles.hero}>
-          <View style={[styles.logo, { backgroundColor: t.vitality }]} />
-          <Text style={[styles.brand, { color: t.text }]}>Thrive</Text>
+          {/* Breathing gold mandala sits BEHIND the lockup; the brand text below
+              renders after it, so the mandala never covers the text. */}
+          <View style={styles.emblem}>
+            <View style={styles.mandalaWrap} pointerEvents="none">
+              <Mandala
+                size={300}
+                colors={Gradients.gold as unknown as string[]}
+                motion="breathe"
+                opacity={0.62}
+                glow={0.7}
+                breatheMs={4500}
+                breatheRange={0.26}
+                dynamicBlur
+              />
+            </View>
+            {/* Y · [logo] · Y  →  YOY "You Only Younger" */}
+            <View style={styles.lockup}>
+              <YGlyph h={108} />
+              <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+              <YGlyph h={108} />
+            </View>
+          </View>
+          <Text style={[styles.brand, { color: t.text }]}>Thrive Radio</Text>
           <Text style={[styles.tagline, { color: t.textSecondary }]}>
-            Your provider&apos;s stations, playlists, and voice wellness — in one place.
+            You Only Younger — healing frequencies, attuned to you.
           </Text>
         </View>
 
         <View style={styles.actions}>
-          <Button
-            label="Sign in with email"
-            onPress={() => router.push('/(auth)/sign-in' as Href)}
-          />
+          <Button label="Tune in" onPress={() => router.push('/(auth)/sign-in' as Href)} />
           <Text style={[styles.fine, { color: t.textTertiary }]}>
             Access is provided by your care provider.
           </Text>
-          {__DEV__ ? <DevAudioTest /> : null}
         </View>
       </SafeAreaView>
-    </View>
+    </Aura>
   );
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  safe: { flex: 1, paddingHorizontal: 32, justifyContent: 'space-between', paddingVertical: 56 },
-  hero: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
-  logo: { width: 96, height: 96, borderRadius: Radius.xxl },
-  brand: { fontSize: 30, fontWeight: '800', letterSpacing: -0.5, marginTop: 18 },
-  tagline: { fontSize: 17, textAlign: 'center', maxWidth: 280, lineHeight: 23 },
-  actions: { gap: 14 },
-  fine: { fontSize: 13, textAlign: 'center' },
+  safe: { flex: 1, paddingHorizontal: 30, justifyContent: 'space-between', paddingVertical: 56 },
+  hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emblem: { width: 320, height: 200, alignItems: 'center', justifyContent: 'center' },
+  mandalaWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lockup: { flexDirection: 'row', alignItems: 'center' },
+  logo: { width: 138, height: 138, marginHorizontal: -12 },
+  brand: { ...Type.largeTitle, fontSize: 34, marginTop: 20 },
+  tagline: { ...Type.body, fontSize: 15, textAlign: 'center', maxWidth: 250, marginTop: 8 },
+  actions: { gap: 16 },
+  fine: { ...Type.subhead, textAlign: 'center' },
 });

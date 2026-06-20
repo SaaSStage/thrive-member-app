@@ -4,13 +4,14 @@
  * Two layers, by design:
  *   1) `palette` — raw named colors (the literal hex values).
  *   2) `Colors.dark` / `Colors.light` — *semantic roles* (primary, surface,
- *      textPrimary, vitality, …) that point AT palette entries.
+ *      text, vitality, …) that point AT palette entries.
  *
  * Screens must consume semantic roles only (e.g. `theme.primary`), never raw
- * hex. To change the entire look later, edit the palette and/or the role
- * mapping here — nothing else in the app should hardcode a color.
+ * hex. To change the entire look, edit the palette and/or the role mapping here.
  *
- * Aesthetic source of truth: docs/wireframes/screens.html (Apple Music, dark).
+ * Aesthetic source of truth: docs/wireframes/screens-thrive-concept.html
+ * ("Resonance" — dark plum aurora, glass cards, sacred-geometry mandalas, all
+ * color radiating from the mandala; Sora display + Inter body).
  */
 
 import { Platform } from 'react-native';
@@ -19,169 +20,157 @@ import { Platform } from 'react-native';
  * 1) Raw palette. Rename/retune here to re-skin.
  * ------------------------------------------------------------------------- */
 const palette = {
-  // Brand accents (shared across light/dark)
-  pink: '#fa2d48', // primary action · play · LIVE
-  green: '#30d158', // vitality / score / "pass"
-  blue: '#0a84ff', // links
-  orange: '#ff9f0a', // "warn"
-  purple: '#bf5af2',
-  pinkSoft: 'rgba(250,45,72,0.16)', // tinted primary button bg
-  blueSoft: 'rgba(10,132,255,0.12)', // tinted info banner bg
-  onGreen: '#04210e', // text/icon on green fills
+  // Spectral accents (the mandala hues)
+  teal: '#5eead4',
+  indigo: '#818cf8',
+  violet: '#a78bfa',
+  rose: '#f0a6d8',
+  gold: '#f3cd8b',
+  amber: '#ff9f5a',
+  onAccent: '#0a0814', // text/icon on bright accent fills
 
-  // Dark neutrals
-  black: '#000000',
-  ink900: '#0c0c0e',
-  ink800: '#161618',
-  card: '#1c1c1e',
-  card2: '#2c2c2e',
-  hairlineDark: '#38383a',
-  white: '#ffffff',
-  grey2Dark: '#9a9aa0',
-  grey3Dark: '#6c6c70',
+  // Deep plum surfaces
+  bg: '#0b0814',
+  bgElev: '#0d0a1b',
+  glass: 'rgba(255,255,255,0.055)', // translucent card
+  glass2: 'rgba(255,255,255,0.10)', // raised translucent
+  hairline: 'rgba(255,255,255,0.11)',
 
-  // Light neutrals
-  paper: '#ffffff',
-  paper2: '#f2f2f7',
-  surfaceLight: '#ffffff',
-  surfaceLight2: '#e5e5ea',
-  hairlineLight: '#d1d1d6',
-  textLight: '#000000',
-  grey2Light: '#60646c',
-  grey3Light: '#8a8a8e',
+  // Text
+  textHi: '#f5f2ee',
+  textMid: '#a8a6c0',
+  textLo: '#6e6b8a',
+
+  // Soft accent tints
+  violetSoft: 'rgba(167,139,250,0.16)',
+  tealSoft: 'rgba(94,234,212,0.14)',
 } as const;
 
 /* ---------------------------------------------------------------------------
- * 2) Semantic roles. Both schemes MUST declare the same keys.
+ * 2) Semantic roles. Both schemes MUST declare the same keys. The app is
+ *    dark-locked (see use-theme), so `light` simply mirrors `dark`.
  * ------------------------------------------------------------------------- */
-export const Colors = {
-  dark: {
-    // surfaces
-    background: palette.black,
-    backgroundElevated: palette.ink900,
-    surface: palette.card,
-    surfaceElevated: palette.card2,
-    hairline: palette.hairlineDark,
-    // text
-    text: palette.white,
-    textSecondary: palette.grey2Dark,
-    textTertiary: palette.grey3Dark,
-    // actions / accents
-    primary: palette.pink,
-    onPrimary: palette.white,
-    primarySoft: palette.pinkSoft,
-    vitality: palette.green,
-    onVitality: palette.onGreen,
-    voice: palette.purple, // voice check-in accent
-    onVoice: palette.white,
-    link: palette.blue,
-    linkSoft: palette.blueSoft,
-    live: palette.pink,
-    // tab bar
-    tabActive: palette.pink,
-    tabInactive: palette.grey3Dark,
-    // status (voice validation: pass / warn / fail)
-    success: palette.green,
-    warning: palette.orange,
-    danger: palette.pink,
-    // legacy aliases (kept so ThemedText/ThemedView don't break)
-    backgroundElement: palette.card,
-    backgroundSelected: palette.card2,
-  },
-  light: {
-    background: palette.paper,
-    backgroundElevated: palette.paper2,
-    surface: palette.surfaceLight,
-    surfaceElevated: palette.surfaceLight2,
-    hairline: palette.hairlineLight,
-    text: palette.textLight,
-    textSecondary: palette.grey2Light,
-    textTertiary: palette.grey3Light,
-    primary: palette.pink,
-    onPrimary: palette.white,
-    primarySoft: palette.pinkSoft,
-    vitality: palette.green,
-    onVitality: palette.onGreen,
-    voice: palette.purple,
-    onVoice: palette.white,
-    link: palette.blue,
-    linkSoft: palette.blueSoft,
-    live: palette.pink,
-    tabActive: palette.pink,
-    tabInactive: palette.grey3Light,
-    success: palette.green,
-    warning: palette.orange,
-    danger: palette.pink,
-    backgroundElement: palette.paper2,
-    backgroundSelected: palette.surfaceLight2,
-  },
+const dark = {
+  // surfaces
+  background: palette.bg,
+  backgroundElevated: palette.bgElev,
+  surface: palette.glass,
+  surfaceElevated: palette.glass2,
+  hairline: palette.hairline,
+  // text
+  text: palette.textHi,
+  textSecondary: palette.textMid,
+  textTertiary: palette.textLo,
+  // actions / accents
+  primary: palette.violet,
+  onPrimary: palette.onAccent,
+  primarySoft: palette.violetSoft,
+  vitality: palette.gold, // vitality / score
+  onVitality: palette.onAccent,
+  voice: palette.teal, // voice check-in accent
+  onVoice: palette.onAccent,
+  link: palette.teal,
+  linkSoft: palette.tealSoft,
+  live: palette.teal,
+  // tab bar
+  tabActive: palette.gold,
+  tabInactive: palette.textLo,
+  // status (voice validation: pass / warn / fail)
+  success: palette.teal,
+  warning: palette.amber,
+  danger: palette.rose,
+  // legacy aliases (kept so ThemedText/ThemedView don't break)
+  backgroundElement: palette.glass,
+  backgroundSelected: palette.glass2,
 } as const;
+
+export const Colors = { dark, light: dark } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 /* ---------------------------------------------------------------------------
- * Artwork gradients (decorative tiles). Consumed via a LinearGradient later.
- * Keys mirror the wireframe (g1..g7, score).
+ * Mandala / artwork gradients. Consumed by <Mandala> and <ArtTile>.
  * ------------------------------------------------------------------------- */
 export const Gradients = {
-  g1: ['#ff6a3d', '#fa2d48'],
-  g2: ['#0a84ff', '#30d1c8'],
-  g3: ['#bf5af2', '#fa2d48'],
-  g4: ['#30d158', '#0a84ff'],
-  g5: ['#ff9f0a', '#ff375f'],
-  g6: ['#5e5ce6', '#0a84ff'],
-  g7: ['#2c2c2e', '#3a3a3c'],
-  score: ['#30d158', '#0a84ff'],
+  g1: ['#5eead4', '#818cf8'], // teal → indigo
+  g2: ['#a78bfa', '#f0a6d8'], // violet → rose
+  g3: ['#f3cd8b', '#f0a6d8'], // gold → rose
+  g4: ['#22d3ee', '#a78bfa'], // cyan → violet
+  g5: ['#34d399', '#5eead4'], // green → teal
+  g6: ['#6366f1', '#a78bfa'], // indigo → violet
+  g7: ['#2c2c3a', '#3a3a4c'], // neutral
+  score: ['#5eead4', '#a78bfa', '#f3cd8b'], // vitality ring
+  spectral: ['#5eead4', '#818cf8', '#a78bfa', '#f0a6d8', '#f3cd8b'],
+  gold: ['#fff6d8', '#f3cd8b', '#c8961f', '#8a5a0f'],
+  violet: ['#c4b5fd', '#a78bfa', '#6d28d9'],
+  teal: ['#d6fff5', '#5eead4', '#0e8f80'],
+  button: ['#5eead4', '#818cf8', '#a78bfa'], // primary CTA
 } as const;
 
 export type GradientName = keyof typeof Gradients;
 
+/**
+ * Hues for content tiles (stations/playlists/frequencies). Deliberately
+ * EXCLUDES teal (reserved for Voice) and solid gold (reserved for Vitality) so
+ * content never clashes with those fixed roles. Assign by list position for
+ * variety, or hash a seed for a stable per-item color.
+ */
+export const ContentHues: string[][] = [
+  ['#c4b5fd', '#a78bfa'], // violet
+  ['#f3cd8b', '#f0a6d8'], // gold → rose
+  ['#818cf8', '#a78bfa'], // indigo → violet
+  ['#ffd9a0', '#ff9f5a'], // amber
+  ['#a78bfa', '#f0a6d8'], // violet → rose
+];
+
 /* ---------------------------------------------------------------------------
- * Typography scale (maps to the wireframe's text sizes/weights).
+ * Fonts. Sora = display/headings/numerals; Inter = body. Loaded in _layout.
+ * (Weight-specific families — RN ignores fontWeight when fontFamily is set.)
  * ------------------------------------------------------------------------- */
-export const Type = {
-  largeTitle: { fontSize: 32, fontWeight: '800', letterSpacing: -0.6 },
-  screenTitle: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
-  sectionTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.4 },
-  headline: { fontSize: 19, fontWeight: '700' },
-  bodyStrong: { fontSize: 15, fontWeight: '600' },
-  body: { fontSize: 15, fontWeight: '400', lineHeight: 21 },
-  callout: { fontSize: 14, fontWeight: '400' },
-  subhead: { fontSize: 13, fontWeight: '400' },
-  footnote: { fontSize: 12, fontWeight: '400' },
-  caption: { fontSize: 11, fontWeight: '700' },
+export const Font = {
+  displayLight: 'Sora_300Light',
+  displayMed: 'Sora_500Medium',
+  display: 'Sora_600SemiBold',
+  displayBold: 'Sora_700Bold',
+  body: 'Inter_400Regular',
+  bodyMed: 'Inter_500Medium',
+  bodySemi: 'Inter_600SemiBold',
+  bodyBold: 'Inter_700Bold',
 } as const;
 
 /* ---------------------------------------------------------------------------
- * Corner radii (from the wireframe: tiles, cards, buttons, phone frame).
+ * Typography scale. Tokens carry fontFamily; spread them into text styles.
+ * ------------------------------------------------------------------------- */
+export const Type = {
+  largeTitle: { fontFamily: Font.displayBold, fontSize: 32, letterSpacing: -0.5 },
+  screenTitle: { fontFamily: Font.display, fontSize: 28, letterSpacing: -0.4 },
+  sectionTitle: { fontFamily: Font.display, fontSize: 22, letterSpacing: -0.3 },
+  headline: { fontFamily: Font.displayMed, fontSize: 19 },
+  bodyStrong: { fontFamily: Font.bodySemi, fontSize: 15 },
+  body: { fontFamily: Font.body, fontSize: 15, lineHeight: 21 },
+  callout: { fontFamily: Font.body, fontSize: 14 },
+  subhead: { fontFamily: Font.body, fontSize: 13 },
+  footnote: { fontFamily: Font.body, fontSize: 12 },
+  caption: { fontFamily: Font.bodySemi, fontSize: 11, letterSpacing: 0.6 },
+  numeral: { fontFamily: Font.displayBold, letterSpacing: -1 }, // big scores; set fontSize at call site
+} as const;
+
+/* ---------------------------------------------------------------------------
+ * Corner radii.
  * ------------------------------------------------------------------------- */
 export const Radius = {
   xs: 6,
   sm: 8,
   md: 10,
   lg: 14,
-  xl: 16,
-  xxl: 24,
+  xl: 18,
+  xxl: 22,
   pill: 999,
 } as const;
 
 export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
+  ios: { sans: 'system-ui', serif: 'ui-serif', rounded: 'ui-rounded', mono: 'ui-monospace' },
+  default: { sans: 'normal', serif: 'serif', rounded: 'normal', mono: 'monospace' },
   web: {
     sans: 'var(--font-display)',
     serif: 'var(--font-serif)',

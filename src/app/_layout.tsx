@@ -1,5 +1,18 @@
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
+import {
+  Sora_300Light,
+  Sora_500Medium,
+  Sora_600SemiBold,
+  Sora_700Bold,
+  useFonts,
+} from '@expo-google-fonts/sora';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -36,6 +49,16 @@ function RootNavigator() {
   const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const [fontsLoaded] = useFonts({
+    Sora_300Light,
+    Sora_500Medium,
+    Sora_600SemiBold,
+    Sora_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -47,7 +70,7 @@ function RootNavigator() {
     }
   }, [isLoaded, isSignedIn, segments, router]);
 
-  if (!isLoaded) return <Splash />;
+  if (!isLoaded || !fontsLoaded) return <Splash />;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

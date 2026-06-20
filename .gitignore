@@ -52,3 +52,6 @@ example
 modules/*/android/build/
 modules/*/android/.cxx/
 modules/*/ios/build/
+
+# Signing secrets (keep a secure backup elsewhere; never commit)
+/credentials/

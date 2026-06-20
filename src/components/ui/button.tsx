@@ -1,8 +1,12 @@
 /**
- * Themed button primitive. Variants map to the wireframe's button styles
- * (primary = pink, green = vitality, ghost = elevated surface, tint = soft
- * primary). Consumes semantic theme roles only — no hardcoded color.
+ * Themed button primitive.
+ *   primary — spectral gradient pill (teal→indigo→violet), dark label
+ *   green   — solid vitality fill
+ *   ghost   — translucent glass
+ *   tint    — soft primary
+ * Consumes semantic theme roles only — no hardcoded color.
  */
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   ActivityIndicator,
   Pressable,
@@ -12,7 +16,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { Radius } from '@/constants/theme';
+import { Gradients, Radius, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type Variant = 'primary' | 'green' | 'ghost' | 'tint';
@@ -33,21 +37,43 @@ export function Button({
   style?: StyleProp<ViewStyle>;
 }) {
   const t = useTheme();
+  const isDisabled = disabled || loading;
 
-  const bg: Record<Variant, string> = {
-    primary: t.primary,
-    green: t.vitality,
-    ghost: t.surfaceElevated,
-    tint: t.primarySoft,
-  };
   const fg: Record<Variant, string> = {
     primary: t.onPrimary,
     green: t.onVitality,
     ghost: t.text,
     tint: t.primary,
   };
+  const solidBg: Record<Variant, string | undefined> = {
+    primary: undefined, // gradient
+    green: t.vitality,
+    ghost: t.surfaceElevated,
+    tint: t.primarySoft,
+  };
 
-  const isDisabled = disabled || loading;
+  const content = loading ? (
+    <ActivityIndicator color={fg[variant]} />
+  ) : (
+    <Text style={[styles.label, { color: fg[variant] }]}>{label}</Text>
+  );
+
+  if (variant === 'primary') {
+    return (
+      <Pressable
+        onPress={onPress}
+        disabled={isDisabled}
+        style={({ pressed }) => [styles.wrap, { opacity: isDisabled ? 0.5 : pressed ? 0.9 : 1 }, style]}>
+        <LinearGradient
+          colors={Gradients.button as unknown as [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.btn}>
+          {content}
+        </LinearGradient>
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable
@@ -55,28 +81,23 @@ export function Button({
       disabled={isDisabled}
       style={({ pressed }) => [
         styles.btn,
-        { backgroundColor: bg[variant], opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1 },
+        variant === 'ghost' && { borderWidth: 1, borderColor: t.hairline },
+        { backgroundColor: solidBg[variant], opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1 },
         style,
       ]}>
-      {loading ? (
-        <ActivityIndicator color={fg[variant]} />
-      ) : (
-        <Text style={[styles.label, { color: fg[variant] }]}>{label}</Text>
-      )}
+      {content}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: { borderRadius: Radius.xl, overflow: 'hidden' },
   btn: {
-    height: 50,
-    borderRadius: Radius.lg,
+    height: 54,
+    borderRadius: Radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
   },
-  label: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
+  label: { ...Type.bodyStrong, fontSize: 16 },
 });

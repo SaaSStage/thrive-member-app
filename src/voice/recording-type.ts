@@ -35,6 +35,18 @@ export type RecordingTypeConfig = {
    */
   minValidMs: number;
   /**
+   * Minimum voiced speech (ms) the VAD must detect for this type. For
+   * `sustained_vowel` this is enforced as the longest CONTINUOUS voiced run; for
+   * the others it is TOTAL voiced time. Unvalidated on hardware — tune on-device.
+   */
+  // THRESHOLD: tune on-device (LOE risk #6)
+  minVoicedMs: number;
+  /**
+   * When true, `minVoicedMs` is checked against the longest contiguous voiced run
+   * (a sustained vowel must be held); when false, against total voiced time.
+   */
+  requiresContinuousVoiced: boolean;
+  /**
    * Whether a bundled "Hear example" clip exists. The reading passage has none —
    * the text is the prompt. (Example WAV assets are not yet supplied; the button
    * surfaces a graceful placeholder until they are — matches Flutter v1.)
@@ -53,6 +65,9 @@ export const RECORDING_CONFIG: Record<VoiceRecordingType, RecordingTypeConfig> =
       "Take a comfortable breath, then sustain the sound naturally. It's OK to pause and breathe if needed.",
     targetMs: 30_000,
     minValidMs: 20_000,
+    // THRESHOLD: tune on-device (LOE risk #6)
+    minVoicedMs: 4_000,
+    requiresContinuousVoiced: true,
     hasAudioExample: true,
     stepNumber: 1,
   },
@@ -63,6 +78,9 @@ export const RECORDING_CONFIG: Record<VoiceRecordingType, RecordingTypeConfig> =
     instruction: 'Read at your natural conversational pace. Don’t rush.',
     targetMs: 35_000,
     minValidMs: 15_000,
+    // THRESHOLD: tune on-device (LOE risk #6)
+    minVoicedMs: 20_000,
+    requiresContinuousVoiced: false,
     hasAudioExample: false,
     stepNumber: 2,
   },
@@ -74,6 +92,9 @@ export const RECORDING_CONFIG: Record<VoiceRecordingType, RecordingTypeConfig> =
       "Repeat the syllables 'pa-ta-ka, pa-ta-ka' as quickly and clearly as you can.",
     targetMs: 10_000,
     minValidMs: 6_000,
+    // THRESHOLD: tune on-device (LOE risk #6)
+    minVoicedMs: 6_000,
+    requiresContinuousVoiced: false,
     hasAudioExample: true,
     stepNumber: 3,
   },

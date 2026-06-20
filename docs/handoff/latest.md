@@ -1,67 +1,44 @@
-# Session handoff — Voice analysis v1 + score breakdown, on `feat/voice-flow`
+# Handoff — 2026-06-19
 
-**Date:** 2026-06-18
-**Branch:** `feat/voice-flow` (ahead of `main`; see `git log main..HEAD`). Pushed + PR opened (see PR link in the session / `gh pr view`).
+## What we did
+Re-skinned the THRIVE member app with the **sacred-geometry "mandala" visual concept** and produced a
+**Google Play upgrade** build of the existing `com.thriveradio.app`.
 
-## TL;DR
-Built the **entire voice-analysis v1 feature** plus the **vitality score breakdown**
-in the RN/Expo app, spec-first. The make-or-break risk — recording spec-compliant
-WAV on this RN 0.85 / New Arch / Windows stack — is **solved and verified on the
-Android emulator**. The emulator turned out to have a **persisted login**, so the
-authenticated screens were render-verified too. All code is `tsc` + lint clean (one
-pre-existing unrelated error) and unit-tested (8/8). What still needs a real device:
-the full record→upload with real audio, the new password login, and iOS.
+- New design language (ADR 0002): `<Aura>` plum background, dark glass cards, `<Mandala>` (svg rosette
+  + glow + breathe/rotate), Sora + Inter fonts, `theme.ts` as the single re-skin point. Committed as
+  **`7d92a1f`** on `feat/voice-flow` (pushed to origin).
+- Screens reskinned + verified on the Android emulator: **entry (YOY "Thrive Radio")**, **Home**,
+  **My Vitality**, plus voice flow (sleek vector mic, recording dial) and profile (Aura). Entry +
+  dials use **breath-coupled blur** (fuzzy→sharp via opacity cross-fade): ~4.5s on entry, ~5.6s on
+  dials; gold=Vitality, teal=Voice, content tiles use a teal-free `ContentHues` palette.
+- Built signed release artifacts (ADR 0003): APK + **AAB**, signed with the production `thrive-radio`
+  key, **versionCode 25 / versionName 2.6.0**. AAB at
+  `android/app/build/outputs/bundle/release/app-release.aab`.
 
-## The recorder decision (the important one)
-Both third-party WAV recorders **failed to build** on this stack:
-- `@siteed/audio-studio` — Android Kotlin doesn't compile against SDK 56's Expo Modules API.
-- `react-native-audio-api` (Software Mansion) — Android CMake downloads iOS `.xcframework`s whose **symlinks fail to unzip on Windows**, breaking codegen.
+## State
+- Branch `feat/voice-flow`; last commit `7d92a1f` (the re-skin) is pushed.
+- **Uncommitted since:** `app.json` version bump (2.6.0 / versionCode 25). `android/` is gitignored
+  (CNG, not committed). `credentials/` (keystore + `key.properties`) is gitignored — keep a backup.
+- AAB was uploaded to Play **Internal testing**; it triggered the **Advertising-ID declaration error**
+  (declaration says "uses ad ID", new bundle omits `AD_ID`). The 3 warnings (dropped devices / size /
+  no deobfuscation file) are non-blocking.
 
-So per [docs/AUDIO-PLAYBACK.md](../AUDIO-PLAYBACK.md)'s "thin native module"
-contingency, we ship an **owned Expo module** [modules/voice-recorder/](../../modules/voice-recorder/)
-— pure Kotlin `AudioRecord` → streamed 44.1 kHz/16-bit/mono PCM WAV (no C++/CMake/
-downloads). **VERIFIED** recording a real spec WAV on the emulator. iOS Swift
-(`AVAudioRecorder` LinearPCM) is written but **not device-tested** (needs the Mac).
+## Next step
+1. **Play Console:** set **Advertising ID declaration → "No"** (Policy → App content → Advertising ID),
+   then finish the Internal testing rollout. (See ADR 0003.)
+2. Optionally **commit the `app.json` version bump** (2.6.0 / 25) so the repo matches what shipped.
+3. Skin the **remaining screens** still on inherited theme only: Now Playing, Frequencies/Radio tab +
+   station detail, Library, Search.
+4. iOS not built/verified (needs a Mac); the concept is cross-platform (svg/gradient/fonts).
 
-## What's built (all committed)
-- **Spec:** [docs/specs/voice-flow-rn-v1.md](../specs/voice-flow-rn-v1.md)
-- **Recorder:** `modules/voice-recorder/` + `src/audio/recorder.ts` (pauses live radio for the session).
-- **Pure logic** (unit-tested): `src/voice/recording-type.ts`, `passages.ts`, `validator.ts` (ported from v3 Flutter; validator now derives min-duration from the shared recording-type config — no duplication).
-- **Upload:** `src/voice/uploader.ts` + `use-voice-submission.ts` — signed-URL upload + `voice_submissions`/`voice_recordings` inserts + `analyze-voice` trigger, matching the SHARED v3 backend (project `yotaqkgfpifomudtwgzr` — functions/tables/RLS already deployed, **no backend work**). Uses `expo-crypto` `randomUUID()`.
-- **Voice flow (Screens A–G):** `src/app/voice.tsx` host + `recording-view.tsx` + `review-view.tsx`, with **Cancel/abort** on the recording + review screens and a safety-net unmount that stops the native recorder by any exit path.
-- **Profile (spec §2/§2.3/§8):** `src/api/profile.ts`, `profile-setup.tsx` wizard, `profile.tsx` edit, `account.tsx`, `profile-banner.tsx`.
-- **Vitality score:** `src/api/score.ts` (`useLatestScore`) + `src/app/score.tsx` breakdown screen (composite score + the 4 subscores with bars; none/analyzing/ready states).
-- **Login:** `src/app/(auth)/sign-in.tsx` now **email-or-username + password** (Clerk), with email-code kept only as a 2FA fallback. (Was email-code OTP.)
-- **Wiring:** Home vitality card → score breakdown (shows the real number); voice card → check-in flow (gated on a complete profile); avatar → Account. Routes registered in `_layout.tsx`. jest-expo test runner (`npm test`).
-
-## Verified ✅ (on the Android emulator, live signed-in session)
-- Custom recorder builds (New Arch) and records a spec-compliant WAV.
-- Home renders the real **Vitality Score = 92**; tapping it opens the **breakdown**
-  (Emotional Wellness 100 / Cognitive Clarity 100 / Physical Energy 100 / Voice
-  Power 67 — and 92 ≈ their equal-weighted average, so it's reading real data).
-- Voice flow **intro** renders; profile gating routes correctly.
-- Validator unit tests 8/8; `tsc` clean; `expo lint` clean except one **pre-existing**
-  error in `src/hooks/use-color-scheme.web.ts` (untouched).
-- Code-review pass done; 1 critical (auto-stop no-op) + 4 convention findings fixed.
-
-## YOU need to test on a real device (couldn't be done on the emulator)
-1. **Full record → upload with real audio.** The emulator mic is silent, so validation
-   (correctly) rejects clips — a passing recording + the live upload (signed URLs →
-   DB rows → analyze-voice) needs a real phone.
-2. **Auto-stop save.** Let a recording run to its full target (e.g. the 30s vowel) and
-   confirm it saves + advances (this was the critical review bug; fixed via refs).
-3. **Password login.** Sign out (Account → Sign out) and sign back in with
-   email/username + password.
-
-## Next steps
-1. Device-test 1–3 above; fix anything that surfaces.
-2. iOS: build + verify the Swift recorder (needs the Mac).
-3. (Optional) Score screen could also surface the backend's narrative, trend vs.
-   prior submissions, and recommended protocols — net-new scope.
-
-## Environment notes (don't re-chase)
-- Android builds need `ANDROID_HOME` + `android/local.properties` (`sdk.dir=...`);
-  `android/` is gitignored (CNG — regenerated from app.json + the module via prebuild).
-- Native code changes need a rebuild (`npx expo run:android`); JS hot-reloads.
-- Dev client hangs on a black screen = wedged Metro workers → kill all node, start one
-  fresh Metro (`npx expo start --dev-client`). See memory `metro-emulator-dev-server-recovery`.
+## Watch out
+- **Emulator dev-client wedges** after many rapid force-stop/reload cycles (stuck on splash or black;
+  app process alive, no JS error). Recovery: **cold-boot the emulator** + clean `expo run:android`.
+  Relaunch via the dev-client deep link
+  `thrivememberapp://expo-development-client/?url=http://localhost:8081` + `adb reverse tcp:8081 tcp:8081`
+  — not `monkey` (stale 10.0.2.2 URL). adb taps onto animated cards are flaky — verify by rendering,
+  not tapping. (Extends memory `metro-emulator-dev-server-recovery`.)
+- After any `expo prebuild --clean`, **re-apply the release signingConfig** in
+  `android/app/build.gradle` — `android/` is regenerated. See `docs/lessons/expo-cng-release-signing.md`.
+- There is an uncommitted **git stash** (`frequency-theme exploration`) — superseded by the mandala
+  concept; safe to drop.

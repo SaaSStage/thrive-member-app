@@ -33,6 +33,8 @@ type VoiceState = {
   uploadedCount: number;
   uploadError: string | null;
   submissionId: string | null;
+  /** Per-type count of consecutive failed validations on the recording screen. */
+  failureCounts: Partial<Record<VoiceRecordingType, number>>;
 
   /** Reset to intro with a fresh randomized passage for the language. */
   openFlow: (preferredLanguage: string) => void;
@@ -40,6 +42,8 @@ type VoiceState = {
   begin: () => void;
   /** Store a finished recording; advance to the next or to review. */
   captureRecording: (rec: CapturedRecording) => void;
+  /** Record one failed validation for a type; returns the new count. */
+  registerFailure: (type: VoiceRecordingType) => number;
   /** Re-record a specific type from the review screen. */
   reRecord: (type: VoiceRecordingType) => void;
   setStep: (step: VoiceFlowStep) => void;
@@ -74,6 +78,7 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
   uploadedCount: 0,
   uploadError: null,
   submissionId: null,
+  failureCounts: {},
 
   openFlow: (preferredLanguage) =>
     set({
@@ -84,18 +89,27 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
       uploadedCount: 0,
       uploadError: null,
       submissionId: null,
+      failureCounts: {},
     }),
 
   begin: () => set({ step: 'recording', currentIndex: 0 }),
 
   captureRecording: (rec) => {
     const captured = { ...get().captured, [rec.type]: rec };
+    // A successful (or forced) capture clears that type's failure streak.
+    const failureCounts = { ...get().failureCounts, [rec.type]: 0 };
     const next = nextUncapturedIndex(captured, get().currentIndex);
     if (next === null) {
-      set({ captured, step: 'review' });
+      set({ captured, failureCounts, step: 'review' });
     } else {
-      set({ captured, step: 'recording', currentIndex: next });
+      set({ captured, failureCounts, step: 'recording', currentIndex: next });
     }
+  },
+
+  registerFailure: (type) => {
+    const count = (get().failureCounts[type] ?? 0) + 1;
+    set({ failureCounts: { ...get().failureCounts, [type]: count } });
+    return count;
   },
 
   reRecord: (type) => set({ step: 'recording', currentIndex: RECORDING_ORDER.indexOf(type) }),
