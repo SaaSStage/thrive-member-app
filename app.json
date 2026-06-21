@@ -10,8 +10,9 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.thriveradio.app",
+      "buildNumber": "3",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "THRIVE uses your microphone to record voice samples for your provider."
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -45,7 +46,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": false,
+          "microphonePermission": "THRIVE uses your microphone to record voice samples for your provider.",
           "recordAudioAndroid": false
         }
       ]
