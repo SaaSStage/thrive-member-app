@@ -16,9 +16,9 @@ public class VoiceRecorderModule: Module {
     Name("VoiceRecorder")
 
     Constants([
-      "sampleRate": sampleRate,
-      "channels": channels,
-      "bitsPerSample": bitsPerSample,
+      "sampleRate": self.sampleRate,
+      "channels": self.channels,
+      "bitsPerSample": self.bitsPerSample,
     ])
 
     AsyncFunction("hasPermission") { () -> Bool in
