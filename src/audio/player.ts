@@ -7,6 +7,7 @@
  * (§3/§4/§5). Reactive UI state lives in the Zustand player store; this module
  * writes to it.
  */
+import { Asset } from 'expo-asset';
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 
 import { fetchNowPlaying } from '@/api/azuracast';
@@ -20,6 +21,24 @@ export type { PlayableStation };
  * via `useAudioPlayerStatus(radioPlayer)` and station/metadata via the store.
  */
 export const radioPlayer: AudioPlayer = createAudioPlayer(null, { updateInterval: 1000 });
+
+/**
+ * Branded fallback artwork for the live station. A line-in HLS feed carries no
+ * per-track art, so the lock screen would otherwise show AzuraCast's generic
+ * placeholder (see `live-stream-metadata-no-icy`). Resolve our amber-mandala
+ * image to a uri the native lock-screen renderer can load, and use it whenever
+ * there's no real track art.
+ */
+const liveArt = Asset.fromModule(require('../../assets/images/live-station-art.png'));
+let liveArtUri: string | undefined = liveArt.localUri ?? liveArt.uri ?? undefined;
+void liveArt
+  .downloadAsync()
+  .then(() => {
+    liveArtUri = liveArt.localUri ?? liveArt.uri ?? liveArtUri;
+  })
+  .catch(() => {
+    /* keep the bundler uri fallback */
+  });
 
 let audioModeReady = false;
 
@@ -63,7 +82,8 @@ function startNowPlayingPoll(station: PlayableStation): void {
     const meta = {
       title: hasTrack ? (np?.title ?? station.name) : station.name,
       artist: hasTrack ? np!.artist! : 'THRIVE Radio',
-      artworkUrl: np?.artworkUrl ?? undefined,
+      // Real track art when present; otherwise our branded live-station mandala.
+      artworkUrl: hasTrack ? (np?.artworkUrl ?? liveArtUri) : liveArtUri,
     };
     radioPlayer.updateLockScreenMetadata(meta);
     usePlayerStore.getState().setNowPlaying(meta);
@@ -81,7 +101,7 @@ export async function playStation(station: PlayableStation): Promise<void> {
   // killed after ~3 min. `isLiveStream: true` hides the scrubber/duration.
   radioPlayer.setActiveForLockScreen(
     true,
-    { title: station.name, artist: 'THRIVE Radio' },
+    { title: station.name, artist: 'THRIVE Radio', artworkUrl: liveArtUri },
     { isLiveStream: true },
   );
   radioPlayer.play();
