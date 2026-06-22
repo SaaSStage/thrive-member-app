@@ -257,9 +257,6 @@ export function VoiceRecordingView() {
           {forcedTake && !isRecording ? (
             <Button label="Use this recording anyway" variant="ghost" onPress={forceThrough} />
           ) : null}
-          {cfg.hasAudioExample && !isRecording ? (
-            <Button label="Hear example (coming soon)" variant="ghost" onPress={() => {}} disabled />
-          ) : null}
           <Button label={isRecording ? 'Cancel recording' : 'Cancel'} variant="ghost" onPress={() => void onCancel()} />
         </View>
       </SafeAreaView>

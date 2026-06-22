@@ -46,12 +46,6 @@ export type RecordingTypeConfig = {
    * (a sustained vowel must be held); when false, against total voiced time.
    */
   requiresContinuousVoiced: boolean;
-  /**
-   * Whether a bundled "Hear example" clip exists. The reading passage has none —
-   * the text is the prompt. (Example WAV assets are not yet supplied; the button
-   * surfaces a graceful placeholder until they are — matches Flutter v1.)
-   */
-  hasAudioExample: boolean;
   /** 1-based position for the "Recording N of 3" header. */
   stepNumber: number;
 };
@@ -68,7 +62,6 @@ export const RECORDING_CONFIG: Record<VoiceRecordingType, RecordingTypeConfig> =
     // THRESHOLD: tune on-device (LOE risk #6)
     minVoicedMs: 4_000,
     requiresContinuousVoiced: true,
-    hasAudioExample: true,
     stepNumber: 1,
   },
   reading_passage: {
@@ -81,7 +74,6 @@ export const RECORDING_CONFIG: Record<VoiceRecordingType, RecordingTypeConfig> =
     // THRESHOLD: tune on-device (LOE risk #6)
     minVoicedMs: 20_000,
     requiresContinuousVoiced: false,
-    hasAudioExample: false,
     stepNumber: 2,
   },
   diadochokinetic: {
@@ -95,7 +87,6 @@ export const RECORDING_CONFIG: Record<VoiceRecordingType, RecordingTypeConfig> =
     // THRESHOLD: tune on-device (LOE risk #6)
     minVoicedMs: 6_000,
     requiresContinuousVoiced: false,
-    hasAudioExample: true,
     stepNumber: 3,
   },
 };
