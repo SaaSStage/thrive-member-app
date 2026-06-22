@@ -2,22 +2,44 @@
  * Vitality score breakdown ("My Vitality"). The composite score sits inside a
  * breathing gold mandala dial; the four sub-scores are glass cards each backed
  * by a slowly-rotating hued mandala. Plus trend, plain-language summary, and
- * recommended protocols. Handles: no submissions, analyzing, score ready.
+ * recommended protocols.
+ *
+ * Handles every state from the backend pipeline: no submissions, processing
+ * (stage-specific spinner), failed, the LOCKED "building your baseline" state
+ * (no baseline yet → scores are null, never shown as a number), and ready.
  */
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter, type Href } from 'expo-router';
 import { Fragment } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useLatestScore, type ProtocolRec, type Subscore, type Trend } from '@/api/score';
+import {
+  useLatestScore,
+  type ProcessingStage,
+  type ProtocolRec,
+  type ScoreResult,
+  type Subscore,
+  type Trend,
+} from '@/api/score';
 import { Aura } from '@/components/ui/aura';
 import { Button } from '@/components/ui/button';
 import { CardMandala, Mandala } from '@/components/ui/mandala';
-import { MicGlyph } from '@/components/ui/mic-glyph';
 import { Gradients, Radius, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 const SUB_HUES = [Gradients.teal, Gradients.violet, Gradients.score, Gradients.gold] as unknown as string[][];
+
+/** Copy for each in-flight stage. `preparing`/`scoring` are fast; `extracting` is the long one. */
+const STAGE_COPY: Record<ProcessingStage, { title: string; sub: string }> = {
+  preparing: { title: 'Getting started', sub: 'Your recording is in line to be analyzed…' },
+  extracting: { title: 'Analyzing your audio', sub: 'This is the longest step — hang tight.' },
+  scoring: { title: 'Computing your results', sub: 'Almost there…' },
+  narrating: { title: 'Writing your summary', sub: 'Putting your results into words…' },
+};
+
+/** Card microcopy for every locked dimension while the baseline is still building. */
+const UNLOCK_HINT = 'Unlocks after 3 baseline sessions';
 
 export default function ScoreScreen() {
   const t = useTheme();
@@ -68,14 +90,7 @@ export default function ScoreScreen() {
               </View>
             ) : null}
 
-            {data.newerSampleAnalyzing ? (
-              <View style={[styles.analyzingPill, styles.glass]}>
-                <ActivityIndicator color={t.primary} size="small" />
-                <Text style={[styles.analyzingText, { color: t.textSecondary }]}>
-                  Your newest sample is still analyzing — showing your last result.
-                </Text>
-              </View>
-            ) : null}
+            {data.newerSampleProcessing ? <NewerSamplePill /> : null}
 
             <Text style={[styles.sectionTitle, { color: t.text }]}>What makes up your score</Text>
             <View style={styles.grid}>
@@ -91,10 +106,6 @@ export default function ScoreScreen() {
                   <Markdownish text={data.narrative} />
                 </View>
               </>
-            ) : data.narrativeStatus === 'pending' ? (
-              <Text style={[styles.muted, { color: t.textTertiary, marginTop: 8 }]}>
-                Your personalized summary is being prepared…
-              </Text>
             ) : null}
 
             {data.protocols.length > 0 ? (
@@ -113,32 +124,99 @@ export default function ScoreScreen() {
             ) : null}
           </ScrollView>
         ) : (
-          <View style={styles.center}>
-            {data?.state === 'analyzing' ? (
-              <Text style={styles.emoji}>⏳</Text>
-            ) : (
-              <MicGlyph size={64} />
-            )}
-            <Text style={[styles.emptyTitle, { color: t.text }]}>
-              {data?.state === 'analyzing' ? 'Analyzing your latest sample' : 'No score yet'}
-            </Text>
-            <Text style={[styles.muted, { color: t.textSecondary }]}>
-              {data?.state === 'analyzing'
-                ? 'Your score will appear here once your provider’s analysis finishes.'
-                : 'Take a voice check-in and your Vitality Score will appear here.'}
-            </Text>
-            {data?.state === 'none' ? (
+          // Every no-score case (none / baseline / processing / failed): the four
+          // locked dimension cards, then a description of where the member is in
+          // their voice submission. No numbers — null scores read as 0/100, both wrong.
+          <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+            <Text style={[styles.sectionTitle, { color: t.text, marginTop: 8 }]}>Baseline not established</Text>
+            <View style={styles.grid}>
+              {SUBSCORE_PLACEHOLDERS.map((s, i) => (
+                <LockedSubscoreCard key={s.key} label={s.label} colors={SUB_HUES[i % SUB_HUES.length]} />
+              ))}
+            </View>
+
+            <NotEstablishedDetail data={data} />
+
+            {data?.state !== 'processing' ? (
               <Button
-                label="Start a voice check-in"
+                label="Submit a voice sample"
                 variant="primary"
                 style={styles.cta}
                 onPress={() => router.replace('/voice' as Href)}
               />
             ) : null}
-          </View>
+          </ScrollView>
         )}
       </SafeAreaView>
     </Aura>
+  );
+}
+
+/** Labels for the locked subscore grid (no values exist before the baseline). */
+const SUBSCORE_PLACEHOLDERS: { key: Subscore['key']; label: string }[] = [
+  { key: 'emotional_wellness', label: 'Emotional Wellness' },
+  { key: 'cognitive_clarity', label: 'Cognitive Clarity' },
+  { key: 'physical_energy', label: 'Physical Energy' },
+  { key: 'voice_power', label: 'Voice Power' },
+];
+
+/**
+ * The description under the locked cards: where the member is in their voice
+ * submission. Copy + busy state vary by pipeline state; the count chip shows only
+ * if the backend has persisted distinctUsableDays.
+ */
+function NotEstablishedDetail({ data }: { data: ScoreResult | undefined }) {
+  const t = useTheme();
+  let body: string;
+  let busy = false;
+  let day: number | null = null;
+  switch (data?.state) {
+    case 'baseline':
+      body =
+        data.wellnessMessage ??
+        'Your scores compare you to your own voice. Record on 3 separate days to establish your baseline — then your scores unlock.';
+      day = data.distinctUsableDays;
+      break;
+    case 'processing':
+      body = `${STAGE_COPY[data.stage].title} — ${STAGE_COPY[data.stage].sub}`;
+      busy = true;
+      break;
+    case 'failed':
+      body = 'We couldn’t process your last recording. Please submit another voice sample.';
+      break;
+    default: // none / undefined — no recordings yet
+      body =
+        'Submit a voice sample to begin. Your scores compare you to your own voice — record on 3 separate days to establish your baseline, then your scores unlock.';
+  }
+  return (
+    <View style={[styles.card, styles.glass, { marginTop: 20 }]}>
+      <View style={styles.detailHead}>
+        {busy ? (
+          <ActivityIndicator color={t.primary} size="small" />
+        ) : (
+          <Ionicons name="lock-closed" size={16} color={t.textSecondary} />
+        )}
+        <Text style={[styles.rowLabel, { color: t.text }]}>Where you are</Text>
+      </View>
+      <Text style={[styles.rowDesc, { color: t.textSecondary, marginTop: 8 }]}>{body}</Text>
+      {day != null ? (
+        <View style={[styles.dayPill, { borderColor: t.hairline, marginTop: 12 }]}>
+          <Text style={[styles.dayPillText, { color: t.vitality }]}>Day {day} of 3</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function NewerSamplePill() {
+  const t = useTheme();
+  return (
+    <View style={[styles.analyzingPill, styles.glass]}>
+      <ActivityIndicator color={t.primary} size="small" />
+      <Text style={[styles.analyzingText, { color: t.textSecondary }]}>
+        Your newest sample is still processing — showing your last result.
+      </Text>
+    </View>
   );
 }
 
@@ -173,6 +251,22 @@ function SubscoreCard({ subscore, colors }: { subscore: Subscore; colors: string
         </View>
       </View>
       <Text style={[styles.subValue, { color: t.text }]}>{subscore.value}</Text>
+    </View>
+  );
+}
+
+function LockedSubscoreCard({ label, colors }: { label: string; colors: string[] }) {
+  const t = useTheme();
+  return (
+    <View style={[styles.subCard, styles.glass]}>
+      <CardMandala colors={colors} size={190} opacity={0.22} glow={0.3} />
+      <View style={styles.subHead}>
+        <Text style={[styles.lockedLabel, { color: t.text }]} numberOfLines={1}>
+          {label}
+        </Text>
+        <Ionicons name="lock-closed" size={15} color={t.textSecondary} />
+      </View>
+      <Text style={[styles.lockedHint, { color: t.textSecondary }]}>{UNLOCK_HINT}</Text>
     </View>
   );
 }
@@ -264,6 +358,17 @@ const styles = StyleSheet.create({
   scoreOf: { ...Type.caption, marginTop: 2 },
   trendRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 6 },
   trendText: { ...Type.subhead },
+  // locked "baseline not established" description block
+  detailHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  dayPill: {
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    alignSelf: 'flex-start',
+  },
+  dayPillText: { ...Type.subhead, fontFamily: Type.bodyStrong.fontFamily },
+  lockedHint: { ...Type.footnote, fontSize: 12.5, lineHeight: 16 },
   analyzingPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -292,6 +397,7 @@ const styles = StyleSheet.create({
   },
   subHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   subLabel: { ...Type.subhead, flex: 1 },
+  lockedLabel: { ...Type.subhead, fontFamily: Type.bodyStrong.fontFamily, flex: 1 },
   subValue: { ...Type.numeral, fontSize: 34 },
   infoBtn: {
     width: 18,
@@ -311,8 +417,6 @@ const styles = StyleSheet.create({
   mdText: { ...Type.body },
   mdBulletRow: { flexDirection: 'row', gap: 8, paddingRight: 8 },
   mdBulletDot: { ...Type.body },
-  emoji: { fontSize: 56 },
-  emptyTitle: { ...Type.sectionTitle, textAlign: 'center' },
   muted: { ...Type.body, textAlign: 'center' },
   cta: { marginTop: 12, alignSelf: 'stretch' },
 });

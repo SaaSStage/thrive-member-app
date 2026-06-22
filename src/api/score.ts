@@ -1,15 +1,28 @@
 /**
- * Latest vitality score for the signed-in member. The score is produced by the
- * backend (analyze-voice → generate-report) and stored in `analysis_results`,
- * keyed to a `voice_submissions` row. RLS scopes both tables to the member.
+ * Latest vitality result for the signed-in member.
  *
- * We resolve the member's latest submission, then its analysis — so the screen
- * can distinguish "no submissions yet", "latest sample still analyzing", and
- * "score ready" (mirrors the v3 Flutter score_repository two-step).
+ * The backend runs a pipeline per submission (extract acoustic features → score
+ * against the member's OWN baseline → write an AI narrative). Results land on an
+ * `analysis_results` row keyed to a `voice_submissions` row; RLS scopes both
+ * tables to the member, so we read them directly (no practitioner endpoint).
  *
- * Beyond the composite Vitality Score (0-100) and its four subscores, we surface
- * the member-facing extras the backend produces: the plain-language wellness
- * narrative, the trend vs. prior submissions, and recommended protocols.
+ * Two important wrinkles from the verified backend contract:
+ *
+ *  1. `voice_submissions.status` is a state machine, NOT a boolean:
+ *       pending → queued → extracting → scoring → analyzed → narrating → reported
+ *     plus the terminal error states `failed` and `narrative_failed`. The screen
+ *     must poll until a TERMINAL state — and `analyzed` is ambiguous: it is only
+ *     terminal once `analysis_results.narrative_status` is past 'pending'. Polling
+ *     on `status` alone makes a new member's submission poll forever.
+ *
+ *  2. Scores are relative to a personal baseline that needs recordings on 3
+ *     SEPARATE days. Until then the backend deliberately returns null scores
+ *     (not 0, not 100) with narrative_status == 'baseline_pending' and a
+ *     templated progress message in `narratives.wellness`. That's the locked
+ *     "building your baseline" state — the most common state for new members.
+ *
+ * Polling stays lean (status + a narrative_status/vitality_score presence check);
+ * the heavy jsonb blobs are fetched once, on terminal, by `useAnalysisResult`.
  */
 import { useQuery } from '@tanstack/react-query';
 
@@ -35,24 +48,53 @@ export type ProtocolRec = {
   perWeek: number | null;
 };
 
-export type NarrativeStatus = 'pending' | 'generated' | 'narrative_failed';
+/** `voice_submissions.status` — the pipeline state machine. */
+export type SubmissionStatus =
+  | 'pending'
+  | 'queued'
+  | 'extracting'
+  | 'scoring'
+  | 'analyzed'
+  | 'narrating'
+  | 'reported'
+  | 'failed'
+  | 'narrative_failed';
+
+/** `analysis_results.narrative_status`. 'baseline_pending' = no baseline yet → null scores. */
+export type NarrativeStatus = 'pending' | 'baseline_pending' | 'narrative_failed' | 'generated';
+
+/** The four user-facing processing stages (several statuses collapse onto one). */
+export type ProcessingStage = 'preparing' | 'extracting' | 'scoring' | 'narrating';
 
 export type ScoreResult =
   | { state: 'none' }
-  | { state: 'analyzing'; pendingSince: string | null }
+  // Newest submission still in the pipeline; nothing usable to show yet.
+  | { state: 'processing'; stage: ProcessingStage; pendingSince: string }
+  // Newest submission failed and there is no earlier usable result.
+  | { state: 'failed' }
+  // Terminal, but no baseline yet → scores are null. Locked "building baseline" UI.
+  | {
+      state: 'baseline';
+      /** Templated progress message from narratives.wellness (NOT AI-generated). */
+      wellnessMessage: string | null;
+      /** Structured progress, when the backend persists it (else null → no "Day X of 3"). */
+      distinctUsableDays: number | null;
+      daysRemaining: number | null;
+      newerSampleProcessing: boolean;
+    }
+  // Terminal with a baseline → real scores.
   | {
       state: 'ready';
       vitalityScore: number;
       subscores: Subscore[];
       vitalityTrend: Trend | null;
       narrative: string | null; // member-facing wellness narrative (markdown-ish)
-      narrativeStatus: NarrativeStatus;
+      /** false when the AI summary failed (narrative_failed): show scores, skip the summary. */
+      summaryAvailable: boolean;
       protocols: ProtocolRec[];
       generatedAt: string | null;
-      /** A submission newer than the one shown here is still being analyzed. */
-      newerSampleAnalyzing: boolean;
-      /** submitted_at of the newest still-analyzing submission (drives poll gating). */
-      pendingSince: string | null;
+      /** A submission newer than the one shown here is still being processed. */
+      newerSampleProcessing: boolean;
     };
 
 const SUBSCORE_META: { key: Subscore['key']; column: string; label: string; description: string }[] = [
@@ -82,7 +124,8 @@ const SUBSCORE_META: { key: Subscore['key']; column: string; label: string; desc
   },
 ];
 
-const COLUMNS = [
+/** Heavy result columns — fetched ONCE on terminal, never on the poll. */
+const RESULT_COLUMNS = [
   'vitality_score',
   'subscore_emotional_wellness',
   'subscore_cognitive_clarity',
@@ -93,7 +136,13 @@ const COLUMNS = [
   'trend_data',
   'recommended_protocols',
   'generated_at',
+  // When the backend persists structured baseline progress, add
+  // 'distinct_usable_days, days_remaining' here — `shapeAnalysis` already reads
+  // them defensively and they flow into the locked "Day X of 3" UI. Selecting a
+  // column that doesn't exist makes PostgREST 400, so they stay out until then.
 ].join(', ');
+
+const numOrNull = (v: unknown): number | null => (v == null || Number.isNaN(Number(v)) ? null : Number(v));
 
 function parseTrend(t: unknown): Trend | null {
   if (!t || typeof t !== 'object') return null;
@@ -130,31 +179,193 @@ function parseProtocols(rp: unknown): ProtocolRec[] {
   return out.sort((a, b) => b.strength - a.strength).map((x) => x.rec);
 }
 
-/** How many recent submissions to consider when finding the last ready score. */
-const SUBMISSION_WINDOW = 10;
-/** Poll cadence while an analysis is in flight. */
-const POLL_INTERVAL_MS = 6_000;
-/** Stop auto-polling this long after the pending submission (guards a failed/stuck analysis). */
-const MAX_POLL_MS = 5 * 60_000;
+/**
+ * The app's terminal test, straight from the contract:
+ *   terminal = status in {reported, failed, narrative_failed}
+ *              OR (status == 'analyzed' AND narrative_status != 'pending')
+ *
+ * `analysis_results` (hence narrative_status) does not exist until status reaches
+ * 'analyzed', so a NULL narrative_status at 'analyzed' is a transient race — treat
+ * it as NOT terminal and keep polling (it will resolve to baseline_pending,
+ * generated, or narrative_failed). Every genuinely-terminal 'analyzed' state has a
+ * non-null narrative_status.
+ */
+export function isTerminalStatus(status: SubmissionStatus, narrativeStatus: NarrativeStatus | null): boolean {
+  if (status === 'reported' || status === 'failed' || status === 'narrative_failed') return true;
+  if (status === 'analyzed') return narrativeStatus != null && narrativeStatus !== 'pending';
+  return false;
+}
 
-/** Shape a finished analysis_results row into the member-facing 'ready' result. */
-function toReadyResult(
-  r: Record<string, any>,
-  newerSampleAnalyzing: boolean,
-  pendingSince: string | null,
-): ScoreResult {
+function stageFor(status: SubmissionStatus): ProcessingStage {
+  switch (status) {
+    case 'extracting':
+      return 'extracting';
+    case 'scoring':
+      return 'scoring';
+    case 'analyzed': // analyzed reaches here only while narrative_status is still 'pending'
+    case 'narrating':
+      return 'narrating';
+    default:
+      return 'preparing'; // pending, queued
+  }
+}
+
+/** Poll cadence while a submission is in flight (~4s per the contract). */
+const STATUS_POLL_MS = 4_000;
+/** Stop auto-polling this long after the pending submission (guards a stuck pipeline). */
+const MAX_POLL_MS = 5 * 60_000;
+/** How many recent submissions to scan when finding the newest usable result. */
+const SUBMISSION_WINDOW = 10;
+
+type ResultKind = 'baseline' | 'scored';
+
+type StatusView =
+  | { kind: 'none' }
+  | { kind: 'failed' }
+  | { kind: 'processing'; stage: ProcessingStage; pendingSince: string }
+  | { kind: 'result'; submissionId: string; resultKind: ResultKind; newerSampleProcessing: boolean; pendingSince: string | null };
+
+/**
+ * Lean status poll. Resolves WHICH submission to display and its high-level kind,
+ * reading only the cheap columns. Heavy jsonb is left to `useAnalysisResult`.
+ */
+function useSubmissionStatus() {
+  const supabase = useSupabase();
+  return useQuery({
+    queryKey: ['submission-status'],
+    refetchIntervalInBackground: false,
+    // Poll only while the newest submission is still being processed — true right
+    // after a submit, false once it reaches a terminal state. Capped so a stuck
+    // pipeline can't poll forever.
+    refetchInterval: (query) => {
+      const d = query.state.data as StatusView | undefined;
+      if (!d) return false;
+      let pendingSince: string | null = null;
+      if (d.kind === 'processing') pendingSince = d.pendingSince;
+      else if (d.kind === 'result' && d.newerSampleProcessing) pendingSince = d.pendingSince;
+      else return false;
+      if (pendingSince) {
+        const since = Date.parse(pendingSince);
+        if (!Number.isNaN(since) && Date.now() - since > MAX_POLL_MS) return false;
+      }
+      return STATUS_POLL_MS;
+    },
+    queryFn: async (): Promise<StatusView> => {
+      const { data: userId, error: idErr } = await supabase.rpc('current_user_id');
+      if (idErr || !userId) throw idErr ?? new Error('Not signed in.');
+
+      // Window of recent submissions (newest first) — so a brand-new sample that's
+      // still processing doesn't hide the last usable result.
+      const { data: submissions, error: subErr } = await supabase
+        .from('voice_submissions')
+        .select('id, status, submitted_at')
+        .eq('client_id', userId)
+        .order('submitted_at', { ascending: false })
+        .limit(SUBMISSION_WINDOW);
+      if (subErr) throw subErr;
+      const subs = (submissions ?? []) as { id: string; status: SubmissionStatus; submitted_at: string }[];
+      if (subs.length === 0) return { kind: 'none' };
+
+      // Lean join: narrative_status (for the terminal test) and a vitality_score
+      // presence check (baseline vs scored). NO narratives/trend/protocol jsonb here.
+      const { data: arRows, error: arErr } = await supabase
+        .from('analysis_results')
+        .select('submission_id, narrative_status, vitality_score, generated_at')
+        .in(
+          'submission_id',
+          subs.map((s) => s.id),
+        )
+        .order('generated_at', { ascending: false });
+      if (arErr) throw arErr;
+      const byId = new Map<string, { narrative_status: NarrativeStatus | null; vitality_score: number | null }>();
+      for (const row of (arRows ?? []) as Record<string, any>[]) {
+        const sid = String(row.submission_id);
+        if (byId.has(sid)) continue; // rows are newest-first; keep the first
+        byId.set(sid, {
+          narrative_status: (row.narrative_status as NarrativeStatus) ?? null,
+          vitality_score: row.vitality_score ?? null,
+        });
+      }
+
+      const classify = (s: { id: string; status: SubmissionStatus }): 'processing' | ResultKind | 'failed' => {
+        const ar = byId.get(s.id);
+        const ns = ar?.narrative_status ?? null;
+        if (!isTerminalStatus(s.status, ns)) return 'processing';
+        if (s.status === 'failed') return 'failed';
+        // Terminal and not failed → an analysis row exists.
+        if (ns === 'baseline_pending' || ar?.vitality_score == null) return 'baseline';
+        return 'scored';
+      };
+
+      const newest = subs[0];
+      // Newest submission that produced something usable (a score or a locked baseline).
+      let display: { id: string; kind: ResultKind } | null = null;
+      for (const s of subs) {
+        const k = classify(s);
+        if (k === 'scored' || k === 'baseline') {
+          display = { id: s.id, kind: k };
+          break;
+        }
+      }
+
+      const newestKind = classify(newest);
+      if (display) {
+        const newerSampleProcessing = display.id !== newest.id && newestKind === 'processing';
+        return {
+          kind: 'result',
+          submissionId: display.id,
+          resultKind: display.kind,
+          newerSampleProcessing,
+          pendingSince: newerSampleProcessing ? newest.submitted_at : null,
+        };
+      }
+      if (newestKind === 'processing') {
+        return { kind: 'processing', stage: stageFor(newest.status), pendingSince: newest.submitted_at };
+      }
+      // Newest is terminal-failed and there's no earlier usable result.
+      return { kind: 'failed' };
+    },
+  });
+}
+
+type AnalysisShaped =
+  | { kind: 'baseline'; wellnessMessage: string | null; distinctUsableDays: number | null; daysRemaining: number | null }
+  | {
+      kind: 'scored';
+      vitalityScore: number;
+      subscores: Subscore[];
+      vitalityTrend: Trend | null;
+      narrative: string | null;
+      summaryAvailable: boolean;
+      protocols: ProtocolRec[];
+      generatedAt: string | null;
+    };
+
+function shapeAnalysis(r: Record<string, any>): AnalysisShaped {
+  const ns = (r.narrative_status as NarrativeStatus) ?? null;
+  const wellness = (r.narratives as { wellness?: string })?.wellness ?? null;
+
+  // No baseline yet → scores are deliberately null. Locked state, regardless of
+  // submission status.
+  if (ns === 'baseline_pending' || r.vitality_score == null) {
+    return {
+      kind: 'baseline',
+      wellnessMessage: wellness,
+      distinctUsableDays: numOrNull(r.distinct_usable_days),
+      daysRemaining: numOrNull(r.days_remaining),
+    };
+  }
+
   const bySub = (r.trend_data as { by_subscore?: Record<string, unknown> })?.by_subscore ?? {};
-  const narrativeStatus = (r.narrative_status as NarrativeStatus) ?? 'pending';
+  const summaryAvailable = ns === 'generated';
   return {
-    state: 'ready',
+    kind: 'scored',
     vitalityScore: Number(r.vitality_score),
     vitalityTrend: parseTrend((r.trend_data as { vitality?: unknown })?.vitality),
-    narrativeStatus,
-    narrative: narrativeStatus === 'generated' ? ((r.narratives as { wellness?: string })?.wellness ?? null) : null,
+    narrative: summaryAvailable ? wellness : null, // narrative_failed → skip the summary
+    summaryAvailable,
     protocols: parseProtocols(r.recommended_protocols),
     generatedAt: (r.generated_at as string) ?? null,
-    newerSampleAnalyzing,
-    pendingSince,
     subscores: SUBSCORE_META.map((m) => ({
       key: m.key,
       label: m.label,
@@ -165,78 +376,78 @@ function toReadyResult(
   };
 }
 
-export function useLatestScore() {
+/** Heavy, one-shot fetch of the full result for a terminal submission. No polling. */
+function useAnalysisResult(submissionId: string | null) {
   const supabase = useSupabase();
   return useQuery({
-    queryKey: ['latest-score'],
-    // Poll ONLY while an analysis is actually in flight (newest submission not yet
-    // scored) — true right after a submit, false once the score lands — so the
-    // screen self-resolves but we never poll an idle, fully-scored account. Capped
-    // so a permanently-failed analysis can't poll indefinitely.
-    refetchInterval: (query) => {
-      const d = query.state.data as ScoreResult | undefined;
-      if (!d) return false;
-      const inFlight = d.state === 'analyzing' || (d.state === 'ready' && d.newerSampleAnalyzing);
-      if (!inFlight) return false;
-      const since = d.pendingSince ? Date.parse(d.pendingSince) : NaN;
-      if (!Number.isNaN(since) && Date.now() - since > MAX_POLL_MS) return false;
-      return POLL_INTERVAL_MS;
-    },
-    refetchIntervalInBackground: false,
-    queryFn: async (): Promise<ScoreResult> => {
-      const { data: userId, error: idErr } = await supabase.rpc('current_user_id');
-      if (idErr || !userId) throw idErr ?? new Error('Not signed in.');
-
-      // Pull a window of recent submissions (newest first), not just the latest —
-      // so a brand-new sample that's still analyzing doesn't hide the last ready score.
-      const { data: submissions, error: subErr } = await supabase
-        .from('voice_submissions')
-        .select('id, submitted_at')
-        .eq('client_id', userId)
-        .order('submitted_at', { ascending: false })
-        .limit(SUBMISSION_WINDOW);
-      if (subErr) throw subErr;
-      const subs = (submissions ?? []) as { id: string; submitted_at: string }[];
-      if (subs.length === 0) return { state: 'none' };
-
-      const { data: arRows, error: arErr } = await supabase
+    queryKey: ['analysis-result', submissionId],
+    enabled: !!submissionId,
+    queryFn: async (): Promise<AnalysisShaped> => {
+      const { data, error } = await supabase
         .from('analysis_results')
-        .select(`submission_id, ${COLUMNS}`)
-        .in(
-          'submission_id',
-          subs.map((s) => s.id),
-        )
-        .order('generated_at', { ascending: false });
-      if (arErr) throw arErr;
-
-      // Newest analysis_results row per submission (rows are already sorted desc).
-      const bySubmission = new Map<string, Record<string, any>>();
-      for (const row of (arRows ?? []) as Record<string, any>[]) {
-        const sid = String(row.submission_id);
-        if (!bySubmission.has(sid)) bySubmission.set(sid, row);
-      }
-
-      // The displayed score is the NEWEST submission that actually has a finished
-      // analysis (vitality_score present). subs is newest-first.
-      const newest = subs[0];
-      let displayRow: Record<string, any> | null = null;
-      let displayId: string | null = null;
-      for (const s of subs) {
-        const row = bySubmission.get(s.id);
-        if (row && row.vitality_score != null) {
-          displayRow = row;
-          displayId = s.id;
-          break;
-        }
-      }
-
-      // Submissions exist but none is scored yet (first-ever sample still processing).
-      if (!displayRow) return { state: 'analyzing', pendingSince: newest.submitted_at };
-
-      // A newer submission than the one we're showing exists but isn't scored → still analyzing.
-      const newerSampleAnalyzing = displayId !== newest.id;
-      const pendingSince = newerSampleAnalyzing ? newest.submitted_at : null;
-      return toReadyResult(displayRow, newerSampleAnalyzing, pendingSince);
+        .select(RESULT_COLUMNS)
+        .eq('submission_id', submissionId)
+        .order('generated_at', { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      const r = (data?.[0] ?? null) as Record<string, any> | null;
+      if (!r) throw new Error('Analysis result not found.');
+      return shapeAnalysis(r);
     },
   });
+}
+
+function combine(view: StatusView | undefined, result: AnalysisShaped | undefined): ScoreResult | undefined {
+  if (!view) return undefined;
+  switch (view.kind) {
+    case 'none':
+      return { state: 'none' };
+    case 'failed':
+      return { state: 'failed' };
+    case 'processing':
+      return { state: 'processing', stage: view.stage, pendingSince: view.pendingSince };
+    case 'result':
+      if (!result) return undefined; // heavy fetch still loading → caller shows the spinner
+      if (result.kind === 'baseline') {
+        return {
+          state: 'baseline',
+          wellnessMessage: result.wellnessMessage,
+          distinctUsableDays: result.distinctUsableDays,
+          daysRemaining: result.daysRemaining,
+          newerSampleProcessing: view.newerSampleProcessing,
+        };
+      }
+      return {
+        state: 'ready',
+        vitalityScore: result.vitalityScore,
+        subscores: result.subscores,
+        vitalityTrend: result.vitalityTrend,
+        narrative: result.narrative,
+        summaryAvailable: result.summaryAvailable,
+        protocols: result.protocols,
+        generatedAt: result.generatedAt,
+        newerSampleProcessing: view.newerSampleProcessing,
+      };
+  }
+}
+
+/**
+ * Latest member-facing vitality result. Composes the lean status poll with the
+ * heavy one-shot result fetch and exposes a single discriminated `ScoreResult`.
+ */
+export function useLatestScore() {
+  const status = useSubmissionStatus();
+  const view = status.data;
+  const displayId = view?.kind === 'result' ? view.submissionId : null;
+  const result = useAnalysisResult(displayId);
+
+  const data = combine(view, result.data);
+  const isLoading = status.isLoading || (!!displayId && result.isLoading && !result.data);
+  const isError = status.isError || (!!displayId && result.isError);
+  const refetch = () => {
+    void status.refetch();
+    if (displayId) void result.refetch();
+  };
+
+  return { data, isLoading, isError, refetch };
 }

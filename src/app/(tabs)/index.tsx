@@ -33,7 +33,7 @@ export default function Home() {
   const { data: profile } = useVoiceProfile();
   const { data: score } = useLatestScore();
   const ready = score?.state === 'ready';
-  const vitalityValue = ready ? String(score.vitalityScore) : '—';
+  const vitalityValue = ready ? String(score.vitalityScore) : '';
   const trend = ready ? score.vitalityTrend : null;
   const trendLabel = trend
     ? `${trend.direction === 'improving' ? '▲' : trend.direction === 'declining' ? '▼' : '▶'} ${Math.abs(
@@ -84,10 +84,10 @@ export default function Home() {
               <View style={styles.cardText}>
                 <Text style={[styles.kicker, { color: t.textSecondary }]}>VITALITY</Text>
                 <Text style={[styles.cardTitle, { color: t.text }]}>
-                  {ready ? 'Flourishing' : 'No score yet'}
+                  {ready ? 'Flourishing' : 'Baseline not established'}
                 </Text>
                 <Text style={[styles.cardHint, { color: t.vitality }]}>
-                  {ready ? trendLabel : 'Take a voice check-in'}
+                  {ready ? trendLabel : 'Submit a voice sample'}
                 </Text>
               </View>
             </Pressable>

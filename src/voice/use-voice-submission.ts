@@ -28,9 +28,9 @@ export function useVoiceSubmission(): () => Promise<void> {
       );
       useVoiceStore.getState().setSubmissionId(id);
       useVoiceStore.getState().setStep('success');
-      // A new submission exists → refetch the score now so the screen picks up the
-      // 'analyzing' state and the gated polling starts (it stops once scored).
-      void queryClient.invalidateQueries({ queryKey: ['latest-score'] });
+      // A new submission exists → refetch status now so the screen picks up the
+      // 'processing' state and the gated polling starts (it stops once terminal).
+      void queryClient.invalidateQueries({ queryKey: ['submission-status'] });
     } catch (e) {
       useVoiceStore.getState().setUploadError(e instanceof VoiceUploadError ? e.message : String(e));
       useVoiceStore.getState().setStep('review');
