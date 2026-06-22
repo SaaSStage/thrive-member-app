@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   lockup: { flexDirection: 'row', alignItems: 'center' },
-  logo: { width: 138, height: 138, marginHorizontal: -12 },
+  logo: { width: 168, height: 168, marginHorizontal: -12, tintColor: '#d9d4cf' },
   brand: { ...Type.largeTitle, fontSize: 34, marginTop: 20 },
   tagline: { ...Type.body, fontSize: 15, textAlign: 'center', maxWidth: 250, marginTop: 8 },
   actions: { gap: 16 },

@@ -1,7 +1,8 @@
 /**
  * The "Y" of the YOY / "You Only Younger" entry lockup. Custom vector so the
- * arms flow straight into the stem with flat (clipped) horizontal tops — the
- * deep royal-purple of the logo's "RADIO" lettering.
+ * arms flow straight into the stem with flat (clipped) horizontal tops. Soft
+ * warm-neutral (toned-down ivory) so it sits calmly against the dark aura
+ * alongside the warm-gold center logo — not stark white, not royal-purple.
  */
 import { useId } from 'react';
 import Svg, { ClipPath, Defs, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
@@ -26,19 +27,19 @@ export function YGlyph({ h }: { h: number }) {
   const clip = `yc_${uid}`;
 
   return (
-    <Svg width={w} height={h}>
+    <Svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
       <Defs>
         <LinearGradient id={grad} x1="0" y1="0" x2={w * 0.5} y2={h} gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#5e3897" />
-          <Stop offset="0.5" stopColor="#331760" />
-          <Stop offset="1" stopColor="#1e0c3d" />
+          <Stop offset="0" stopColor="#efedea" />
+          <Stop offset="0.5" stopColor="#d7d4d0" />
+          <Stop offset="1" stopColor="#bcb7b2" />
         </LinearGradient>
         <ClipPath id={clip}>
           <Rect x={-30} y={top} width={w + 60} height={h} />
         </ClipPath>
       </Defs>
-      {/* faint wide under-glow (no blur available in RN SVG) */}
-      <Path d={d} stroke={`url(#${grad})`} strokeWidth={sw * 1.6} strokeLinejoin="round" fill="none" opacity={0.3} />
+      {/* faint wide under-glow (no blur available in RN SVG) — kept subtle */}
+      <Path d={d} stroke={`url(#${grad})`} strokeWidth={sw * 1.3} strokeLinejoin="round" fill="none" opacity={0.08} />
       {/* crisp glyph, tops clipped flat */}
       <G clipPath={`url(#${clip})`}>
         <Path

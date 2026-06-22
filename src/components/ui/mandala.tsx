@@ -1,15 +1,18 @@
 /**
  * Sacred-geometry mandala (rosette) — the app's signature graphic.
  *
- * Pure vector: N equal circles whose centers sit on a ring, drawn over each
- * other, plus framing circles and a glowing core. Re-colorable via `colors`,
- * animatable — `motion="breathe"` for focal dials, `motion="rotate"` behind
- * cards. Fuzziness/glow comes from static SVG Gaussian-blur filters.
+ * Faithful port of the wireframe (docs/wireframes/screens-thrive-concept.html):
+ * N equal circles whose centers sit on a ring, drawn over each other, plus two
+ * framing circles and a glowing core. Each mandala is THREE stacked stroke
+ * layers — a wide blurred glow + a medium blurred glow (brightness/bloom) under
+ * an ALWAYS-CRISP top line (sharpness). That crisp-line-over-glow stack is what
+ * reads as both sharp and bright, matching the wireframe.
  *
- * `dynamicBlur` (breathe only): cross-fades a SHARP layer and a FUZZY layer by
- * opacity as it breathes — fuzzy when contracted, sharp when expanded. We
- * cross-fade opacity (GPU-composited, smooth) rather than animate the blur
- * filter itself (which re-rasterizes every frame and stutters).
+ * `motion="breathe"` pulses scale + opacity only (like the wireframe's keyframes)
+ * — it never blurs the line. `motion="rotate"` slowly spins (clockwise).
+ *
+ * Re-colorable via `colors`. (`dynamicBlur`/`blur` are accepted for backward
+ * compat but no longer do anything — the line is always crisp now.)
  */
 import { useEffect, useId, useMemo } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
@@ -38,25 +41,23 @@ function ringCircles(size: number, n: number, dF: number, rF: number, phase = 0)
   return out;
 }
 
-/** One static rendering of the rosette at a given blur multiplier. */
+/** The static rosette: 2 glow layers under an always-crisp top line. */
 function MandalaSvg({
   size,
   colors,
   opacity,
   glow,
-  blurMul,
 }: {
   size: number;
   colors: string[];
   opacity: number;
   glow: number;
-  blurMul: number;
 }) {
   const uid = useId().replace(/[:]/g, '');
   const grad = `mg_${uid}`;
-  const bloom = `mb_${uid}`;
-  const softF = `ms_${uid}`;
-  const glowF = `mw_${uid}`;
+  const bloom = `mbl_${uid}`;
+  const wideF = `mw_${uid}`;
+  const medF = `mm_${uid}`;
 
   const circles = useMemo(
     () => [
@@ -68,12 +69,23 @@ function MandalaSvg({
   );
 
   const c = size / 2;
-  const sw = Math.max(0.6, size * 0.0034);
+  const sw = Math.max(0.85, size * 0.0036); // crisp line stroke (wireframe ≈ size*0.003)
   const mid = colors[Math.floor(colors.length / 2)] ?? colors[0];
-  const lineStd = size * 0.011 * blurMul;
-  const softStd = Math.max(0.5, lineStd);
-  const glowStd = Math.max(1.5, size * 0.026 * blurMul); // keep a soft halo even at zero line-blur
-  const lineFilter = lineStd > 0.4 ? `url(#${softF})` : undefined; // blurMul 0 → crisp line-work
+  const wideStd = size * 0.014; // wide glow blur (tighter → less wash over line-work)
+  const medStd = size * 0.007; // medium glow blur
+  const r84 = c * 0.84;
+  const r97 = c * 0.97;
+
+  // The geometry (framing circles + rosette) repeated per layer.
+  const geometry = (keyPrefix: string) => (
+    <>
+      <Circle cx={c} cy={c} r={r84} />
+      <Circle cx={c} cy={c} r={r97} />
+      {circles.map((o, i) => (
+        <Circle key={`${keyPrefix}${i}`} cx={o.cx} cy={o.cy} r={o.r} />
+      ))}
+    </>
+  );
 
   return (
     <Svg width={size} height={size}>
@@ -84,35 +96,36 @@ function MandalaSvg({
           ))}
         </LinearGradient>
         <RadialGradient id={bloom} cx="50%" cy="50%" r="50%">
-          <Stop offset="0" stopColor={mid} stopOpacity={glow * 0.5} />
-          <Stop offset="0.7" stopColor={colors[0]} stopOpacity={glow * 0.14} />
+          <Stop offset="0" stopColor={mid} stopOpacity={glow * 0.55} />
+          <Stop offset="0.65" stopColor={colors[0]} stopOpacity={glow * 0.16} />
           <Stop offset="1" stopColor={colors[0]} stopOpacity={0} />
         </RadialGradient>
-        <Filter id={softF} x="-30%" y="-30%" width="160%" height="160%">
-          <FeGaussianBlur in="SourceGraphic" stdDeviation={softStd} />
+        <Filter id={wideF} x="-60%" y="-60%" width="220%" height="220%">
+          <FeGaussianBlur in="SourceGraphic" stdDeviation={wideStd} />
         </Filter>
-        <Filter id={glowF} x="-60%" y="-60%" width="220%" height="220%">
-          <FeGaussianBlur in="SourceGraphic" stdDeviation={glowStd} />
+        <Filter id={medF} x="-40%" y="-40%" width="180%" height="180%">
+          <FeGaussianBlur in="SourceGraphic" stdDeviation={medStd} />
         </Filter>
       </Defs>
 
+      {/* soft radial bloom backdrop (brightness) */}
       <Circle cx={c} cy={c} r={c} fill={`url(#${bloom})`} />
 
-      <G stroke={`url(#${grad})`} strokeWidth={sw * 2.2} fill="none" opacity={glow * 0.55} filter={`url(#${glowF})`}>
-        {circles.map((o, i) => (
-          <Circle key={`b${i}`} cx={o.cx} cy={o.cy} r={o.r} />
-        ))}
+      {/* layer 1 — wide glow */}
+      <G stroke={`url(#${grad})`} strokeWidth={sw * 1.8} fill="none" opacity={Math.min(1, glow * 0.55)} filter={`url(#${wideF})`}>
+        {geometry('w')}
+      </G>
+      {/* layer 2 — medium glow */}
+      <G stroke={`url(#${grad})`} strokeWidth={sw * 1.25} fill="none" opacity={Math.min(1, glow * 0.9)} filter={`url(#${medF})`}>
+        {geometry('m')}
+      </G>
+      {/* layer 3 — CRISP top line (no filter, always sharp) */}
+      <G stroke={`url(#${grad})`} strokeWidth={sw} fill="none" opacity={Math.min(1, opacity * 1.55)}>
+        {geometry('s')}
       </G>
 
-      <G stroke={`url(#${grad})`} strokeWidth={sw} fill="none" opacity={opacity} filter={lineFilter}>
-        <Circle cx={c} cy={c} r={c * 0.84} />
-        <Circle cx={c} cy={c} r={c * 0.97} />
-        {circles.map((o, i) => (
-          <Circle key={`c${i}`} cx={o.cx} cy={o.cy} r={o.r} />
-        ))}
-      </G>
-
-      <Circle cx={c} cy={c} r={c * 0.05} fill={`url(#${grad})`} />
+      {/* bright core */}
+      <Circle cx={c} cy={c} r={c * 0.055} fill={`url(#${grad})`} />
     </Svg>
   );
 }
@@ -120,13 +133,11 @@ function MandalaSvg({
 export function Mandala({
   size,
   colors = Gradients.spectral as unknown as string[],
-  opacity = 0.5,
-  glow = 0.6,
+  opacity = 0.55,
+  glow = 0.7,
   motion = 'none',
-  blur = 1,
   breatheMs = 7000,
   breatheRange = 0.12,
-  dynamicBlur = false,
   style,
 }: {
   size: number;
@@ -134,17 +145,16 @@ export function Mandala({
   opacity?: number;
   glow?: number;
   motion?: Motion;
-  /** Blur multiplier — <1 sharper, >1 fuzzier. */
-  blur?: number;
   /** Breathe cycle duration (ms) — smaller is faster. */
   breatheMs?: number;
   /** Breathe scale swing — larger pulses bigger. */
   breatheRange?: number;
-  /** Couple blur to the breath: fuzzy when contracted, sharp when expanded. */
+  /** @deprecated no-op — the line is always crisp now. */
   dynamicBlur?: boolean;
+  /** @deprecated no-op — the line is always crisp now. */
+  blur?: number;
   style?: StyleProp<ViewStyle>;
 }) {
-  const dyn = motion === 'breathe' && dynamicBlur;
   const t = useSharedValue(0);
 
   useEffect(() => {
@@ -165,9 +175,10 @@ export function Mandala({
 
   const outerStyle = useAnimatedStyle(() => {
     if (motion === 'breathe') {
+      // Wireframe breathe: scale 0.94→1.06 + opacity 0.7→1 (no blur).
       return {
-        transform: [{ scale: 0.93 + breatheRange * t.value }],
-        opacity: dyn ? 1 : 0.55 + 0.4 * t.value,
+        transform: [{ scale: 1 - breatheRange / 2 + breatheRange * t.value }],
+        opacity: 0.72 + 0.28 * t.value,
       };
     }
     if (motion === 'rotate' || motion === 'rotateReverse') {
@@ -177,24 +188,9 @@ export function Mandala({
     return {};
   });
 
-  // Cross-fade layers (only used when dyn): sharp shows as it expands, fuzzy as it contracts.
-  const sharpStyle = useAnimatedStyle(() => ({ opacity: t.value }));
-  const fuzzyStyle = useAnimatedStyle(() => ({ opacity: 1 - t.value }));
-
   return (
     <Animated.View style={[{ width: size, height: size }, outerStyle, style]}>
-      {dyn ? (
-        <>
-          <Animated.View style={[styles.layer, fuzzyStyle]}>
-            <MandalaSvg size={size} colors={colors} opacity={opacity} glow={glow} blurMul={2.6} />
-          </Animated.View>
-          <Animated.View style={[styles.layer, sharpStyle]}>
-            <MandalaSvg size={size} colors={colors} opacity={opacity} glow={glow} blurMul={0} />
-          </Animated.View>
-        </>
-      ) : (
-        <MandalaSvg size={size} colors={colors} opacity={opacity} glow={glow} blurMul={blur} />
-      )}
+      <MandalaSvg size={size} colors={colors} opacity={opacity} glow={glow} />
     </Animated.View>
   );
 }
@@ -233,13 +229,4 @@ export function CardMandala({
 
 const styles = StyleSheet.create({
   corner: { position: 'absolute' },
-  layer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });

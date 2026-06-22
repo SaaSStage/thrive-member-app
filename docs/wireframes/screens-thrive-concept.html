@@ -51,7 +51,14 @@
   .logoO{width:124px;height:124px;object-fit:contain;margin:0 -6px;
     filter:drop-shadow(0 0 22px rgba(167,139,250,.5)) brightness(1.12) saturate(1.08)}
   .logoO2{width:152px;height:152px;object-fit:contain;margin:0 -12px;
-    filter:drop-shadow(0 0 20px rgba(167,139,250,.45))}
+    filter:brightness(0) invert(1) drop-shadow(0 0 20px rgba(255,255,255,.5))}
+  .logoW{width:152px;height:152px;object-fit:contain;margin:0 -12px}
+  /* 1 — dimmed dove-gray */
+  .logoW1{filter:brightness(0) invert(.78) opacity(.92) drop-shadow(0 0 12px rgba(180,175,205,.20))}
+  /* 2 — lavender tint */
+  .logoW2{filter:brightness(0) invert(1) sepia(.7) hue-rotate(218deg) saturate(2.8) brightness(.82) drop-shadow(0 0 12px rgba(167,139,250,.30))}
+  /* 3 — warm champagne */
+  .logoW3{filter:brightness(0) invert(1) sepia(.55) saturate(1.7) brightness(.9) drop-shadow(0 0 12px rgba(243,205,139,.30))}
   .chip{display:inline-block;background:var(--glass2);border:1px solid var(--hair);font-size:12px;padding:7px 13px;border-radius:999px}
   .live{display:inline-flex;align-items:center;gap:5px;color:var(--teal);font-size:11px;font-weight:700}
   .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal)}
@@ -78,7 +85,10 @@
   <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#efe6ff"/><stop offset=".5" stop-color="#a78bfa"/><stop offset="1" stop-color="#5b3bb8"/></linearGradient>
   <linearGradient id="rose" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe3f4"/><stop offset=".5" stop-color="#f0a6d8"/><stop offset="1" stop-color="#b13a86"/></linearGradient>
   <linearGradient id="spec" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5eead4"/><stop offset=".4" stop-color="#a78bfa"/><stop offset="1" stop-color="#f3cd8b"/></linearGradient>
-  <linearGradient id="yg" x1="0" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#5e3897"/><stop offset=".5" stop-color="#331760"/><stop offset="1" stop-color="#1e0c3d"/></linearGradient>
+  <linearGradient id="yg" x1="0" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#f4f4f8"/><stop offset="1" stop-color="#e2e2ec"/></linearGradient>
+  <linearGradient id="yg1" x1="0" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#c7c1d6"/><stop offset=".5" stop-color="#aaa3c4"/><stop offset="1" stop-color="#8e87ab"/></linearGradient>
+  <linearGradient id="yg2" x1="0" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#ddd2ff"/><stop offset=".5" stop-color="#b9a6f5"/><stop offset="1" stop-color="#9a7ee8"/></linearGradient>
+  <linearGradient id="yg3" x1="0" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#efebe2"/><stop offset=".5" stop-color="#dad3c6"/><stop offset="1" stop-color="#c0b6a4"/></linearGradient>
   <filter id="gA" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.2"/></filter>
   <filter id="gB" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="5"/></filter>
 </defs></svg>
@@ -102,13 +112,13 @@ function mandala(size,grad,op,glowOp){op=op==null?0.6:op;glowOp=glowOp==null?0.7
 function cardWM(grad,dir){return `<div class="wm ${dir||'spin'}" style="right:-50px;top:-50px;width:170px;height:170px">${mandala(170,grad,0.5,0.6)}</div>`;}
 
 /* Custom vector Y: arms flow straight into the stem (round joins, no squared junction). */
-function yLetter(h,n){const w=h*0.64,sw=h*0.155,jx=w*0.5,jy=h*0.52,top=h*0.05,over=h*0.17,lx=w*0.06,rx=w*0.94;
+function yLetter(h,n,grad){grad=grad||'yg';const w=h*0.64,sw=h*0.155,jx=w*0.5,jy=h*0.52,top=h*0.05,over=h*0.17,lx=w*0.06,rx=w*0.94;
   const tt=(top-over-jy)/(top-jy),slx=(jx+tt*(lx-jx)).toFixed(1),srx=(jx+tt*(rx-jx)).toFixed(1),sty=(top-over).toFixed(1),J=`${jx.toFixed(1)},${jy.toFixed(1)}`;
   const d=`M${slx},${sty} L${J} L${jx.toFixed(1)},${h} M${srx},${sty} L${J}`;
   return `<svg width="${w.toFixed(1)}" height="${h}" viewBox="0 0 ${w.toFixed(1)} ${h}" fill="none" style="overflow:visible">
     <defs><clipPath id="yc${n}"><rect x="-30" y="${top.toFixed(1)}" width="${(w+60).toFixed(1)}" height="${h}"/></clipPath></defs>
-    <path d="${d}" stroke="url(#yg)" stroke-width="${(sw*1.6).toFixed(1)}" stroke-linejoin="round" filter="url(#gB)" opacity=".28"/>
-    <g clip-path="url(#yc${n})"><path d="${d}" stroke="url(#yg)" stroke-width="${sw.toFixed(1)}" stroke-linecap="butt" stroke-linejoin="round"/></g></svg>`;}
+    <path d="${d}" stroke="url(#${grad})" stroke-width="${(sw*1.3).toFixed(1)}" stroke-linejoin="round" filter="url(#gB)" opacity=".08"/>
+    <g clip-path="url(#yc${n})"><path d="${d}" stroke="url(#${grad})" stroke-width="${sw.toFixed(1)}" stroke-linecap="butt" stroke-linejoin="round"/></g></svg>`;}
 
 const SB=`<div class="notch"></div><div class="sbar"><div>9:41</div><div>📶 100%</div></div>`;
 const TAB={home:'<svg width="23" height="23" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 3 10v10h6v-6h6v6h6V10z"/></svg>',
@@ -128,7 +138,7 @@ add('Entry · YOY (nothing behind)',`${SB}<div class="body"><div class="center" 
     <div style="position:relative;display:flex;align-items:center;justify-content:center;width:330px;height:184px">
       <div style="position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(167,139,250,.55),transparent 64%);filter:blur(36px);opacity:.5"></div>
       <div style="position:relative;display:flex;align-items:center;gap:0">
-        ${yLetter(120,'a')}<img src="../../assets/images/logo-cut2.png" class="logoO2" alt="thrive radio"/>${yLetter(120,'b')}
+        ${yLetter(120,'a','yg1')}<img src="../../assets/images/logo-cut2.png" class="logoW logoW1" alt="thrive radio"/>${yLetter(120,'b','yg1')}
       </div>
     </div>
     <div class="disp" style="font-size:34px;font-weight:600;margin-top:14px;letter-spacing:.5px">Thrive Radio</div>
@@ -144,7 +154,7 @@ add('Entry · YOY + purple mandala',`${SB}<div class="body"><div class="center" 
       <div style="position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(167,139,250,.7),transparent 64%);filter:blur(36px);opacity:.5"></div>
       <div class="breathe" style="position:absolute;width:284px;height:284px;opacity:.45">${mandala(284,'violet',0.42,0.6)}</div>
       <div style="position:relative;display:flex;align-items:center;gap:0">
-        ${yLetter(120,'c')}<img src="../../assets/images/logo-cut2.png" class="logoO2" alt="thrive radio"/>${yLetter(120,'d')}
+        ${yLetter(120,'c','yg2')}<img src="../../assets/images/logo-cut2.png" class="logoW logoW2" alt="thrive radio"/>${yLetter(120,'d','yg2')}
       </div>
     </div>
     <div class="disp" style="font-size:34px;font-weight:600;margin-top:14px;letter-spacing:.5px">Thrive Radio</div>
@@ -160,7 +170,7 @@ add('Entry · YOY + gold mandala',`${SB}<div class="body"><div class="center" st
       <div style="position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(243,205,139,.55),transparent 64%);filter:blur(36px);opacity:.5"></div>
       <div class="breathe" style="position:absolute;width:284px;height:284px;opacity:.5">${mandala(284,'gold',0.45,0.65)}</div>
       <div style="position:relative;display:flex;align-items:center;gap:0">
-        ${yLetter(120,'e')}<img src="../../assets/images/logo-cut2.png" class="logoO2" alt="thrive radio"/>${yLetter(120,'f')}
+        ${yLetter(120,'e','yg3')}<img src="../../assets/images/logo-cut2.png" class="logoW logoW3" alt="thrive radio"/>${yLetter(120,'f','yg3')}
       </div>
     </div>
     <div class="disp" style="font-size:34px;font-weight:600;margin-top:14px;letter-spacing:.5px">Thrive Radio</div>

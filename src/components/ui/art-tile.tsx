@@ -42,7 +42,7 @@ export function ArtTile({
 }) {
   const [dim, setDim] = useState({ w: 0, h: 0 });
   const hue = colors ?? hueFor(seed);
-  const reverse = seed.charCodeAt(0) % 2 === 0;
+  const reverse = false; // card mandalas always spin clockwise (motion="rotate")
 
   const onLayout = (e: LayoutChangeEvent) =>
     setDim({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height });

@@ -71,14 +71,13 @@ export default function Home() {
             <Pressable style={[styles.card, styles.glass]} onPress={() => router.push('/score' as Href)}>
               <View style={styles.dialWrap}>
                 <Mandala
-                  size={92}
+                  size={112}
                   colors={Gradients.gold as unknown as string[]}
                   motion="breathe"
-                  opacity={0.5}
+                  opacity={0.6}
                   glow={0.8}
-                  breatheRange={0.17}
+                  breatheRange={0.14}
                   breatheMs={5600}
-                  dynamicBlur
                 />
                 <Text style={[styles.dialNum, { color: t.text }]}>{vitalityValue}</Text>
               </View>
@@ -165,7 +164,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
   },
-  dialWrap: { width: 88, height: 88, alignItems: 'center', justifyContent: 'center' },
+  dialWrap: { width: 100, height: 100, alignItems: 'center', justifyContent: 'center' },
   dialNum: { position: 'absolute', ...Type.numeral, fontSize: 30 },
   cardText: { flex: 1 },
   kicker: { ...Type.caption },
