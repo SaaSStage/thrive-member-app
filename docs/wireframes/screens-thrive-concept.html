@@ -85,12 +85,15 @@
   <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#efe6ff"/><stop offset=".5" stop-color="#a78bfa"/><stop offset="1" stop-color="#5b3bb8"/></linearGradient>
   <linearGradient id="rose" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe3f4"/><stop offset=".5" stop-color="#f0a6d8"/><stop offset="1" stop-color="#b13a86"/></linearGradient>
   <linearGradient id="spec" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5eead4"/><stop offset=".4" stop-color="#a78bfa"/><stop offset="1" stop-color="#f3cd8b"/></linearGradient>
+  <linearGradient id="sw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f3cd8b"/><stop offset=".34" stop-color="#ff9f5a"/><stop offset=".68" stop-color="#f0a6d8"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+  <radialGradient id="swglow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff1d6" stop-opacity=".6"/><stop offset="38%" stop-color="#f6b870" stop-opacity=".22"/><stop offset="100%" stop-color="#f6b870" stop-opacity="0"/></radialGradient>
   <linearGradient id="yg" x1="0" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#f4f4f8"/><stop offset="1" stop-color="#e2e2ec"/></linearGradient>
   <linearGradient id="yg1" x1="0" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#c7c1d6"/><stop offset=".5" stop-color="#aaa3c4"/><stop offset="1" stop-color="#8e87ab"/></linearGradient>
   <linearGradient id="yg2" x1="0" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#ddd2ff"/><stop offset=".5" stop-color="#b9a6f5"/><stop offset="1" stop-color="#9a7ee8"/></linearGradient>
   <linearGradient id="yg3" x1="0" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#efebe2"/><stop offset=".5" stop-color="#dad3c6"/><stop offset="1" stop-color="#c0b6a4"/></linearGradient>
   <filter id="gA" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.2"/></filter>
   <filter id="gB" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="5"/></filter>
+  <filter id="gC" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.1"/></filter>
 </defs></svg>
 
 <script>
@@ -111,6 +114,23 @@ function mandala(size,grad,op,glowOp){op=op==null?0.6:op;glowOp=glowOp==null?0.7
 /* corner watermark behind a card (rotates) */
 function cardWM(grad,dir){return `<div class="wm ${dir||'spin'}" style="right:-50px;top:-50px;width:170px;height:170px">${mandala(170,grad,0.5,0.6)}</div>`;}
 
+/* Live-station DNA double helix. Strands are DEPTH-SHADED — the segment rotating
+   toward you is thick+bright, the one going behind is thin+faint, weaving over
+   each other at the crossings — so the horizontal drift reads as a rotating
+   corkscrew, not a slide. Soft (gA/gB blur) to match the mandalas; base-pair
+   rungs tilted ~25° to the right. Rendered ~480px wide and looped by exactly one
+   wavelength (108px) by .dnaflow so there's no seam. */
+function dna(){const W=480,H=44,A=15,L=108,k=2*Math.PI/L,S=L/8,N=96,C=['#5eead4','#a78bfa','#f3cd8b','#f0a6d8'];
+  const seg=ph=>{let b='',f='';for(let i=0;i<N;i++){const x0=W*i/N,x1=W*(i+1)/N,z=Math.cos(k*(x0+x1)/2+ph),d=(z+1)/2,
+    ln=`<path d="M${x0.toFixed(1)} ${(H/2+A*Math.sin(k*x0+ph)).toFixed(1)}L${x1.toFixed(1)} ${(H/2+A*Math.sin(k*x1+ph)).toFixed(1)}" stroke-width="${(1+2.4*d).toFixed(2)}" opacity="${(0.22+0.78*d).toFixed(2)}"/>`;
+    if(z<0)b+=ln;else f+=ln;}return [b,f];};
+  const [b0,f0]=seg(0),[b1,f1]=seg(Math.PI),si=Math.sin(.4363),co=Math.cos(.4363);let R='';
+  for(let i=0,nR=Math.round(W/S);i<nR;i++){const x=(i+0.5)*S,ya=H/2+A*Math.sin(k*x),yb=H/2+A*Math.sin(k*x+Math.PI),cy=(ya+yb)/2,hl=Math.abs(ya-yb)/2;
+    R+=`<line x1="${(x+hl*si).toFixed(1)}" y1="${(cy-hl*co).toFixed(1)}" x2="${(x-hl*si).toFixed(1)}" y2="${(cy+hl*co).toFixed(1)}" stroke="${C[i%4]}" opacity="${(0.2+0.6*Math.abs(Math.sin(k*x))).toFixed(2)}"/>`;}
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" style="display:block;overflow:visible">
+    <g filter="url(#gB)" opacity=".5" stroke-linecap="round"><g stroke="url(#teal)">${b0}${f0}</g><g stroke="url(#violet)">${b1}${f1}</g></g>
+    <g filter="url(#gC)" stroke-linecap="round"><g stroke="url(#teal)">${b0}</g><g stroke="url(#violet)">${b1}</g><g stroke-width="2.6">${R}</g><g stroke="url(#teal)">${f0}</g><g stroke="url(#violet)">${f1}</g></g></svg>`;}
+
 /* Custom vector Y: arms flow straight into the stem (round joins, no squared junction). */
 function yLetter(h,n,grad){grad=grad||'yg';const w=h*0.64,sw=h*0.155,jx=w*0.5,jy=h*0.52,top=h*0.05,over=h*0.17,lx=w*0.06,rx=w*0.94;
   const tt=(top-over-jy)/(top-jy),slx=(jx+tt*(lx-jx)).toFixed(1),srx=(jx+tt*(rx-jx)).toFixed(1),sty=(top-over).toFixed(1),J=`${jx.toFixed(1)},${jy.toFixed(1)}`;
@@ -129,6 +149,25 @@ const tabbar=a=>`<div class="tabbar">${[['home','Home'],['freq','Frequencies'],[
 const mini=()=>`<div class="mini"><div style="width:48px;height:48px;border-radius:13px;overflow:hidden;position:relative;background:#120e22"><div class="wm spin" style="inset:-14px">${mandala(76,'gold',0.6,0.7)}</div></div>
   <div class="mt"><div class="a">528 Hz · Renewal</div><div class="b"><span class="live">LIVE</span></div></div>
   <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--gold)"><rect x="6" y="5" width="4" height="14" rx="1.3"/><rect x="14" y="5" width="4" height="14" rx="1.3"/></svg></div>`;
+
+/* Live-station SOUND WAVE — an audio-waveform "burst": several thin overlapping
+   waves of different frequency that swell out of the centre and taper at the
+   edges (the classic constructive-interference look of a real sound wave), in the
+   app's gold/amber/magenta/violet shades, soft-blurred and TRANSPARENT so it sits
+   behind text. opt: {h, layers, amp, spread, fb (base frequency)}. */
+function soundwave(opt){opt=opt||{};const W=320,H=opt.h||104,N=200,cy=H/2,LY=opt.layers||7,
+  amp=opt.amp==null?H*0.42:opt.amp,sp=opt.spread||0.27,fb=opt.fb||3.5,
+  C=['#f3cd8b','#ffce9a','#ff9f5a','#f0a6d8','#cab6ff','#a78bfa','#f5d39a'],
+  env=x=>Math.exp(-Math.pow((x/W-0.5)/sp,2));let p='';
+  for(let l=0;l<LY;l++){const f=fb+l*0.95,ph=Math.PI/2-Math.PI*f+l*0.5,a=amp*(0.58+0.42*((l%3)/2));let d='';
+    for(let i=0;i<=N;i++){const x=W*i/N,y=cy+a*env(x)*Math.sin(2*Math.PI*f*x/W+ph);d+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);}
+    p+=`<path d="${d}" stroke="${C[l%C.length]}" stroke-width="1.6" stroke-linecap="round" fill="none"/>`;}
+  const u=(soundwave._i=(soundwave._i||0)+1),core=p.replace(/stroke="#[0-9a-f]+"/g,'stroke="#fff3df"');
+  return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" fill="none">
+    <defs><clipPath id="swc${u}"><ellipse cx="${(W/2).toFixed(0)}" cy="${cy.toFixed(0)}" rx="${(W*0.22).toFixed(0)}" ry="${(H*0.5).toFixed(0)}"/></clipPath></defs>
+    <ellipse cx="${(W/2).toFixed(0)}" cy="${cy.toFixed(0)}" rx="${(W*0.3).toFixed(0)}" ry="${(H*0.52).toFixed(0)}" fill="url(#swglow)"/>
+    <g filter="url(#gB)" opacity=".24">${p}</g><g filter="url(#gC)" opacity=".5">${p}</g>
+    <g clip-path="url(#swc${u})" filter="url(#gC)" opacity=".5">${core}</g></svg>`;}
 
 const S=[];const add=(n,h)=>S.push({n,h});
 
@@ -278,6 +317,26 @@ add('Library',`${SB}<div class="body">
       `<div><div class="glass" style="height:140px">${cardWM(g,'spin')}<div style="position:absolute;left:13px;bottom:12px" class="disp" style="font-size:15px">${t}</div></div>
        <div class="muted" style="font-size:12px;margin-top:7px">${s}</div></div>`).join('')}
   </div><div style="height:160px"></div>${mini()}${tabbar('lib')}</div>`);
+
+/* ───────── LIVE STATION · lock-screen "now playing" options ─────────
+   The small media card that shows on the lock screen, with a single SOUND-WAVE
+   graphic (app gold/amber/magenta/violet, softly blurred). Three card layouts. */
+
+/* Live-station lock-screen art: the small media card with a big AMBER mandala
+   overflowing the card top/bottom (only its glowing centre shows, ~60% of the
+   card width), title + play button floating on top. */
+add('Lock · live — mandala card',`${SB}<div class="body">
+  <div class="center" style="margin-top:38px">
+    <div class="muted" style="font-size:15px;font-weight:600">Monday, June 22</div>
+    <div class="disp" style="font-size:86px;font-weight:300;line-height:1;letter-spacing:1px">9:41</div></div>
+  <div style="position:absolute;left:16px;right:16px;bottom:108px">
+    <div class="glass" style="padding:20px 16px;border-radius:24px;position:relative;overflow:hidden">
+      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:210px;height:210px">${mandala(210,'amber',0.62,0.85)}</div>
+      <div class="between" style="position:relative;z-index:2">
+        <div><div class="disp" style="font-size:18px;font-weight:600">Wellness Live</div>
+          <div class="muted" style="font-size:13px;margin-top:3px;display:flex;align-items:center;gap:7px">Thrive Radio <span class="live" style="font-size:11px">LIVE</span></div></div>
+        <div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(120deg,#f3cd8b,#f0a6d8 55%,#a78bfa);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="#0a0814"><rect x="6" y="5" width="4" height="14" rx="1.4"/><rect x="14" y="5" width="4" height="14" rx="1.4"/></svg></div></div>
+    </div></div></div>`);
 
 const grid=document.getElementById('grid');
 S.forEach(s=>{const c=document.createElement('div');c.className='cell';
