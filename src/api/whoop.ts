@@ -32,6 +32,20 @@ export type WhoopLinkStatus =
     }
   | { state: 'reauth_required' };
 
+/** One row from `whoop_body` — explicit columns, no `*`. */
+export type WhoopBodyRow = {
+  day: string;
+  height_m: number | null;
+  weight_kg: number | null;
+  max_hr_bpm: number | null;
+};
+
+/** Minimal weight-history row for charting — explicit columns, no `*`. */
+export type WhoopWeightPoint = {
+  day: string;
+  weight_kg: number | null;
+};
+
 /** One row from `whoop_daily` — explicit columns, no `*`. */
 export type WhoopDailyRow = {
   day: string;
@@ -184,6 +198,52 @@ export function useDailySync() {
   }
 
   return { triggerSync, syncing };
+}
+
+const BODY_COLUMNS = ['day', 'height_m', 'weight_kg', 'max_hr_bpm'].join(', ');
+const WEIGHT_COLUMNS = ['day', 'weight_kg'].join(', ');
+
+/**
+ * Latest single body-measurement snapshot (most recent day).
+ * Returns null when the member has not yet synced body data.
+ * Explicit columns — never `*`.
+ */
+export function useWhoopBody() {
+  const supabase = useSupabase();
+  return useQuery({
+    queryKey: ['whoop-body'],
+    queryFn: async (): Promise<WhoopBodyRow | null> => {
+      const { data, error } = await supabase
+        .from('whoop_body')
+        .select(BODY_COLUMNS)
+        .order('day', { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      return ((data ?? []) as unknown as WhoopBodyRow[])[0] ?? null;
+    },
+  });
+}
+
+/**
+ * Weight time series for the last `days` days.
+ * Rows come back ascending (oldest→newest) for charting.
+ * Explicit columns — never `*`.
+ */
+export function useWhoopWeightHistory(days = 180) {
+  const supabase = useSupabase();
+  return useQuery({
+    queryKey: ['whoop-weight', days],
+    queryFn: async (): Promise<WhoopWeightPoint[]> => {
+      const { data, error } = await supabase
+        .from('whoop_body')
+        .select(WEIGHT_COLUMNS)
+        .order('day', { ascending: false })
+        .limit(days);
+      if (error) throw error;
+      // Reverse so charts get oldest-first.
+      return ((data ?? []) as unknown as WhoopWeightPoint[]).reverse();
+    },
+  });
 }
 
 /**

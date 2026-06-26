@@ -20,6 +20,8 @@ import {
   useUnlinkWhoop,
   useDailySync,
   useWhoopDailyData,
+  useWhoopBody,
+  useWhoopWeightHistory,
 } from '@/api/whoop';
 import { Aura } from '@/components/ui/aura';
 import { Button } from '@/components/ui/button';
@@ -51,6 +53,8 @@ export default function WhoopScreen() {
   const unlink = useUnlinkWhoop();
   const { triggerSync, syncing } = useDailySync();
   const { data: dailyRows } = useWhoopDailyData(30);
+  const { data: bodyRow } = useWhoopBody();
+  const { data: weightHistory } = useWhoopWeightHistory(180);
 
   const linked = linkStatus?.state === 'linked';
   const needsReauth = linkStatus?.state === 'reauth_required';
@@ -61,6 +65,10 @@ export default function WhoopScreen() {
   const hrvData = (dailyRows ?? [])
     .map((r) => r.hrv_rmssd_ms)
     .filter((v): v is number => v != null);
+  const weightData = (weightHistory ?? [])
+    .map((r) => r.weight_kg)
+    .filter((v): v is number => v != null);
+  const currentWeightKg = bodyRow?.weight_kg ?? null;
 
   return (
     <Aura>
@@ -168,6 +176,48 @@ export default function WhoopScreen() {
                 </Text>
                 <Text style={[styles.chartUnit, { color: t.textTertiary }]}>ms · latest</Text>
               </View>
+            </View>
+          ) : null}
+
+          {/* ---- Weight sparkline ---- */}
+          {linked && weightData.length >= 2 ? (
+            <View style={[styles.card, styles.glass]}>
+              <Text style={[styles.chartLabel, { color: t.textSecondary }]}>
+                Weight (kg) · 180 days
+              </Text>
+              <Sparkline
+                data={weightData}
+                width={320}
+                height={52}
+                color={Gradients.gold[1] as string}
+                strokeWidth={2.4}
+              />
+              <View style={styles.chartFooter}>
+                {currentWeightKg != null ? (
+                  <>
+                    <Text style={[styles.chartStat, { color: t.text }]}>
+                      {currentWeightKg.toFixed(1)}
+                    </Text>
+                    <Text style={[styles.chartUnit, { color: t.textTertiary }]}>kg · latest</Text>
+                  </>
+                ) : null}
+              </View>
+            </View>
+          ) : null}
+
+          {/* ---- Weight: current reading only (no sparkline yet) ---- */}
+          {linked && weightData.length < 2 && currentWeightKg != null ? (
+            <View style={[styles.card, styles.glass]}>
+              <Text style={[styles.chartLabel, { color: t.textSecondary }]}>Weight</Text>
+              <View style={styles.chartFooter}>
+                <Text style={[styles.chartStat, { color: t.text }]}>
+                  {currentWeightKg.toFixed(1)}
+                </Text>
+                <Text style={[styles.chartUnit, { color: t.textTertiary }]}>kg</Text>
+              </View>
+              <Text style={[styles.cardSub, { color: t.textTertiary, marginTop: 6 }]}>
+                Trend builds after a few daily syncs.
+              </Text>
             </View>
           ) : null}
 
