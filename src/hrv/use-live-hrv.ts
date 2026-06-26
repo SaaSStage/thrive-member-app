@@ -58,6 +58,7 @@ export function useLiveHrv() {
           latestBpmRef.current = bpm;
           if (rrMs.length > 0) {
             window.addIntervals(rrMs, Date.now());
+            useHrvStore.getState().addRawRr(rrMs);
             lastBeatAtRef.current = Date.now();
           }
         },

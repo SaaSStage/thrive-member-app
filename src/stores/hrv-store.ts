@@ -30,10 +30,18 @@ export type HrvSessionSummary = {
   minRmssd: number | null;
   maxRmssd: number | null;
   sampleCount: number;
+  /** Raw beat-to-beat R-R intervals (ms), unfiltered — the full scientific record. */
+  rrIntervalsMs: number[];
+  /** Per-tick (~1s) live RMSSD time-course. */
+  rmssdSeries: number[];
+  /** Per-tick heart-rate time-course (bpm). */
+  bpmSeries: number[];
 };
 
 /** How many recent RMSSD samples to keep for the sparkline. */
 export const RECENT_CAP = 40;
+/** Defensive cap on stored raw R-R intervals (~14h at 60bpm; no real session hits it). */
+export const RAW_RR_CAP = 50_000;
 
 type HrvState = {
   armed: boolean;
@@ -53,12 +61,19 @@ type HrvState = {
   minRmssd: number | null;
   maxRmssd: number | null;
 
+  // Raw / time-series capture (the full record, persisted on Stop capture).
+  rrAll: number[];
+  rmssdSeries: number[];
+  bpmSeries: number[];
+
   /** Station Play-button toggle on/off. Arming clears any prior session. */
   arm: (station: HrvStation) => void;
   disarm: () => void;
   /** Connection started for `station`. */
   beginSession: (station: HrvStation) => void;
   setStatus: (status: HrvStatus) => void;
+  /** Append raw beat-to-beat R-R intervals (ms) as they arrive from BLE. */
+  addRawRr: (rrMs: number[]) => void;
   /** Feed a throttled sample from the live hook. */
   pushSample: (sample: { rmssd: number | null; bpm: number | null; stale: boolean }) => void;
   setError: (error: HrvErrorCode) => void;
@@ -81,6 +96,9 @@ const INITIAL = {
   sampleCount: 0,
   minRmssd: null,
   maxRmssd: null,
+  rrAll: [] as number[],
+  rmssdSeries: [] as number[],
+  bpmSeries: [] as number[],
 };
 
 export const useHrvStore = create<HrvState>((set, get) => ({
@@ -100,6 +118,13 @@ export const useHrvStore = create<HrvState>((set, get) => ({
 
   setStatus: (status) => set({ status }),
 
+  addRawRr: (rrMs) => {
+    if (rrMs.length === 0) return;
+    const s = get();
+    if (s.rrAll.length >= RAW_RR_CAP) return;
+    set({ rrAll: [...s.rrAll, ...rrMs] });
+  },
+
   pushSample: ({ rmssd, bpm, stale }) => {
     const s = get();
     if (rmssd == null) {
@@ -116,6 +141,8 @@ export const useHrvStore = create<HrvState>((set, get) => ({
       sampleCount: s.sampleCount + 1,
       minRmssd: s.minRmssd == null ? rmssd : Math.min(s.minRmssd, rmssd),
       maxRmssd: s.maxRmssd == null ? rmssd : Math.max(s.maxRmssd, rmssd),
+      rmssdSeries: [...s.rmssdSeries, rmssd],
+      bpmSeries: bpm != null ? [...s.bpmSeries, bpm] : s.bpmSeries,
     });
   },
 
@@ -137,6 +164,9 @@ export const useHrvStore = create<HrvState>((set, get) => ({
       minRmssd: s.minRmssd,
       maxRmssd: s.maxRmssd,
       sampleCount: s.sampleCount,
+      rrIntervalsMs: s.rrAll,
+      rmssdSeries: s.rmssdSeries,
+      bpmSeries: s.bpmSeries,
     };
     set({ ...INITIAL });
     return summary;

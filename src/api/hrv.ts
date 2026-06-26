@@ -56,6 +56,10 @@ export function useSaveHrvSession() {
           min_rmssd: summary.minRmssd,
           max_rmssd: summary.maxRmssd,
           sample_count: summary.sampleCount,
+          // Full record (jsonb) — not read by list queries; for later reprocessing.
+          rr_intervals_ms: summary.rrIntervalsMs,
+          rmssd_series: summary.rmssdSeries,
+          bpm_series: summary.bpmSeries,
         })
         .select(COLUMNS)
         .single();
