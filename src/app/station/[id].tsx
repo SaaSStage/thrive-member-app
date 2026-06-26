@@ -6,6 +6,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from 'react-native';
@@ -18,6 +19,7 @@ import { SectionHeader } from '@/components/ui/section-header';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { usePlayerStore } from '@/stores/player-store';
+import { useHrvStore } from '@/stores/hrv-store';
 
 export default function StationDetail() {
   const t = useTheme();
@@ -26,6 +28,10 @@ export default function StationDetail() {
   const { data, isLoading } = useGrantedContent();
   const status = useAudioPlayerStatus(radioPlayer);
   const activeStation = usePlayerStore((s) => s.activeStation);
+
+  const armed = useHrvStore((s) => s.armed);
+  const arm = useHrvStore((s) => s.arm);
+  const disarm = useHrvStore((s) => s.disarm);
 
   const asset = data?.find((a) => a.id === id);
   const isThis = activeStation?.id === id;
@@ -44,6 +50,16 @@ export default function StationDetail() {
         stream_url: asset.stream_url,
         description: asset.description,
       });
+      router.push('/player');
+    }
+  }
+
+  function toggleHrv() {
+    if (!asset) return;
+    if (armed) {
+      disarm();
+    } else {
+      arm({ id: asset.id, code: asset.code ?? null, name: asset.name });
     }
   }
 
@@ -76,24 +92,53 @@ export default function StationDetail() {
           </ArtTile>
 
           <View style={styles.actions}>
+            {/* Play Live button with embedded HRV toggle */}
             <Pressable
               style={[styles.playBtn, { backgroundColor: t.vitality }]}
               onPress={togglePlay}>
               {buffering ? (
-                <ActivityIndicator color={t.onVitality} />
+                <ActivityIndicator color={t.onVitality} style={{ flex: 1 }} />
               ) : (
                 <>
-                  <Ionicons
-                    name={playing ? 'pause' : 'play'}
-                    size={20}
-                    color={t.onVitality}
-                  />
-                  <Text style={[styles.playText, { color: t.onVitality }]}>
-                    {playing ? 'Pause' : 'Play Live'}
-                  </Text>
+                  {/* Left side: play icon + label */}
+                  <View style={styles.playLeft}>
+                    <Ionicons
+                      name={playing ? 'pause' : 'play'}
+                      size={20}
+                      color={t.onVitality}
+                    />
+                    <Text style={[styles.playText, { color: t.onVitality }]}>
+                      {playing ? 'Pause' : 'Play Live'}
+                    </Text>
+                  </View>
+
+                  {/* Right side: HRV toggle pill — stops event propagation */}
+                  <Pressable
+                    style={styles.hrvPill}
+                    onPress={(e) => { e.stopPropagation(); toggleHrv(); }}
+                    hitSlop={6}>
+                    {/* ECG / heartbeat glyph */}
+                    <Ionicons name="pulse-outline" size={17} color={t.onVitality} />
+                    <Switch
+                      value={armed}
+                      onValueChange={toggleHrv}
+                      trackColor={{ false: 'rgba(10,8,20,0.30)', true: 'rgba(10,8,20,0.50)' }}
+                      thumbColor="#ffffff"
+                      style={styles.switch}
+                    />
+                  </Pressable>
                 </>
               )}
             </Pressable>
+
+            {/* one-line explanation beneath */}
+            <View style={styles.hrvHint}>
+              <Ionicons name="pulse-outline" size={13} color={t.live} />
+              <Text style={[styles.hrvHintText, { color: t.textSecondary }]}>
+                <Text style={{ color: t.text, fontWeight: '600' }}>Track Live HRV.</Text>
+                {' Switch this on to watch how your body responds to this frequency in real time, measured by your WHOOP.'}
+              </Text>
+            </View>
           </View>
 
           {asset.description ? (
@@ -134,14 +179,38 @@ const styles = StyleSheet.create({
   heroSub: { color: '#fff', fontSize: 14, opacity: 0.92 },
   actions: { paddingHorizontal: 20, paddingTop: 16 },
   playBtn: {
-    height: 50,
+    height: 60,
     borderRadius: Radius.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
+    paddingLeft: 22,
+    paddingRight: 8,
+  },
+  playLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
   },
   playText: { fontSize: 17, fontWeight: '700' },
+  hrvPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    backgroundColor: 'rgba(10,8,20,0.20)',
+    borderRadius: 13,
+    height: 46,
+    paddingHorizontal: 12,
+  },
+  switch: { transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] },
+  hrvHint: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 5,
+    marginTop: 11,
+    paddingHorizontal: 2,
+  },
+  hrvHintText: { fontSize: 13, lineHeight: 19, flex: 1 },
   desc: { fontSize: 14, paddingHorizontal: 20, marginTop: 16, lineHeight: 21 },
   empty: { fontSize: 14, paddingHorizontal: 20, paddingBottom: 8 },
 });

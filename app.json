@@ -44,6 +44,15 @@
           "microphonePermission": "THRIVE uses your microphone to record voice samples for your provider.",
           "recordAudioAndroid": false
         }
+      ],
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": false,
+          "modes": ["central"],
+          "bluetoothAlwaysPermission": "THRIVE connects to your WHOOP band over Bluetooth to read your live heart-rate variability while you listen.",
+          "neverForLocation": true
+        }
       ]
     ],
     "experiments": {

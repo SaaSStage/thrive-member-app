@@ -83,6 +83,7 @@ function RootNavigator() {
       <Stack.Screen name="profile-setup" options={{ presentation: 'modal' }} />
       <Stack.Screen name="account" options={{ presentation: 'modal' }} />
       <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="hrv-summary" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }
