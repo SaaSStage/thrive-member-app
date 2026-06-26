@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useVoiceProfile, isProfileComplete } from '@/api/profile';
+import { useWhoopLinkStatus } from '@/api/whoop';
 import { Button } from '@/components/ui/button';
 import { ArtTile } from '@/components/ui/art-tile';
 import { Radius, Type } from '@/constants/theme';
@@ -21,6 +22,9 @@ export default function Account() {
   const { signOut } = useAuth();
   const { data: profile } = useVoiceProfile();
   const complete = isProfileComplete(profile);
+  const { data: whoopStatus } = useWhoopLinkStatus();
+  const whoopLinked = whoopStatus?.state === 'linked';
+  const whoopReauth = whoopStatus?.state === 'reauth_required';
 
   const email = user?.primaryEmailAddress?.emailAddress ?? '';
   const name = user?.fullName ?? email;
@@ -54,6 +58,22 @@ export default function Account() {
               </Text>
             </View>
             <Text style={[styles.chevron, { color: complete ? t.textTertiary : t.primary }]}>›</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push('/whoop')}
+            style={[styles.rowCard, { backgroundColor: t.surface, marginTop: 10 }]}>
+            <View style={styles.rowTextWrap}>
+              <Text style={[styles.rowTitle, { color: t.text }]}>WHOOP · recovery &amp; HRV trends</Text>
+              <Text style={[styles.rowSub, { color: whoopReauth ? t.warning : t.textTertiary }]}>
+                {whoopLinked
+                  ? 'Connected — tap to view or sync'
+                  : whoopReauth
+                    ? 'Reconnect required'
+                    : 'Tap to link your WHOOP account'}
+              </Text>
+            </View>
+            <Text style={[styles.chevron, { color: whoopLinked ? t.textTertiary : t.primary }]}>›</Text>
           </Pressable>
         </View>
 

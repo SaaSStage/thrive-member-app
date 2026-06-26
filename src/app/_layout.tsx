@@ -22,6 +22,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { SupabaseProvider } from '@/api/supabase';
 import { Colors } from '@/constants/theme';
+import { WhoopSyncProvider } from '@/whoop/WhoopSyncProvider';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 if (!publishableKey) {
@@ -73,6 +74,8 @@ function RootNavigator() {
   if (!isLoaded || !fontsLoaded) return <Splash />;
 
   return (
+    <>
+      {isSignedIn ? <WhoopSyncProvider /> : null}
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="(auth)" />
@@ -84,7 +87,9 @@ function RootNavigator() {
       <Stack.Screen name="account" options={{ presentation: 'modal' }} />
       <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
       <Stack.Screen name="hrv-summary" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="whoop" options={{ presentation: 'modal' }} />
     </Stack>
+    </>
   );
 }
 
