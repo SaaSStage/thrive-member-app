@@ -114,15 +114,15 @@ export default function StationDetail() {
 
                   {/* Right side: HRV toggle pill — stops event propagation */}
                   <Pressable
-                    style={styles.hrvPill}
+                    style={[styles.hrvPill, armed && { backgroundColor: 'rgba(94,234,212,0.18)' }]}
                     onPress={(e) => { e.stopPropagation(); toggleHrv(); }}
                     hitSlop={6}>
-                    {/* ECG / heartbeat glyph */}
-                    <Ionicons name="pulse-outline" size={17} color={t.onVitality} />
+                    {/* ECG / heartbeat glyph — teal, matching the description icon */}
+                    <Ionicons name="pulse-outline" size={17} color={t.live} />
                     <Switch
                       value={armed}
                       onValueChange={toggleHrv}
-                      trackColor={{ false: 'rgba(10,8,20,0.30)', true: 'rgba(10,8,20,0.50)' }}
+                      trackColor={{ false: 'rgba(10,8,20,0.30)', true: t.live }}
                       thumbColor="#ffffff"
                       style={styles.switch}
                     />
@@ -131,13 +131,20 @@ export default function StationDetail() {
               )}
             </Pressable>
 
-            {/* one-line explanation beneath */}
+            {/* one-line explanation beneath — confirms state when armed */}
             <View style={styles.hrvHint}>
               <Ionicons name="pulse-outline" size={13} color={t.live} />
-              <Text style={[styles.hrvHintText, { color: t.textSecondary }]}>
-                <Text style={{ color: t.text, fontWeight: '600' }}>Track Live HRV.</Text>
-                {' Switch this on to watch how your body responds to this frequency in real time, measured by your WHOOP.'}
-              </Text>
+              {armed ? (
+                <Text style={[styles.hrvHintText, { color: t.textSecondary }]}>
+                  <Text style={{ color: t.live, fontWeight: '700' }}>Live HRV is on.</Text>
+                  {' Tap Play Live — we’ll connect to your WHOOP and track your HRV as you listen.'}
+                </Text>
+              ) : (
+                <Text style={[styles.hrvHintText, { color: t.textSecondary }]}>
+                  <Text style={{ color: t.text, fontWeight: '600' }}>Track Live HRV.</Text>
+                  {' Switch this on to watch how your body responds to this frequency in real time, measured by your WHOOP.'}
+                </Text>
+              )}
             </View>
           </View>
 
