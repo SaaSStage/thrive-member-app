@@ -22,6 +22,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { SupabaseProvider } from '@/api/supabase';
 import { Colors } from '@/constants/theme';
+import { LiveHrvProvider } from '@/hrv/live-hrv-provider';
 import { WhoopSyncProvider } from '@/whoop/WhoopSyncProvider';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -74,22 +75,22 @@ function RootNavigator() {
   if (!isLoaded || !fontsLoaded) return <Splash />;
 
   return (
-    <>
+    <LiveHrvProvider>
       {isSignedIn ? <WhoopSyncProvider /> : null}
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="player" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="voice" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="score" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="profile-setup" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="account" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="hrv-summary" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="whoop" options={{ presentation: 'modal' }} />
-    </Stack>
-    </>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="player" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="voice" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="score" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="profile-setup" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="account" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="hrv-summary" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="whoop" options={{ presentation: 'modal' }} />
+      </Stack>
+    </LiveHrvProvider>
   );
 }
 

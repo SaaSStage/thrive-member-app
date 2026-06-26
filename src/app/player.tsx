@@ -21,7 +21,7 @@ import { Sparkline } from '@/components/hrv/sparkline';
 import { ArtTile } from '@/components/ui/art-tile';
 import { Radius, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useLiveHrv } from '@/hrv/use-live-hrv';
+import { useLiveHrvControls } from '@/hrv/live-hrv-provider';
 import { useHrvStore } from '@/stores/hrv-store';
 import { usePlayerStore } from '@/stores/player-store';
 
@@ -48,11 +48,8 @@ export default function NowPlaying() {
   const stale = useHrvStore((s) => s.stale);
   const hrvError = useHrvStore((s) => s.error);
 
-  const { startTracking, stopTracking } = useLiveHrv();
+  const { stopCapture, reconnect } = useLiveHrvControls();
   const saveHrvSession = useSaveHrvSession();
-
-  // Guard: start tracking only once per mount when armed + idle + station ready.
-  const trackingStarted = useRef(false);
 
   // User can dismiss the connect sheet without reconnecting.
   const [sheetDismissed, setSheetDismissed] = useState(false);
@@ -66,18 +63,6 @@ export default function NowPlaying() {
   useEffect(() => {
     if (!activeStation) router.back();
   }, [activeStation, router]);
-
-  // Start tracking once when armed + idle + station available.
-  useEffect(() => {
-    if (armed && hrvStatus === 'idle' && activeStation && !trackingStarted.current) {
-      trackingStarted.current = true;
-      startTracking({
-        id: activeStation.id,
-        code: activeStation.code ?? null,
-        name: activeStation.name,
-      });
-    }
-  }, [armed, hrvStatus, activeStation, startTracking]);
 
   // Manage the session elapsed timer: start when tracking, stop otherwise.
   useEffect(() => {
@@ -108,7 +93,7 @@ export default function NowPlaying() {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-    const summary = await stopTracking();
+    const summary = await stopCapture();
     if (summary) {
       try {
         const row = await saveHrvSession.mutateAsync(summary);
@@ -123,13 +108,8 @@ export default function NowPlaying() {
   }
 
   function handleReconnect() {
-    if (!activeStation) return;
     setSheetDismissed(false);
-    startTracking({
-      id: activeStation.id,
-      code: activeStation.code ?? null,
-      name: activeStation.name,
-    });
+    void reconnect();
   }
 
   if (!activeStation) return <View style={{ flex: 1, backgroundColor: t.background }} />;

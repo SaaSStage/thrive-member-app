@@ -30,8 +30,26 @@ export default function StationDetail() {
   const activeStation = usePlayerStore((s) => s.activeStation);
 
   const armed = useHrvStore((s) => s.armed);
+  const hrvStatus = useHrvStore((s) => s.status);
+  const hrvError = useHrvStore((s) => s.error);
   const arm = useHrvStore((s) => s.arm);
   const disarm = useHrvStore((s) => s.disarm);
+
+  // Live connection feedback shown under the toggle while armed.
+  const armedMessage =
+    hrvStatus === 'scanning' || hrvStatus === 'connecting'
+      ? 'Connecting to your WHOOP…'
+      : hrvStatus === 'tracking'
+        ? 'WHOOP connected — HRV is tracking. Tap Play Live to listen along.'
+        : hrvStatus === 'no-rr'
+          ? 'Connected — turn on Broadcast Heart Rate in your WHOOP app.'
+          : hrvStatus === 'error' && hrvError === 'bluetooth-off'
+            ? 'Turn on Bluetooth to reach your WHOOP.'
+            : hrvStatus === 'error' && hrvError === 'not-found'
+              ? 'No WHOOP found nearby — make sure it’s on and broadcasting.'
+              : hrvStatus === 'error'
+                ? 'Couldn’t reach your WHOOP — check it’s on and broadcasting.'
+                : 'Connecting to your WHOOP…';
 
   const asset = data?.find((a) => a.id === id);
   const isThis = activeStation?.id === id;
@@ -136,8 +154,8 @@ export default function StationDetail() {
               <Ionicons name="pulse-outline" size={13} color={t.live} />
               {armed ? (
                 <Text style={[styles.hrvHintText, { color: t.textSecondary }]}>
-                  <Text style={{ color: t.live, fontWeight: '700' }}>Live HRV is on.</Text>
-                  {' Tap Play Live — we’ll connect to your WHOOP and track your HRV as you listen.'}
+                  <Text style={{ color: t.live, fontWeight: '700' }}>Live HRV on. </Text>
+                  {armedMessage}
                 </Text>
               ) : (
                 <Text style={[styles.hrvHintText, { color: t.textSecondary }]}>

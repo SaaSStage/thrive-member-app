@@ -1,8 +1,8 @@
 /**
  * Session-level state for the live-HRV capture that runs inline on Now Playing.
  * Zustand, mirroring voice-store/player-store. The BLE lifecycle + RMSSD window
- * live in `useLiveHrv` (it needs refs and the native client); that hook pushes
- * throttled samples here via `pushSample`, and the UI renders from this store.
+ * live in `LiveHrvProvider` (app-level, so the session survives navigation); it
+ * pushes throttled samples here via `pushSample`, and the UI renders from here.
  *
  * `armed` is the station Play-button toggle; `status` tracks the connection.
  * Session aggregates accumulate here so the summary screen is self-sufficient.
