@@ -16,6 +16,7 @@
  */
 import { createContext, useCallback, useContext, useEffect, useRef, type ReactNode } from 'react';
 
+import { useSupabase } from '@/api/supabase';
 import { useHrvStore, type HrvSessionSummary } from '@/stores/hrv-store';
 
 import { BleHrClient } from './ble-hr';
@@ -52,7 +53,45 @@ export function LiveHrvProvider({ children }: { children: ReactNode }) {
   const latestBpmRef = useRef<number | null>(null);
   const runningRef = useRef(false);
 
+  // --- Debug telemetry: each live session writes its timeline to user_reports so
+  //     a failure (drop vs. no R-R delivery) is diagnosable without guesswork. ---
+  const supabase = useSupabase();
+  const supabaseRef = useRef(supabase);
+  supabaseRef.current = supabase;
+  const telemetryRef = useRef<{ t: number; e: string }[]>([]);
+  const sessionStartRef = useRef(0);
+  const hrCountRef = useRef(0);
+  const rrCountRef = useRef(0);
+  const firstRrRef = useRef<number | null>(null);
+  const writeTelemetry = async () => {
+    const events = telemetryRef.current;
+    if (events.length === 0) return;
+    telemetryRef.current = [];
+    try {
+      const sb = supabaseRef.current;
+      const { data: id } = await sb.rpc('current_user_id');
+      if (!id) return;
+      await sb.from('user_reports').insert({
+        user_id: id,
+        message: 'live-hrv telemetry',
+        player_state: 'live-hrv-debug',
+        playback_stats: {
+          durationMs: sessionStartRef.current ? Date.now() - sessionStartRef.current : 0,
+          hrPackets: hrCountRef.current,
+          rrIntervals: rrCountRef.current,
+          firstRrMs: firstRrRef.current,
+          events,
+        },
+      });
+    } catch {
+      // best-effort telemetry; never block teardown
+    }
+  };
+  const writeTelemetryRef = useRef(writeTelemetry);
+  writeTelemetryRef.current = writeTelemetry;
+
   const teardown = useCallback(async () => {
+    void writeTelemetryRef.current?.();
     if (tickRef.current) {
       clearInterval(tickRef.current);
       tickRef.current = null;
@@ -70,20 +109,42 @@ export function LiveHrvProvider({ children }: { children: ReactNode }) {
     runningRef.current = true;
     useHrvStore.getState().beginSession(forStation);
 
+    // reset telemetry for this session
+    sessionStartRef.current = Date.now();
+    telemetryRef.current = [{ t: 0, e: 'session-start' }];
+    hrCountRef.current = 0;
+    rrCountRef.current = 0;
+    firstRrRef.current = null;
+
     const window = new RmssdWindow();
     windowRef.current = window;
 
     const client = new BleHrClient({
-      onStatus: (status) => useHrvStore.getState().setStatus(status),
+      onStatus: (status) => {
+        telemetryRef.current.push({ t: Date.now() - sessionStartRef.current, e: `status:${status}` });
+        useHrvStore.getState().setStatus(status);
+      },
       onSample: ({ bpm, rrMs }) => {
         latestBpmRef.current = bpm;
+        hrCountRef.current += 1;
         if (rrMs.length > 0) {
+          rrCountRef.current += rrMs.length;
+          if (firstRrRef.current == null) {
+            firstRrRef.current = Date.now() - sessionStartRef.current;
+            telemetryRef.current.push({ t: firstRrRef.current, e: 'first-rr' });
+          }
           window.addIntervals(rrMs, Date.now());
           useHrvStore.getState().addRawRr(rrMs);
           lastBeatAtRef.current = Date.now();
         }
       },
-      onError: (code) => useHrvStore.getState().setError(code),
+      onError: (code, message) => {
+        telemetryRef.current.push({
+          t: Date.now() - sessionStartRef.current,
+          e: `error:${code}${message ? ` ${message}` : ''}`,
+        });
+        useHrvStore.getState().setError(code);
+      },
     });
     clientRef.current = client;
     void client.start({ deviceNameHint: WHOOP_NAME_HINT });

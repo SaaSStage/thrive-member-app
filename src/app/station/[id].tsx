@@ -62,6 +62,8 @@ export default function StationDetail() {
     if (!asset?.stream_url) return;
     if (isThis) {
       togglePlayPause();
+      // The live-HRV card lives on Now Playing — surface it when HRV is armed.
+      if (armed) router.push('/player');
     } else {
       void playStation({
         id: asset.id,

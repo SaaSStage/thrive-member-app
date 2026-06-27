@@ -19,8 +19,12 @@ const HR_SERVICE = '0000180d-0000-1000-8000-00805f9b34fb';
 const HR_MEASUREMENT_CHAR = '00002a37-0000-1000-8000-00805f9b34fb';
 
 const DEFAULT_SCAN_TIMEOUT_MS = 12_000;
-/** If we connect but no R-R intervals arrive in this window, Broadcast mode is likely off. */
-const NO_RR_TIMEOUT_MS = 15_000;
+/**
+ * A real WHOOP only begins emitting R-R intervals ~30 s after Broadcast starts
+ * (it withholds them while the optical signal stabilises — measured at t+31.9 s on
+ * hardware). Only after this window with still no R-R do we treat it as failed.
+ */
+const NO_RR_TIMEOUT_MS = 50_000;
 
 export type BleHrStatus = 'scanning' | 'connecting' | 'tracking' | 'no-rr';
 export type BleHrErrorCode =
@@ -173,6 +177,10 @@ export class BleHrClient {
         return;
       }
       this.device = connected;
+      // Surface a mid-session drop instead of silently waiting out the R-R timeout.
+      connected.onDisconnected((err) => {
+        if (!this.stopped) this.cb.onError?.('connect-failed', `disconnected${err ? ': ' + err.message : ''}`);
+      });
       await connected.discoverAllServicesAndCharacteristics();
       if (this.stopped) return;
 

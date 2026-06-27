@@ -9,7 +9,7 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "bundleIdentifier": "com.thriveradio.app",
-      "buildNumber": "6",
+      "buildNumber": "9",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }

@@ -10,7 +10,7 @@
  * Glass-card aesthetic matches score.tsx / account.tsx.
  * Uses <Aura> as the animated background canvas.
  */
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -239,6 +239,13 @@ export default function WhoopScreen() {
               only on the server — never on this device.
             </Text>
           </View>
+
+          {/* ---- BLE diagnostic entry (investigation tool) ---- */}
+          <Button
+            label="Run BLE Diagnostic"
+            variant="ghost"
+            onPress={() => router.push('/ble-diag' as Href)}
+          />
         </ScrollView>
       </SafeAreaView>
     </Aura>

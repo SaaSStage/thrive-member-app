@@ -47,6 +47,8 @@ export default function NowPlaying() {
   const recent = useHrvStore((s) => s.recent);
   const stale = useHrvStore((s) => s.stale);
   const hrvError = useHrvStore((s) => s.error);
+  // Raw R-R count — the unambiguous "live HRV has actually started" signal.
+  const rrCount = useHrvStore((s) => s.rrAll.length);
 
   const { stopCapture, reconnect } = useLiveHrvControls();
   const saveHrvSession = useSaveHrvSession();
@@ -130,13 +132,16 @@ export default function NowPlaying() {
             ? 'no-rr'
             : 'not-found';
 
+  // Card + Stop button show through the whole working phase (incl. the ~30s
+  // "stabilising" wait before R-R starts). On a genuine failure (no-rr after the
+  // 50s window, or error) the card hides and the connect sheet takes over.
   const isCapturing = armed && (
     hrvStatus === 'scanning' ||
     hrvStatus === 'connecting' ||
-    hrvStatus === 'tracking' ||
-    hrvStatus === 'no-rr' ||
-    hrvStatus === 'error'
+    hrvStatus === 'tracking'
   );
+  // Live HRV is actually flowing once we have enough beats to compute RMSSD.
+  const liveReady = hrvStatus === 'tracking' && rrCount >= 2 && liveRmssd != null;
 
   // Derived — show the connect sheet when BLE needs user action (unless dismissed).
   const sheetVisible = armed && !sheetDismissed && (hrvStatus === 'no-rr' || hrvStatus === 'error');
@@ -171,16 +176,8 @@ export default function NowPlaying() {
           {/* HRV inline card — shown when armed and BLE is active */}
           {isCapturing ? (
             <View style={[styles.hrvCard, { borderColor: 'rgba(94,234,212,0.4)' }]}>
-              {hrvStatus === 'scanning' || hrvStatus === 'connecting' ? (
-                /* Connecting state */
-                <View style={styles.hrvConnecting}>
-                  <Ionicons name="pulse-outline" size={22} color={t.live} />
-                  <Text style={[styles.hrvConnectingText, { color: t.textSecondary }]}>
-                    Connecting to your WHOOP…
-                  </Text>
-                </View>
-              ) : hrvStatus === 'tracking' ? (
-                /* Tracking state */
+              {liveReady ? (
+                /* Live HRV — real R-R is flowing */
                 <>
                   <View style={styles.hrvTopRow}>
                     <Text style={[styles.hrvLabel, { color: t.live }]}>
@@ -218,11 +215,11 @@ export default function NowPlaying() {
                   </View>
                 </>
               ) : (
-                /* no-rr / error — just a placeholder while sheet is shown */
+                /* Stabilising — card shows immediately; R-R begins ~30s in. */
                 <View style={styles.hrvConnecting}>
-                  <Ionicons name="pulse-outline" size={22} color={t.textSecondary} />
+                  <Ionicons name="pulse-outline" size={22} color={t.live} />
                   <Text style={[styles.hrvConnectingText, { color: t.textSecondary }]}>
-                    Waiting for signal…
+                    Stabilizing — keep still, HRV starts in ~30 seconds
                   </Text>
                 </View>
               )}
