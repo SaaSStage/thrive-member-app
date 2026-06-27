@@ -120,13 +120,15 @@ export default function NowPlaying() {
 
   // Which mode to pass the connect sheet.
   const sheetMode =
-    hrvError === 'bluetooth-off'
-      ? 'bluetooth-off'
-      : hrvError === 'not-found'
-        ? 'not-found'
-        : hrvStatus === 'no-rr'
-          ? 'no-rr'
-          : 'not-found';
+    hrvError === 'permission-denied'
+      ? 'permission-denied'
+      : hrvError === 'bluetooth-off'
+        ? 'bluetooth-off'
+        : hrvError === 'not-found'
+          ? 'not-found'
+          : hrvStatus === 'no-rr'
+            ? 'no-rr'
+            : 'not-found';
 
   const isCapturing = armed && (
     hrvStatus === 'scanning' ||

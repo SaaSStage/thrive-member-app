@@ -20,7 +20,7 @@ const STEPS = [
   'Come back here — we’ll connect to your band automatically.',
 ] as const;
 
-type Mode = 'connecting' | 'bluetooth-off' | 'no-rr' | 'not-found';
+type Mode = 'connecting' | 'bluetooth-off' | 'permission-denied' | 'no-rr' | 'not-found';
 
 function modeTitle(mode: Mode): string {
   switch (mode) {
@@ -28,6 +28,8 @@ function modeTitle(mode: Mode): string {
       return 'Connecting…';
     case 'bluetooth-off':
       return 'Bluetooth is off';
+    case 'permission-denied':
+      return 'Bluetooth access needed';
     case 'no-rr':
       return 'No heart-rate signal';
     case 'not-found':
@@ -41,6 +43,8 @@ function modeSubtitle(mode: Mode): string {
       return 'Looking for your WHOOP band…';
     case 'bluetooth-off':
       return 'Enable Bluetooth so we can connect to your WHOOP band.';
+    case 'permission-denied':
+      return 'Allow Bluetooth for THRIVE in Settings, then try again.';
     case 'no-rr':
       return 'We’re connected but not receiving R‑R intervals. Try holding still.';
     case 'not-found':

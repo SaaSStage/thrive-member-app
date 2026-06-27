@@ -60,6 +60,42 @@ async function ensureAndroidPermissions(): Promise<boolean> {
 }
 
 /**
+ * Resolve once the Bluetooth adapter reports a *definitive* state.
+ *
+ * On iOS a freshly-created `BleManager` reports `State.Unknown` for the first few
+ * hundred ms while CoreBluetooth spins up (and again while the permission prompt is
+ * open). Reading `manager.state()` synchronously then wrongly looks like "Bluetooth
+ * off". Instead we subscribe with `emitCurrentState = true` and wait for a real
+ * state — PoweredOn / PoweredOff / Unauthorized / Unsupported — ignoring the
+ * transient Unknown/Resetting. Falls back to the last state seen on timeout.
+ */
+function waitForBleState(manager: BleManager, timeoutMs = 6000): Promise<State> {
+  return new Promise((resolve) => {
+    let settled = false;
+    let last = State.Unknown;
+    const finish = (s: State) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      sub.remove();
+      resolve(s);
+    };
+    const timer = setTimeout(() => finish(last), timeoutMs);
+    const sub = manager.onStateChange((s) => {
+      last = s;
+      if (
+        s === State.PoweredOn ||
+        s === State.PoweredOff ||
+        s === State.Unauthorized ||
+        s === State.Unsupported
+      ) {
+        finish(s);
+      }
+    }, true);
+  });
+}
+
+/**
  * Drives one live-HRV connection. Create per session, call `start()`, and always
  * `stop()` when finished or on unmount — it cancels the subscription, disconnects,
  * and destroys the manager so the radio/connection never leaks.
@@ -89,8 +125,14 @@ export class BleHrClient {
     this.manager ??= new BleManager();
     const manager = this.manager;
 
-    const state = await manager.state();
+    // Wait for the adapter to settle — iOS reports `Unknown` on the first tick even
+    // when Bluetooth is on, so a synchronous state read false-positives as "off".
+    const state = await waitForBleState(manager);
     if (this.stopped) return;
+    if (state === State.Unauthorized) {
+      this.cb.onError?.('permission-denied');
+      return;
+    }
     if (state !== State.PoweredOn) {
       this.cb.onError?.('bluetooth-off');
       return;

@@ -26,6 +26,13 @@ function typeLabel(a: ContentAsset): string {
   }
 }
 
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export default function Home() {
   const t = useTheme();
   const router = useRouter();
@@ -58,7 +65,7 @@ export default function Home() {
       <SafeAreaView style={styles.fill} edges={['top']}>
         <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
           <View style={styles.headerRow}>
-            <Text style={[styles.greet, { color: t.text }]}>Good evening</Text>
+            <Text style={[styles.greet, { color: t.text }]}>{greeting()}</Text>
             <Pressable onPress={() => router.push('/account' as Href)} hitSlop={10}>
               <ArtTile seed="me" style={styles.avatar} radius={18} fill />
             </Pressable>

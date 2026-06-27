@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayerStatus } from 'expo-audio';
 import { useRouter, type Href } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { radioPlayer, togglePlayPause } from '@/audio/player';
 import { Sparkline } from '@/components/hrv/sparkline';
@@ -22,6 +23,7 @@ import { usePlayerStore } from '@/stores/player-store';
 export function MiniPlayer() {
   const t = useTheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const activeStation = usePlayerStore((s) => s.activeStation);
   const nowPlaying = usePlayerStore((s) => s.nowPlaying);
   const status = useAudioPlayerStatus(radioPlayer);
@@ -38,7 +40,7 @@ export function MiniPlayer() {
 
   return (
     <Pressable
-      style={[styles.bar, { backgroundColor: t.surfaceElevated, bottom: BottomTabInset + 6 }]}
+      style={[styles.bar, { backgroundColor: t.surfaceElevated, bottom: BottomTabInset + insets.bottom + 6 }]}
       onPress={() => router.push('/player' as Href)}>
       <ArtTile seed={activeStation.code ?? activeStation.id} style={styles.art} radius={Radius.sm} />
       <View style={styles.meta}>
