@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Thrive — full app concept (mandala)</title>
+<title>Thrive — workflow map (mandala)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -14,10 +14,20 @@
   *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
   body{background:#0a0712;font-family:var(--sans);color:var(--ink);padding:40px}
   h1{font-family:var(--disp);font-size:23px;font-weight:600;margin-bottom:6px}
-  .sub{color:#b9b6d0;font-size:14px;max-width:880px;line-height:1.5;margin-bottom:28px}
-  .grid{display:flex;flex-wrap:wrap;gap:42px;align-items:flex-start}
+  .sub{color:#b9b6d0;font-size:14px;max-width:880px;line-height:1.5;margin-bottom:36px}
+
+  /* flow grouping */
+  .flows{display:flex;flex-direction:column;gap:60px}
+  .flow-block{display:flex;flex-direction:column;gap:0}
+  .flow-header{padding:18px 24px 20px;border-left:3px solid var(--teal);margin-bottom:32px;background:rgba(94,234,212,.04);border-radius:0 12px 12px 0}
+  .flow-title{font-family:var(--disp);font-size:20px;font-weight:700;color:var(--teal);margin-bottom:5px}
+  .flow-desc{color:#b9b6d0;font-size:14px}
+  .screen-row{display:flex;flex-wrap:wrap;gap:42px;align-items:flex-start}
   .cell{display:flex;flex-direction:column;gap:10px}
   .cap{color:#d6d3e8;font-size:13px;font-weight:600;text-align:center}
+  .taps{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px;max-width:384px}
+  .taps li{color:#7a778f;font-size:11px;line-height:1.4;padding-left:10px;position:relative}
+  .taps li::before{content:"▸";position:absolute;left:0;color:var(--teal);font-size:10px;top:1px}
 
   .screen{width:384px;height:832px;border-radius:46px;position:relative;overflow:hidden;background:var(--bg);
     box-shadow:0 0 0 11px #181426,0 0 0 13px #2a2440,0 26px 70px rgba(0,0,0,.6)}
@@ -45,21 +55,17 @@
 
   .btn{display:flex;align-items:center;justify-content:center;border-radius:18px;font-family:var(--disp);font-weight:600;font-size:16px;height:54px;
     background:linear-gradient(120deg,#5eead4,#818cf8 55%,#a78bfa);color:#0a0814}
+  .btn-gold{background:linear-gradient(120deg,#f3cd8b,#e8a830);color:#1a1000}
+  .btn-ghost{background:transparent;border:1px solid var(--hair);color:var(--ink2)}
+  .btn-teal{background:linear-gradient(120deg,#5eead4,#3aa99a);color:#04201c}
   .yoy{font-family:var(--disp);font-weight:800;font-size:98px;line-height:.9;
     background:linear-gradient(160deg,#c4b5fd,#8b5cf6 55%,#5b21b6);-webkit-background-clip:text;background-clip:text;color:transparent;
     filter:drop-shadow(0 0 16px rgba(167,139,250,.55))}
-  .logoO{width:124px;height:124px;object-fit:contain;margin:0 -6px;
-    filter:drop-shadow(0 0 22px rgba(167,139,250,.5)) brightness(1.12) saturate(1.08)}
-  .logoO2{width:152px;height:152px;object-fit:contain;margin:0 -12px;
-    filter:brightness(0) invert(1) drop-shadow(0 0 20px rgba(255,255,255,.5))}
   .logoW{width:152px;height:152px;object-fit:contain;margin:0 -12px}
-  /* 1 — dimmed dove-gray */
   .logoW1{filter:brightness(0) invert(.78) opacity(.92) drop-shadow(0 0 12px rgba(180,175,205,.20))}
-  /* 2 — lavender tint */
-  .logoW2{filter:brightness(0) invert(1) sepia(.7) hue-rotate(218deg) saturate(2.8) brightness(.82) drop-shadow(0 0 12px rgba(167,139,250,.30))}
-  /* 3 — warm champagne */
-  .logoW3{filter:brightness(0) invert(1) sepia(.55) saturate(1.7) brightness(.9) drop-shadow(0 0 12px rgba(243,205,139,.30))}
   .chip{display:inline-block;background:var(--glass2);border:1px solid var(--hair);font-size:12px;padding:7px 13px;border-radius:999px}
+  .chip-sel{background:var(--gold);color:#1a1000;border-color:transparent;font-weight:700}
+  .chip-teal{background:rgba(94,234,212,.15);border-color:rgba(94,234,212,.4);color:var(--teal)}
   .live{display:inline-flex;align-items:center;gap:5px;color:var(--teal);font-size:11px;font-weight:700}
   .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal)}
   .field{background:var(--glass);border:1px solid var(--hair);border-radius:14px;height:44px;display:flex;align-items:center;padding:0 14px;color:var(--ink2);font-size:14px;gap:8px}
@@ -71,12 +77,18 @@
   .tabbar{position:absolute;left:0;right:0;bottom:0;height:82px;z-index:50;background:rgba(13,10,27,.82);border-top:1px solid var(--hair);backdrop-filter:blur(20px);display:flex;padding:9px 0 20px}
   .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--ink3);font-size:10px;font-weight:600}
   .tab.on{color:var(--gold)}
+
+  /* settings rows */
+  .srow{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--hair)}
+  .srow:last-child{border-bottom:none}
+  .srow-lbl{font-size:14px}
+  .srow-val{color:var(--ink3);font-size:18px}
 </style>
 </head>
 <body>
-<h1>Thrive — full app concept · sacred-geometry mandala</h1>
-<div class="sub">Dark canvas, dark glass cards, and all color radiating from the mandalas themselves. <b>Open in a browser</b> — focal score dials <b>breathe</b>; background mandalas behind cards <b>rotate slowly</b> (one motion per element, never both). Fatter score numerals. Type: Sora + Inter.</div>
-<div class="grid" id="grid"></div>
+<h1>Thrive — real screens · workflow map</h1>
+<div class="sub">Every screen the member sees, grouped by workflow. Each phone frame shows a real screen. Below each frame: the screen name and the annotated tap targets (▸ control → destination). Dark canvas · breathing mandalas · glass cards · Sora + Inter.</div>
+<div class="flows" id="flows"></div>
 
 <svg width="0" height="0" style="position:absolute"><defs>
   <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6d8"/><stop offset=".4" stop-color="#f3cd8b"/><stop offset=".75" stop-color="#c8961f"/><stop offset="1" stop-color="#8a5a0f"/></linearGradient>
@@ -111,27 +123,8 @@ function mandala(size,grad,op,glowOp){op=op==null?0.6:op;glowOp=glowOp==null?0.7
     <g stroke="url(#${grad})" stroke-width="${sw}" opacity="${op}">${fr}${geo}</g>
     <circle cx="${c}" cy="${c}" r="${(b*0.05).toFixed(1)}" fill="url(#${grad})" filter="url(#gA)"/></svg>`;}
 
-/* corner watermark behind a card (rotates) */
 function cardWM(grad,dir){return `<div class="wm ${dir||'spin'}" style="right:-50px;top:-50px;width:170px;height:170px">${mandala(170,grad,0.5,0.6)}</div>`;}
 
-/* Live-station DNA double helix. Strands are DEPTH-SHADED — the segment rotating
-   toward you is thick+bright, the one going behind is thin+faint, weaving over
-   each other at the crossings — so the horizontal drift reads as a rotating
-   corkscrew, not a slide. Soft (gA/gB blur) to match the mandalas; base-pair
-   rungs tilted ~25° to the right. Rendered ~480px wide and looped by exactly one
-   wavelength (108px) by .dnaflow so there's no seam. */
-function dna(){const W=480,H=44,A=15,L=108,k=2*Math.PI/L,S=L/8,N=96,C=['#5eead4','#a78bfa','#f3cd8b','#f0a6d8'];
-  const seg=ph=>{let b='',f='';for(let i=0;i<N;i++){const x0=W*i/N,x1=W*(i+1)/N,z=Math.cos(k*(x0+x1)/2+ph),d=(z+1)/2,
-    ln=`<path d="M${x0.toFixed(1)} ${(H/2+A*Math.sin(k*x0+ph)).toFixed(1)}L${x1.toFixed(1)} ${(H/2+A*Math.sin(k*x1+ph)).toFixed(1)}" stroke-width="${(1+2.4*d).toFixed(2)}" opacity="${(0.22+0.78*d).toFixed(2)}"/>`;
-    if(z<0)b+=ln;else f+=ln;}return [b,f];};
-  const [b0,f0]=seg(0),[b1,f1]=seg(Math.PI),si=Math.sin(.4363),co=Math.cos(.4363);let R='';
-  for(let i=0,nR=Math.round(W/S);i<nR;i++){const x=(i+0.5)*S,ya=H/2+A*Math.sin(k*x),yb=H/2+A*Math.sin(k*x+Math.PI),cy=(ya+yb)/2,hl=Math.abs(ya-yb)/2;
-    R+=`<line x1="${(x+hl*si).toFixed(1)}" y1="${(cy-hl*co).toFixed(1)}" x2="${(x-hl*si).toFixed(1)}" y2="${(cy+hl*co).toFixed(1)}" stroke="${C[i%4]}" opacity="${(0.2+0.6*Math.abs(Math.sin(k*x))).toFixed(2)}"/>`;}
-  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" style="display:block;overflow:visible">
-    <g filter="url(#gB)" opacity=".5" stroke-linecap="round"><g stroke="url(#teal)">${b0}${f0}</g><g stroke="url(#violet)">${b1}${f1}</g></g>
-    <g filter="url(#gC)" stroke-linecap="round"><g stroke="url(#teal)">${b0}</g><g stroke="url(#violet)">${b1}</g><g stroke-width="2.6">${R}</g><g stroke="url(#teal)">${f0}</g><g stroke="url(#violet)">${f1}</g></g></svg>`;}
-
-/* Custom vector Y: arms flow straight into the stem (round joins, no squared junction). */
 function yLetter(h,n,grad){grad=grad||'yg';const w=h*0.64,sw=h*0.155,jx=w*0.5,jy=h*0.52,top=h*0.05,over=h*0.17,lx=w*0.06,rx=w*0.94;
   const tt=(top-over-jy)/(top-jy),slx=(jx+tt*(lx-jx)).toFixed(1),srx=(jx+tt*(rx-jx)).toFixed(1),sty=(top-over).toFixed(1),J=`${jx.toFixed(1)},${jy.toFixed(1)}`;
   const d=`M${slx},${sty} L${J} L${jx.toFixed(1)},${h} M${srx},${sty} L${J}`;
@@ -141,359 +134,867 @@ function yLetter(h,n,grad){grad=grad||'yg';const w=h*0.64,sw=h*0.155,jx=w*0.5,jy
     <g clip-path="url(#yc${n})"><path d="${d}" stroke="url(#${grad})" stroke-width="${sw.toFixed(1)}" stroke-linecap="butt" stroke-linejoin="round"/></g></svg>`;}
 
 const SB=`<div class="notch"></div><div class="sbar"><div>9:41</div><div>📶 100%</div></div>`;
-const TAB={home:'<svg width="23" height="23" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 3 10v10h6v-6h6v6h6V10z"/></svg>',
- freq:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M7.5 7.5a6.4 6.4 0 000 9M16.5 7.5a6.4 6.4 0 010 9M4.7 4.7a10.3 10.3 0 000 14.6M19.3 4.7a10.3 10.3 0 010 14.6"/></svg>',
- lib:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 9h10M7 12h10M7 15h6"/></svg>',
- search:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/></svg>'};
-const tabbar=a=>`<div class="tabbar">${[['home','Home'],['freq','Frequencies'],['lib','Library'],['search','Search']].map(([k,l])=>`<div class="tab ${k===a?'on':''}">${TAB[k]}<span>${l}</span></div>`).join('')}</div>`;
+
+const TAB={
+  home:'<svg width="23" height="23" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 3 10v10h6v-6h6v6h6V10z"/></svg>',
+  freq:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M7.5 7.5a6.4 6.4 0 000 9M16.5 7.5a6.4 6.4 0 010 9M4.7 4.7a10.3 10.3 0 000 14.6M19.3 4.7a10.3 10.3 0 010 14.6"/></svg>',
+  lib:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 9h10M7 12h10M7 15h6"/></svg>',
+  search:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/></svg>'
+};
+
+const tabbar=a=>`<div class="tabbar">${[['home','Home'],['freq','Radio'],['lib','Library'],['search','Search']].map(([k,l])=>`<div class="tab ${k===a?'on':''}">${TAB[k]}<span>${l}</span></div>`).join('')}</div>`;
+
 const mini=()=>`<div class="mini"><div style="width:48px;height:48px;border-radius:13px;overflow:hidden;position:relative;background:#120e22"><div class="wm spin" style="inset:-14px">${mandala(76,'gold',0.6,0.7)}</div></div>
-  <div class="mt"><div class="a">528 Hz · Renewal</div><div class="b"><span class="live">LIVE</span></div></div>
+  <div class="mt"><div class="a">Wellness Live</div><div class="b"><span class="live">LIVE</span></div></div>
   <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--gold)"><rect x="6" y="5" width="4" height="14" rx="1.3"/><rect x="14" y="5" width="4" height="14" rx="1.3"/></svg></div>`;
 
-/* Live-station SOUND WAVE — an audio-waveform "burst": several thin overlapping
-   waves of different frequency that swell out of the centre and taper at the
-   edges (the classic constructive-interference look of a real sound wave), in the
-   app's gold/amber/magenta/violet shades, soft-blurred and TRANSPARENT so it sits
-   behind text. opt: {h, layers, amp, spread, fb (base frequency)}. */
-function soundwave(opt){opt=opt||{};const W=320,H=opt.h||104,N=200,cy=H/2,LY=opt.layers||7,
-  amp=opt.amp==null?H*0.42:opt.amp,sp=opt.spread||0.27,fb=opt.fb||3.5,
-  C=['#f3cd8b','#ffce9a','#ff9f5a','#f0a6d8','#cab6ff','#a78bfa','#f5d39a'],
-  env=x=>Math.exp(-Math.pow((x/W-0.5)/sp,2));let p='';
-  for(let l=0;l<LY;l++){const f=fb+l*0.95,ph=Math.PI/2-Math.PI*f+l*0.5,a=amp*(0.58+0.42*((l%3)/2));let d='';
-    for(let i=0;i<=N;i++){const x=W*i/N,y=cy+a*env(x)*Math.sin(2*Math.PI*f*x/W+ph);d+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);}
-    p+=`<path d="${d}" stroke="${C[l%C.length]}" stroke-width="1.6" stroke-linecap="round" fill="none"/>`;}
-  const u=(soundwave._i=(soundwave._i||0)+1),core=p.replace(/stroke="#[0-9a-f]+"/g,'stroke="#fff3df"');
-  return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" fill="none">
-    <defs><clipPath id="swc${u}"><ellipse cx="${(W/2).toFixed(0)}" cy="${cy.toFixed(0)}" rx="${(W*0.22).toFixed(0)}" ry="${(H*0.5).toFixed(0)}"/></clipPath></defs>
-    <ellipse cx="${(W/2).toFixed(0)}" cy="${cy.toFixed(0)}" rx="${(W*0.3).toFixed(0)}" ry="${(H*0.52).toFixed(0)}" fill="url(#swglow)"/>
-    <g filter="url(#gB)" opacity=".24">${p}</g><g filter="url(#gC)" opacity=".5">${p}</g>
-    <g clip-path="url(#swc${u})" filter="url(#gC)" opacity=".5">${core}</g></svg>`;}
-
-const S=[];const add=(n,h)=>S.push({n,h});
-
-/* 1 — ENTRY · YOY (nothing behind) */
-add('Entry · YOY (nothing behind)',`${SB}<div class="body"><div class="center" style="height:100%;justify-content:space-between;padding:60px 30px 54px">
-  <div class="center">
-    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:330px;height:184px">
-      <div style="position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(167,139,250,.55),transparent 64%);filter:blur(36px);opacity:.5"></div>
-      <div style="position:relative;display:flex;align-items:center;gap:0">
-        ${yLetter(120,'a','yg1')}<img src="../../assets/images/logo-cut2.png" class="logoW logoW1" alt="thrive radio"/>${yLetter(120,'b','yg1')}
-      </div>
-    </div>
-    <div class="disp" style="font-size:34px;font-weight:600;margin-top:14px;letter-spacing:.5px">Thrive Radio</div>
-    <div class="muted" style="font-size:15px;max-width:248px;margin-top:8px;line-height:1.5">You Only Younger — healing frequencies, attuned to you.</div>
-  </div>
-  <div style="width:100%"><div class="btn">Tune in</div><div class="muted3 center" style="font-size:12px;margin-top:16px">Access is provided by your practitioner.</div></div>
-</div></div>`);
-
-/* 2 — ENTRY · YOY + breathing PURPLE mandala */
-add('Entry · YOY + purple mandala',`${SB}<div class="body"><div class="center" style="height:100%;justify-content:space-between;padding:60px 30px 54px">
-  <div class="center">
-    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:330px;height:204px">
-      <div style="position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(167,139,250,.7),transparent 64%);filter:blur(36px);opacity:.5"></div>
-      <div class="breathe" style="position:absolute;width:284px;height:284px;opacity:.45">${mandala(284,'violet',0.42,0.6)}</div>
-      <div style="position:relative;display:flex;align-items:center;gap:0">
-        ${yLetter(120,'c','yg2')}<img src="../../assets/images/logo-cut2.png" class="logoW logoW2" alt="thrive radio"/>${yLetter(120,'d','yg2')}
-      </div>
-    </div>
-    <div class="disp" style="font-size:34px;font-weight:600;margin-top:14px;letter-spacing:.5px">Thrive Radio</div>
-    <div class="muted" style="font-size:15px;max-width:248px;margin-top:8px;line-height:1.5">You Only Younger — healing frequencies, attuned to you.</div>
-  </div>
-  <div style="width:100%"><div class="btn">Tune in to the frequency</div><div class="muted3 center" style="font-size:12px;margin-top:16px">Access is provided by your practitioner.</div></div>
-</div></div>`);
-
-/* 3 — ENTRY · YOY + breathing GOLD mandala */
-add('Entry · YOY + gold mandala',`${SB}<div class="body"><div class="center" style="height:100%;justify-content:space-between;padding:60px 30px 54px">
-  <div class="center">
-    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:330px;height:204px">
-      <div style="position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(243,205,139,.55),transparent 64%);filter:blur(36px);opacity:.5"></div>
-      <div class="breathe" style="position:absolute;width:284px;height:284px;opacity:.5">${mandala(284,'gold',0.45,0.65)}</div>
-      <div style="position:relative;display:flex;align-items:center;gap:0">
-        ${yLetter(120,'e','yg3')}<img src="../../assets/images/logo-cut2.png" class="logoW logoW3" alt="thrive radio"/>${yLetter(120,'f','yg3')}
-      </div>
-    </div>
-    <div class="disp" style="font-size:34px;font-weight:600;margin-top:14px;letter-spacing:.5px">Thrive Radio</div>
-    <div class="muted" style="font-size:15px;max-width:248px;margin-top:8px;line-height:1.5">You Only Younger — healing frequencies, attuned to you.</div>
-  </div>
-  <div style="width:100%"><div class="btn">Attune yourself</div><div class="muted3 center" style="font-size:12px;margin-top:16px">Access is provided by your practitioner.</div></div>
-</div></div>`);
-
-/* 4 — HOME */
-add('Home',`${SB}<div class="body">
-  <div class="between pad" style="padding-top:6px"><div class="disp" style="font-size:30px;font-weight:600">Good evening</div>
-    <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;position:relative;background:#120e22"><div class="wm spin" style="inset:-10px">${mandala(56,'violet',0.6,0.7)}</div></div></div>
-  <div class="pad"><div class="glass" style="margin-top:14px;padding:16px;display:flex;align-items:center;gap:16px">
-    <div style="position:relative;width:92px;height:92px;display:flex;align-items:center;justify-content:center;flex:none">
-      <div class="breathe">${mandala(92,'gold',0.6,0.75)}</div>
-      <div class="score" style="position:absolute;font-size:30px">82</div></div>
-    <div style="flex:1"><div class="muted disp" style="font-size:11px;font-weight:700;letter-spacing:1px">VITALITY</div>
-      <div class="disp" style="font-size:22px;font-weight:600;margin-top:2px">Flourishing</div>
-      <div style="color:var(--gold);font-size:13px;font-weight:600;margin-top:4px">▲ 3 this week · tap for breakdown</div></div></div>
-    <div class="glass" style="margin-top:14px;padding:16px;height:104px;display:flex;flex-direction:column;justify-content:center">${cardWM('teal','spinr')}
-      <div class="muted disp" style="font-size:11px;font-weight:700;letter-spacing:1px;position:relative">VOICE CHECK-IN</div>
-      <div class="disp" style="font-size:19px;margin-top:6px;position:relative">Tune your weekly sample</div>
-      <div class="muted" style="font-size:12px;margin-top:5px;position:relative">~2 min · 3 recordings</div></div>
-  </div>
-  <div class="sec">Continue Listening</div>
-  <div style="display:flex;gap:14px;padding:0 20px;overflow:hidden">
-    ${[['violet','528 Hz','Renewal'],['rose','Theta Drift','Sleep'],['teal','Calm Focus','Work']].map(([g,t,s])=>
-      `<div style="width:142px;flex:none"><div class="glass" style="width:142px;height:142px">${cardWM(g,'spin')}<div style="position:absolute;left:13px;bottom:12px" class="disp">${t}</div></div>
-       <div class="muted" style="font-size:13px;margin-top:8px">${s}</div></div>`).join('')}
-  </div>
-  <div class="sec">From Your Provider</div>
-  <div class="pad"><div class="glass" style="height:120px;padding:16px;display:flex;flex-direction:column;justify-content:flex-end">${cardWM('amber','spin')}
-    <div class="disp" style="font-size:18px;position:relative">Wellness Frequencies</div><div class="position:relative" style="position:relative"><span class="live">LIVE</span></div></div></div>
-  <div style="height:160px"></div>${mini()}${tabbar('home')}</div>`);
-
-/* 3 — MY VITALITY */
-add('My Vitality',`${SB}<div class="body">
-  <div class="between pad" style="padding-top:8px"><div class="disp" style="color:var(--gold);font-size:15px">‹ Back</div><div class="disp" style="font-size:16px;font-weight:500">My Vitality</div><div style="width:30px"></div></div>
-  <div class="center" style="margin-top:6px">
-    <div style="position:relative;width:268px;height:268px;display:flex;align-items:center;justify-content:center">
-      <div style="position:absolute;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,#f3cd8b,#a78bfa);filter:blur(44px);opacity:.34"></div>
-      <div class="breathe">${mandala(268,'gold',0.6,0.78)}</div>
-      <div class="center" style="position:absolute"><div class="score" style="font-size:80px">82</div><div class="muted" style="letter-spacing:3px;font-size:11px;margin-top:2px">VITALITY</div></div></div>
-    <div class="disp" style="font-size:18px;margin-top:4px">Flourishing</div>
-    <div style="color:var(--gold);font-size:14px;font-weight:600;margin-top:2px">▲ 3 since your last check-in</div></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:20px 20px 0">
-    ${[['Respiratory',86,'teal'],['Vocal Stability',78,'violet'],['Articulation',84,'spec'],['Energy',79,'amber']].map(([t,v,g])=>`
-      <div class="glass" style="padding:14px;height:112px">${cardWM(g,'spin')}
-        <div class="between" style="position:relative"><span class="muted" style="font-size:13px">${t}</span>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a8a6c0" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.5"/></svg></div>
-        <div class="score" style="font-size:32px;margin-top:8px;position:relative">${v}</div></div>`).join('')}
-  </div>
-  <div class="sec">Your summary</div>
-  <div class="pad"><div class="glass" style="padding:16px"><div class="muted" style="font-size:14px;line-height:1.55">Your vitality is in the flourishing range. Voice stability dipped slightly — the protocols below target breath support and resonance.</div></div></div>
-  <div style="height:24px"></div></div>`);
-
-/* 4 — FREQUENCIES (Radio tab) */
-add('Frequencies',`${SB}<div class="body">
-  <div class="disp pad" style="font-size:30px;font-weight:600;padding-top:6px">Frequencies</div>
-  <div class="pad" style="margin-top:10px"><div class="field"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/></svg>Search frequencies</div></div>
-  <div class="pad"><div class="glass" style="margin-top:14px;height:150px;padding:18px;display:flex;flex-direction:column;justify-content:space-between">${cardWM('spec','spin')}
-    <div style="position:relative"><span class="live">LIVE NOW</span></div>
-    <div style="position:relative"><div class="disp" style="font-size:24px">Wellness Live</div><div class="muted" style="font-size:13px">Continuous healing stream · Thrive</div></div></div></div>
-  <div class="sec">Explore</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 20px">
-    ${[['gold','528 Hz','Renewal'],['violet','432 Hz','Calm'],['teal','Theta','Deep sleep'],['rose','Alpha','Focus']].map(([g,t,s])=>
-      `<div class="glass" style="height:128px;padding:14px;display:flex;flex-direction:column;justify-content:flex-end">${cardWM(g,'spin')}
-        <div class="disp" style="font-size:17px;position:relative">${t}</div><div class="muted" style="font-size:12px;position:relative">${s}</div></div>`).join('')}
-  </div><div style="height:160px"></div>${mini()}${tabbar('freq')}</div>`);
-
-/* 5 — NOW PLAYING */
-add('Now Playing',`${SB}<div class="body"><div class="aura" style="background:radial-gradient(70% 50% at 50% 40%,rgba(243,205,139,.2),transparent 62%),#070510"></div>
-  <div class="center" style="margin-top:14px"><div style="width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.3)"></div></div>
-  <div class="center" style="margin-top:40px">
-    <div style="position:relative;width:320px;height:320px;display:flex;align-items:center;justify-content:center">
-      <div style="position:absolute;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,#f3cd8b,#a78bfa);filter:blur(50px);opacity:.42"></div>
-      <div class="breathe">${mandala(320,'gold',0.62,0.82)}</div>
-      <div class="center" style="position:absolute"><div class="score" style="font-size:62px">528</div><div class="muted" style="letter-spacing:4px;font-size:12px">HZ</div></div></div></div>
-  <div class="center" style="margin-top:30px"><div class="disp" style="font-size:23px">528 Hz · Renewal</div><div class="muted" style="font-size:14px;margin-top:2px">Solfeggio tone · Thrive Live</div></div>
-  <div class="pad" style="margin-top:24px"><div style="display:flex;align-items:center;gap:3px;height:30px">${Array.from({length:50}).map((_,i)=>`<div style="flex:1;height:${6+Math.round(18*Math.abs(Math.sin(i*.5)))}px;border-radius:2px;background:${i<24?'var(--gold)':'rgba(255,255,255,.22)'}"></div>`).join('')}</div>
-    <div class="between" style="margin-top:8px"><span class="muted3" style="font-size:12px">3:42</span><span class="live" style="font-size:11px">LIVE</span></div>
-    <div class="between" style="padding:22px 26px 0"><svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M6 6h2v12H6zM20 6 9 12l11 6z"/></svg>
-      <div style="width:78px;height:78px;border-radius:50%;background:linear-gradient(120deg,#f3cd8b,#a78bfa);display:flex;align-items:center;justify-content:center"><svg width="30" height="30" viewBox="0 0 24 24" fill="#0a0814"><rect x="6" y="5" width="4" height="14" rx="1.4"/><rect x="14" y="5" width="4" height="14" rx="1.4"/></svg></div>
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M18 6h-2v12h2zM4 6l11 6L4 18z"/></svg></div></div></div>`);
-
-/* 6 — VOICE RECORDING */
-add('Voice · Recording',`${SB}<div class="body"><div class="aura" style="background:radial-gradient(60% 40% at 50% 32%,rgba(94,234,212,.2),transparent 64%),#070510"></div>
-  <div class="between pad" style="padding-top:8px"><div class="disp" style="color:var(--teal)">Cancel</div><div class="muted" style="font-size:14px">Recording 1 of 3</div><div style="width:40px"></div></div>
-  <div class="center" style="margin-top:18px"><div class="chip" style="border-color:var(--teal);color:var(--teal)">Sustained “ahh”</div>
-    <div class="disp" style="font-size:20px;margin-top:18px;line-height:1.4">Take a breath, then hold<br>a steady “ahhh”</div></div>
-  <div class="center" style="margin-top:26px">
-    <div style="position:relative;width:250px;height:250px;display:flex;align-items:center;justify-content:center">
-      <div style="position:absolute;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,#5eead4,#a78bfa);filter:blur(42px);opacity:.32"></div>
-      <div class="breathe">${mandala(250,'teal',0.6,0.78)}</div>
-      <div class="center" style="position:absolute"><div class="score" style="font-size:48px">0:17</div><div class="muted" style="font-size:12px">of 30 sec</div></div></div></div>
-  <div class="center" style="margin-top:28px"><div style="width:74px;height:74px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center"><div style="width:26px;height:26px;border-radius:7px;background:linear-gradient(120deg,#5eead4,#a78bfa)"></div></div>
-    <div class="muted3" style="font-size:13px;margin-top:14px">Tap to stop</div></div></div>`);
-
-/* 7 — LIBRARY */
-add('Library',`${SB}<div class="body">
-  <div class="disp pad" style="font-size:30px;font-weight:600;padding-top:6px">Library</div>
-  <div class="pad" style="display:flex;gap:9px;margin-top:12px"><span class="chip" style="background:var(--gold);color:#1a1206;border-color:transparent;font-weight:700">All</span><span class="chip">Frequencies</span><span class="chip">Playlists</span><span class="chip">Saved</span></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px 20px 0">
-    ${[['gold','528 Hz','Renewal'],['teal','Calm Focus','Playlist'],['violet','432 Hz','Calm'],['rose','Theta Drift','Sleep'],['amber','Morning Light','Playlist'],['spec','My Mix','Personal']].map(([g,t,s])=>
-      `<div><div class="glass" style="height:140px">${cardWM(g,'spin')}<div style="position:absolute;left:13px;bottom:12px" class="disp" style="font-size:15px">${t}</div></div>
-       <div class="muted" style="font-size:12px;margin-top:7px">${s}</div></div>`).join('')}
-  </div><div style="height:160px"></div>${mini()}${tabbar('lib')}</div>`);
-
-/* ───────── LIVE STATION · lock-screen "now playing" options ─────────
-   The small media card that shows on the lock screen, with a single SOUND-WAVE
-   graphic (app gold/amber/magenta/violet, softly blurred). Three card layouts. */
-
-/* Live-station lock-screen art: the small media card with a big AMBER mandala
-   overflowing the card top/bottom (only its glowing centre shows, ~60% of the
-   card width), title + play button floating on top. */
-add('Lock · live — mandala card',`${SB}<div class="body">
-  <div class="center" style="margin-top:38px">
-    <div class="muted" style="font-size:15px;font-weight:600">Monday, June 22</div>
-    <div class="disp" style="font-size:86px;font-weight:300;line-height:1;letter-spacing:1px">9:41</div></div>
-  <div style="position:absolute;left:16px;right:16px;bottom:108px">
-    <div class="glass" style="padding:20px 16px;border-radius:24px;position:relative;overflow:hidden">
-      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:210px;height:210px">${mandala(210,'amber',0.62,0.85)}</div>
-      <div class="between" style="position:relative;z-index:2">
-        <div><div class="disp" style="font-size:18px;font-weight:600">Wellness Live</div>
-          <div class="muted" style="font-size:13px;margin-top:3px;display:flex;align-items:center;gap:7px">Thrive Radio <span class="live" style="font-size:11px">LIVE</span></div></div>
-        <div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(120deg,#f3cd8b,#f0a6d8 55%,#a78bfa);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="#0a0814"><rect x="6" y="5" width="4" height="14" rx="1.4"/><rect x="14" y="5" width="4" height="14" rx="1.4"/></svg></div></div>
-    </div></div></div>`);
-
-/* ───────── LIVE HRV · biometric tracking while listening ─────────
-   Member taps "Track Live HRV" on Now Playing → connects to their WHOOP over
-   Bluetooth (broadcast mode, R-R intervals) → live RMSSD readout while the
-   frequency plays → session summary saved + linked to the station. The biometric
-   uses the TEAL mandala (calm / coherence); the audio station stays gold. */
-
-/* small inline HRV sparkline — teal polyline over recent RMSSD samples */
 function spark(W,H,seed){const N=46;const pts=Array.from({length:N},(_,i)=>28+10*Math.sin(i*.5+seed)+6*Math.sin(i*1.3)+(i>N-9?(i-(N-9))*1.5:0));
   const mn=Math.min(...pts),mx=Math.max(...pts);
   const d=pts.map((v,i)=>((i?'L':'M')+(W*i/(N-1)).toFixed(1)+','+(H-4-((v-mn)/(mx-mn||1))*(H-12)).toFixed(1))).join(' ');
   return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" fill="none"><path d="${d}" stroke="url(#teal)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
 
-/* ① Station page — Play Live with an HRV toggle EMBEDDED in the button (heartbeat
-   icon + switch). Explanation of the toggle sits directly beneath the button. */
-add('① Station · Play + HRV toggle',`${SB}<div class="body">
-  <div class="between pad" style="padding-top:8px"><div class="disp" style="color:var(--gold);font-size:15px">‹ Frequencies</div>
-    <svg width="19" height="19" viewBox="0 0 24 24" fill="#a8a6c0"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></div>
-  <div class="center" style="margin-top:10px">
-    <div style="position:relative;width:222px;height:222px;display:flex;align-items:center;justify-content:center">
-      <div style="position:absolute;width:164px;height:164px;border-radius:50%;background:radial-gradient(circle,#f3cd8b,#a78bfa);filter:blur(42px);opacity:.4"></div>
-      <div class="breathe">${mandala(222,'gold',0.6,0.8)}</div>
-      <div class="center" style="position:absolute"><div class="score" style="font-size:46px">528</div><div class="muted" style="letter-spacing:3px;font-size:11px">HZ</div></div></div>
-    <div class="disp" style="font-size:23px;margin-top:14px">528 Hz · Renewal</div>
-    <div class="muted" style="font-size:13px;margin-top:5px;display:flex;align-items:center;gap:7px">Solfeggio · Thrive Live <span class="live" style="font-size:11px">LIVE</span></div></div>
-  <div class="pad" style="margin-top:24px">
-    <div class="btn" style="justify-content:space-between;padding:0 8px 0 22px;height:60px">
-      <div style="display:flex;align-items:center;gap:11px"><svg width="18" height="18" viewBox="0 0 24 24" fill="#0a0814"><path d="M8 5v14l11-7z"/></svg>Play Live</div>
-      <div style="display:flex;align-items:center;gap:9px;background:rgba(10,8,20,.20);border-radius:13px;height:46px;padding:0 12px">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#0a0814" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2.5-7 4 14 2.5-7H22"/></svg>
-        <div style="width:42px;height:25px;border-radius:13px;background:rgba(10,8,20,.30);position:relative"><div style="position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff"></div></div></div>
+function sparkGold(W,H,seed){const N=36;const pts=Array.from({length:N},(_,i)=>28+8*Math.sin(i*.6+seed)+5*Math.sin(i*1.1));
+  const mn=Math.min(...pts),mx=Math.max(...pts);
+  const d=pts.map((v,i)=>((i?'L':'M')+(W*i/(N-1)).toFixed(1)+','+(H-4-((v-mn)/(mx-mn||1))*(H-10)).toFixed(1))).join(' ');
+  return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" fill="none"><path d="${d}" stroke="url(#gold)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
+
+/* mic SVG glyph — teal/violet */
+const micGlyph=`<svg width="62" height="80" viewBox="0 0 62 80" fill="none">
+  <rect x="18" y="4" width="26" height="40" rx="13" stroke="url(#teal)" stroke-width="2.5"/>
+  <rect x="24" y="10" width="14" height="28" rx="7" fill="url(#violet)" opacity=".18"/>
+  <path d="M8 38c0 12.7 10.3 23 23 23s23-10.3 23-23" stroke="url(#teal)" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="31" y1="61" x2="31" y2="74" stroke="url(#teal)" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="18" y1="74" x2="44" y2="74" stroke="url(#teal)" stroke-width="2.5" stroke-linecap="round"/>
+</svg>`;
+
+/* settingsRow helper: label + right content */
+const srow=(lbl,right,danger)=>`<div class="srow"><span class="srow-lbl" style="${danger?'color:#ef9a9a':''}">${lbl}</span><span class="${right==='›'?'srow-val':'muted'}" style="font-size:${right==='›'?'18px':'13px'}">${right}</span></div>`;
+
+/* listRow helper: icon box + title + subtitle + right element */
+const listRow=(icon,title,sub,right)=>`<div style="display:flex;align-items:center;gap:13px;padding:10px 0">
+  <div style="width:54px;height:54px;border-radius:14px;background:rgba(94,234,212,.08);border:1px solid rgba(94,234,212,.2);display:flex;align-items:center;justify-content:center;flex:none">${icon}</div>
+  <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">${title}</div><div class="muted" style="font-size:12px;margin-top:2px">${sub}</div></div>
+  ${right}</div>`;
+
+/* selectChips: label + options array, selectedIdx */
+const selectChips=(label,opts,sel)=>`<div style="margin-bottom:14px">
+  <div class="muted" style="font-size:12px;font-weight:600;letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase">${label}</div>
+  <div style="display:flex;flex-wrap:wrap;gap:7px">${opts.map((o,i)=>`<span class="chip${i===sel?' chip-sel':''}">${o}</span>`).join('')}</div></div>`;
+
+const S=[];
+const add=(flow,name,taps,html)=>S.push({flow,name,taps,html});
+
+/* ══════════════════════════════════════════════════════
+   FLOW 1 — Sign in
+   ══════════════════════════════════════════════════════ */
+
+add('① Sign in','Welcome',[
+  'Tune in → Sign in'
+],`${SB}<div class="body"><div class="center" style="height:100%;justify-content:space-between;padding:60px 30px 54px">
+  <div class="center">
+    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:330px;height:204px">
+      <div style="position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(243,205,139,.55),transparent 64%);filter:blur(36px);opacity:.5"></div>
+      <div class="breathe" style="position:absolute;width:284px;height:284px;opacity:.5">${mandala(284,'gold',0.45,0.65)}</div>
+      <div style="position:relative;display:flex;align-items:center;gap:0">
+        ${yLetter(110,'a','yg1')}<img src="../../assets/images/logo-cut2.png" class="logoW logoW1" alt="thrive radio"/>${yLetter(110,'b','yg1')}
+      </div>
     </div>
-    <div class="muted" style="font-size:13px;line-height:1.5;margin-top:11px;padding:0 2px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="url(#teal)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M2 12h4l2.5-7 4 14 2.5-7H22"/></svg> <b style="color:var(--ink2)">Track Live HRV.</b> Switch this on to watch how your body responds to this frequency in real time, measured by your WHOOP.</div>
+    <div class="disp" style="font-size:34px;font-weight:600;margin-top:14px;letter-spacing:.5px">Thrive Radio</div>
+    <div class="muted" style="font-size:15px;max-width:248px;margin-top:8px;line-height:1.5">You Only Younger — healing frequencies, attuned to you.</div>
   </div>
-  <div class="sec">About this frequency</div>
-  <div class="pad"><div class="muted" style="font-size:14px;line-height:1.6">The 528 Hz “renewal” tone is associated with calm and restoration. Listen for 10–20 minutes in a quiet space.</div></div>
+  <div style="width:100%">
+    <div class="btn btn-gold">Tune in</div>
+    <div class="muted3 center" style="font-size:12px;margin-top:16px">Access is provided by your care provider.</div>
+  </div>
+</div></div>`);
+
+add('① Sign in','Sign in · password',[
+  'Sign in → Home (signed in)',
+  '‹ Back → Welcome'
+],`${SB}<div class="body pad" style="padding-top:8px">
+  <div style="color:var(--gold);font-size:15px;font-family:var(--disp);margin-bottom:28px">‹ Back</div>
+  <div class="disp" style="font-size:28px;font-weight:700;margin-bottom:8px">Sign in</div>
+  <div class="muted" style="font-size:14px;line-height:1.55;margin-bottom:28px">Use the email or username and password from your provider.</div>
+  <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:28px">
+    <div class="field">Email or username</div>
+    <div class="field" style="letter-spacing:6px">••••••••••</div>
+  </div>
+  <div class="btn btn-gold" style="height:54px">Sign in</div>
 </div>`);
 
-/* ①b Connect-your-WHOOP prompt — shown when HRV is toggled on but the band isn't
-   connected (or Bluetooth is off). A bottom sheet with turn-it-on instructions. */
-add('①b Connect your WHOOP (prompt)',`${SB}<div class="body">
-  <div style="position:absolute;inset:0;opacity:.28">
-    <div class="center" style="margin-top:60px"><div style="width:200px;height:200px">${mandala(200,'gold',0.5,0.6)}</div>
-      <div class="disp" style="font-size:22px;margin-top:10px">528 Hz · Renewal</div></div></div>
-  <div style="position:absolute;inset:0;background:rgba(5,4,12,.66)"></div>
+add('① Sign in','Sign in · code (2FA)',[
+  'Continue → Home',
+  '‹ Back to password → password step'
+],`${SB}<div class="body pad" style="padding-top:8px">
+  <div style="color:var(--gold);font-size:15px;font-family:var(--disp);margin-bottom:28px">‹ Back</div>
+  <div class="disp" style="font-size:28px;font-weight:700;margin-bottom:8px">Enter your code</div>
+  <div class="muted" style="font-size:14px;line-height:1.55;margin-bottom:28px">Your account has two-factor sign-in. We sent a 6-digit code to your email.</div>
+  <div class="field" style="justify-content:center;letter-spacing:18px;font-size:20px;font-family:var(--disp);font-weight:600;color:var(--ink);height:60px;margin-bottom:22px">1 2 3 4 5 6</div>
+  <div style="color:var(--teal);font-size:13px;text-align:center;margin-bottom:24px">‹ Back to password</div>
+  <div class="btn btn-gold" style="height:54px">Continue</div>
+</div>`);
+
+/* ══════════════════════════════════════════════════════
+   FLOW 2 — Home & browse
+   ══════════════════════════════════════════════════════ */
+
+add('② Home & browse','Home',[
+  'Avatar → Account',
+  'Vitality card → My Vitality (score)',
+  'Voice check-in → Voice flow',
+  'Provider tile (station) → Station detail'
+],`${SB}<div class="body">
+  <div class="between pad" style="padding-top:6px">
+    <div class="disp" style="font-size:30px;font-weight:600">Good evening</div>
+    <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;position:relative;background:#120e22">
+      <div class="wm spin" style="inset:-10px">${mandala(56,'violet',0.6,0.7)}</div>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="glass" style="margin-top:14px;padding:16px;display:flex;align-items:center;gap:16px">
+      <div style="position:relative;width:92px;height:92px;display:flex;align-items:center;justify-content:center;flex:none">
+        <div class="breathe">${mandala(92,'gold',0.6,0.75)}</div>
+      </div>
+      <div style="flex:1">
+        <div class="muted disp" style="font-size:11px;font-weight:700;letter-spacing:1px">VITALITY</div>
+        <div class="disp" style="font-size:19px;font-weight:600;margin-top:3px">Baseline not established</div>
+        <div style="color:var(--gold);font-size:13px;font-weight:600;margin-top:6px">Submit a voice sample</div>
+      </div>
+    </div>
+    <div class="glass" style="margin-top:14px;padding:16px;height:104px;display:flex;flex-direction:column;justify-content:center">${cardWM('teal','spinr')}
+      <div class="muted disp" style="font-size:11px;font-weight:700;letter-spacing:1px;position:relative">VOICE CHECK-IN</div>
+      <div class="disp" style="font-size:19px;margin-top:6px;position:relative">Tune your weekly sample</div>
+      <div class="muted" style="font-size:12px;margin-top:5px;position:relative">~2 min · 3 recordings</div>
+    </div>
+  </div>
+  <div class="sec">From Your Provider</div>
+  <div class="pad">
+    <div class="glass" style="height:130px;padding:18px;display:flex;flex-direction:column;justify-content:space-between">${cardWM('amber','spin')}
+      <div style="position:relative"><span class="live">LIVE NOW</span></div>
+      <div style="position:relative">
+        <div class="disp" style="font-size:20px;font-weight:600">Wellness Live</div>
+        <div class="muted" style="font-size:13px">Healing frequencies · authorized</div>
+      </div>
+    </div>
+  </div>
+  <div style="height:160px"></div>${mini()}${tabbar('home')}</div>`);
+
+add('② Home & browse','Radio',[
+  'Station row → toggles play/pause (does NOT open a page)'
+],`${SB}<div class="body">
+  <div class="disp pad" style="font-size:30px;font-weight:600;padding-top:6px">Radio</div>
+  <div class="muted pad" style="font-size:14px;margin-top:4px">Live stations your provider authorized</div>
+  <div class="pad" style="margin-top:20px">
+    <div class="glass" style="padding:12px 16px">
+      ${listRow(
+        `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="url(#teal)" stroke-width="1.7"><circle cx="12" cy="12" r="2" fill="url(#teal)"/><path d="M7.5 7.5a6.4 6.4 0 000 9M16.5 7.5a6.4 6.4 0 010 9M4.7 4.7a10.3 10.3 0 000 14.6M19.3 4.7a10.3 10.3 0 010 14.6"/></svg>`,
+        'Wellness Live',
+        '<span class="live" style="font-size:11px">LIVE</span> · Healing frequencies',
+        `<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(120deg,#f3cd8b,#c8961f);display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#0a0814"><path d="M8 5v14l11-7z"/></svg></div>`
+      )}
+    </div>
+  </div>
+  <div style="height:160px"></div>${tabbar('freq')}</div>`);
+
+add('② Home & browse','Library',[],`${SB}<div class="body">
+  <div class="disp pad" style="font-size:30px;font-weight:600;padding-top:6px">Library</div>
+  <div class="center" style="margin-top:200px">
+    <div class="muted3 disp" style="font-size:22px">Coming soon</div>
+  </div>
+  ${tabbar('lib')}</div>`);
+
+add('② Home & browse','Search',[],`${SB}<div class="body">
+  <div class="disp pad" style="font-size:30px;font-weight:600;padding-top:6px">Search</div>
+  <div class="center" style="margin-top:200px">
+    <div class="muted3 disp" style="font-size:22px">Coming soon</div>
+  </div>
+  ${tabbar('search')}</div>`);
+
+/* ══════════════════════════════════════════════════════
+   FLOW 3 — Live HRV (WHOOP over Bluetooth)
+   ══════════════════════════════════════════════════════ */
+
+add('③ Live HRV (WHOOP)','Station · HRV off',[
+  'Play Live → Now Playing',
+  'HRV toggle → arms HRV (connects)'
+],`${SB}<div class="body">
+  <div class="between pad" style="padding-top:8px">
+    <div style="width:34px;height:34px;border-radius:50%;background:var(--glass);border:1px solid var(--hair);display:flex;align-items:center;justify-content:center">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--ink2)"><path d="M15 18l-6-6 6-6"/></svg>
+    </div>
+    <div style="width:30px"></div>
+  </div>
+  <div class="pad" style="margin-top:4px">
+    <div class="glass" style="height:200px;display:flex;flex-direction:column;justify-content:flex-end;padding:18px;overflow:hidden">${cardWM('gold','spin')}
+      <div style="position:relative"><span class="live">LIVE</span></div>
+      <div class="disp" style="font-size:28px;font-weight:700;margin-top:6px;position:relative">Wellness Live</div>
+      <div class="muted" style="font-size:14px;position:relative">Provider station</div>
+    </div>
+  </div>
+  <div class="pad" style="margin-top:20px;position:relative;z-index:1">
+    <div class="btn btn-gold" style="justify-content:space-between;padding:0 10px 0 22px;height:60px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#0a0814"><path d="M8 5v14l11-7z"/></svg>
+        <span>Play Live</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;background:rgba(10,8,20,.22);border-radius:13px;height:44px;padding:0 12px">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0a0814" stroke-width="2.2" stroke-linecap="round"><path d="M2 12h4l2.5-7 4 14 2.5-7H22"/></svg>
+        <div style="width:40px;height:24px;border-radius:12px;background:rgba(10,8,20,.35);position:relative">
+          <div style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff"></div>
+        </div>
+        <span style="font-size:12px;opacity:.7">OFF</span>
+      </div>
+    </div>
+    <div class="muted" style="font-size:13px;line-height:1.55;margin-top:12px;padding:0 2px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="url(#teal)" stroke-width="2.2" stroke-linecap="round" style="vertical-align:-1px"><path d="M2 12h4l2.5-7 4 14 2.5-7H22"/></svg>
+      <b style="color:var(--ink2)"> Track Live HRV.</b> Switch this on to watch how your body responds to this frequency in real time, measured by your WHOOP.
+    </div>
+  </div>
+  <div class="sec" style="padding-top:18px">About this frequency</div>
+  <div class="pad"><div class="muted" style="font-size:14px;line-height:1.6">Healing frequencies from your provider. Listen in a quiet space.</div></div>
+  <div class="sec" style="padding-top:18px">On-Demand Episodes</div>
+  <div class="pad"><div class="muted" style="font-size:14px">No on-demand episodes yet.</div></div>
+</div>`);
+
+add('③ Live HRV (WHOOP)','Station · HRV armed',[
+  'Play Live → Now Playing (tracking)'
+],`${SB}<div class="body">
+  <div class="between pad" style="padding-top:8px">
+    <div style="width:34px;height:34px;border-radius:50%;background:var(--glass);border:1px solid var(--hair);display:flex;align-items:center;justify-content:center">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--ink2)"><path d="M15 18l-6-6 6-6"/></svg>
+    </div>
+    <div style="width:30px"></div>
+  </div>
+  <div class="pad" style="margin-top:4px">
+    <div class="glass" style="height:200px;display:flex;flex-direction:column;justify-content:flex-end;padding:18px;overflow:hidden">${cardWM('gold','spin')}
+      <div style="position:relative"><span class="live">LIVE</span></div>
+      <div class="disp" style="font-size:28px;font-weight:700;margin-top:6px;position:relative">Wellness Live</div>
+      <div class="muted" style="font-size:14px;position:relative">Provider station</div>
+    </div>
+  </div>
+  <div class="pad" style="margin-top:20px;position:relative;z-index:1">
+    <div class="btn btn-gold" style="justify-content:space-between;padding:0 10px 0 22px;height:60px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#0a0814"><path d="M8 5v14l11-7z"/></svg>
+        <span>Play Live</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;background:rgba(94,234,212,.18);border:1px solid rgba(94,234,212,.4);border-radius:13px;height:44px;padding:0 12px">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="url(#teal)" stroke-width="2.2" stroke-linecap="round"><path d="M2 12h4l2.5-7 4 14 2.5-7H22"/></svg>
+        <div style="width:40px;height:24px;border-radius:12px;background:var(--teal);position:relative">
+          <div style="position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:#fff"></div>
+        </div>
+        <span style="font-size:12px;color:var(--teal)">ON</span>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:10px 12px;border-radius:14px;border:1px solid rgba(94,234,212,.3);background:rgba(94,234,212,.06)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.2" stroke-linecap="round"><path d="M2 12h4l2.5-7 4 14 2.5-7H22"/></svg>
+        <span style="font-size:13px;color:var(--teal);font-weight:600">Live HRV on.</span>
+        <span class="muted" style="font-size:13px">Connecting to your WHOOP…</span>
+      </div>
+    </div>
+  </div>
+</div>`);
+
+add('③ Live HRV (WHOOP)','Now Playing · stabilising',[
+  'Stop capture & save → Session summary',
+  'Pause → audio control'
+],`${SB}<div class="body"><div class="aura" style="background:radial-gradient(72% 48% at 50% 30%,rgba(94,234,212,.14),rgba(243,205,139,.10) 58%,transparent 74%),#070510"></div>
+  <div class="center" style="margin-top:12px"><div style="width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.3)"></div></div>
+  <div class="center" style="margin-top:20px">
+    <div style="position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,#f3cd8b,#a78bfa);filter:blur(36px);opacity:.38"></div>
+      <div class="breathe">${mandala(180,'gold',0.6,0.8)}</div>
+      <div class="center" style="position:absolute"><div class="score" style="font-size:36px">528</div><div class="muted" style="letter-spacing:3px;font-size:10px">HZ</div></div>
+    </div>
+    <div class="disp" style="font-size:19px;margin-top:10px;font-weight:600">Wellness Live</div>
+    <div class="muted" style="font-size:13px;margin-top:2px">THRIVE Radio</div>
+    <div style="margin-top:4px"><span class="live">LIVE</span></div>
+  </div>
+  <div class="pad" style="margin-top:16px">
+    <div class="glass" style="padding:15px 16px;border-color:rgba(94,234,212,.35)">
+      <div style="display:flex;align-items:center;gap:9px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="url(#teal)" stroke-width="2.2" stroke-linecap="round"><path d="M2 12h4l2.5-7 4 14 2.5-7H22"/></svg>
+        <div>
+          <div class="muted" style="font-size:12px;font-weight:600;color:var(--teal)">Stabilising</div>
+          <div class="muted" style="font-size:12px;margin-top:2px">Keep still, HRV starts in ~30 seconds</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="pad" style="margin-top:14px;position:relative;z-index:1">
+    <div class="btn btn-teal" style="height:54px;gap:9px">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="#04201c"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>
+      <span class="disp" style="font-size:16px;font-weight:600">Stop capture &amp; save</span>
+    </div>
+  </div>
+  <div class="between pad" style="margin-top:16px;padding-left:46px;padding-right:46px;position:relative;z-index:1">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M6 6h2v12H6zM20 6 9 12l11 6z"/></svg>
+    <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(120deg,#f3cd8b,#a78bfa);display:flex;align-items:center;justify-content:center">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="#0a0814"><rect x="6" y="5" width="4" height="14" rx="1.4"/><rect x="14" y="5" width="4" height="14" rx="1.4"/></svg>
+    </div>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M18 6h-2v12h2zM4 6l11 6L4 18z"/></svg>
+  </div>
+  <div class="muted3 center" style="font-size:11px;margin-top:10px;padding:0 28px;position:relative;z-index:1">Stop capture saves your session and opens your results · audio keeps playing</div>
+</div>`);
+
+add('③ Live HRV (WHOOP)','Now Playing · tracking (live)',[
+  'Stop capture & save → Session summary'
+],`${SB}<div class="body"><div class="aura" style="background:radial-gradient(72% 48% at 50% 30%,rgba(94,234,212,.16),rgba(243,205,139,.12) 60%,transparent 75%),#070510"></div>
+  <div class="center" style="margin-top:12px"><div style="width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.3)"></div></div>
+  <div class="center" style="margin-top:14px">
+    <div style="position:relative;width:170px;height:170px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;width:126px;height:126px;border-radius:50%;background:radial-gradient(circle,#f3cd8b,#a78bfa);filter:blur(38px);opacity:.4"></div>
+      <div class="breathe">${mandala(170,'gold',0.6,0.8)}</div>
+      <div class="center" style="position:absolute"><div class="score" style="font-size:34px">528</div><div class="muted" style="letter-spacing:3px;font-size:10px">HZ</div></div>
+    </div>
+    <div class="disp" style="font-size:18px;margin-top:8px;font-weight:600">Wellness Live</div>
+    <div class="muted" style="font-size:12px;margin-top:2px">THRIVE Radio · <span class="live" style="font-size:10px">LIVE</span></div>
+  </div>
+  <div class="pad" style="margin-top:14px">
+    <div class="glass" style="padding:15px 16px;border-color:rgba(94,234,212,.4)">
+      <div class="between"><span class="disp" style="font-size:12px;color:var(--teal);display:flex;align-items:center;gap:7px"><span class="live" style="font-size:10px">LIVE</span> HRV · capturing</span>
+        <span class="muted3" style="font-size:11px;font-variant:tabular-nums">01:24</span></div>
+      <div class="between" style="margin-top:10px;align-items:flex-end">
+        <div style="display:flex;align-items:baseline;gap:7px"><span class="score" style="font-size:46px">64</span><span class="muted" style="font-size:13px">ms RMSSD</span></div>
+        <div style="text-align:right"><div class="disp" style="font-size:14px;color:var(--teal)">Coherent</div><div class="muted" style="font-size:12px;margin-top:1px">72 bpm</div></div>
+      </div>
+      <div style="margin-top:8px">${spark(312,40,0.6)}</div>
+    </div>
+  </div>
+  <div class="pad" style="margin-top:14px;position:relative;z-index:1">
+    <div class="btn btn-teal" style="height:54px;gap:9px">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="#04201c"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>
+      <span class="disp" style="font-size:16px;font-weight:600">Stop capture &amp; save</span>
+    </div>
+  </div>
+  <div class="between pad" style="margin-top:14px;padding-left:46px;padding-right:46px;position:relative;z-index:1">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M6 6h2v12H6zM20 6 9 12l11 6z"/></svg>
+    <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(120deg,#f3cd8b,#a78bfa);display:flex;align-items:center;justify-content:center">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="#0a0814"><rect x="6" y="5" width="4" height="14" rx="1.4"/><rect x="14" y="5" width="4" height="14" rx="1.4"/></svg>
+    </div>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M18 6h-2v12h2zM4 6l11 6L4 18z"/></svg>
+  </div>
+  <div class="muted3 center" style="font-size:11px;margin-top:10px;padding:0 28px;position:relative;z-index:1">Stop capture saves your session and opens your results · audio keeps playing</div>
+</div>`);
+
+add('③ Live HRV (WHOOP)','Connect-WHOOP sheet',[
+  'Connect → retry BLE',
+  'Open Settings → iOS settings'
+],`${SB}<div class="body">
+  <div style="position:absolute;inset:0;opacity:.22">
+    <div class="center" style="margin-top:60px">
+      <div style="width:180px;height:180px">${mandala(180,'gold',0.5,0.6)}</div>
+      <div class="disp" style="font-size:20px;margin-top:10px">Wellness Live</div>
+    </div>
+  </div>
+  <div style="position:absolute;inset:0;background:rgba(5,4,12,.68)"></div>
   <div style="position:absolute;left:0;right:0;bottom:0;background:#100c1e;border-top:1px solid var(--hair);border-radius:26px 26px 0 0;padding:14px 22px 32px">
     <div class="center"><div style="width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.25)"></div></div>
     <div class="center" style="margin-top:14px">
       <div style="position:relative;width:96px;height:96px;display:flex;align-items:center;justify-content:center">
         <div class="breathe">${mandala(96,'teal',0.6,0.78)}</div>
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="url(#teal)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="position:absolute"><path d="M2 12h4l2.5-7 4 14 2.5-7H22"/></svg></div>
-      <div class="disp" style="font-size:22px;margin-top:10px">Connect your WHOOP</div>
-      <div class="muted" style="font-size:14px;margin-top:6px;text-align:center;max-width:286px;line-height:1.5">To track live HRV we need a quick Bluetooth connection to your band.</div></div>
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="url(#teal)" stroke-width="1.7" stroke-linecap="round" style="position:absolute"><path d="M2 12h4l2.5-7 4 14 2.5-7H22"/></svg>
+      </div>
+      <div class="disp" style="font-size:22px;margin-top:10px;font-weight:700">WHOOP not found</div>
+      <div class="muted" style="font-size:14px;margin-top:6px;text-align:center;max-width:286px;line-height:1.5">To track live HRV we need a quick Bluetooth connection to your band.</div>
+    </div>
     <div style="margin-top:22px;display:flex;flex-direction:column;gap:15px">
-      ${[['1','Turn on <b style="color:var(--ink)">Bluetooth</b> on your phone.'],['2','In the WHOOP app, tap the <b style="color:var(--ink)">strap icon</b> (top-right) → turn on <b style="color:var(--ink)">Broadcast Heart Rate</b>.'],['3','Come back here — we’ll connect to your band automatically.']].map(([n,t])=>
+      ${[['1','Turn on <b style="color:var(--ink)">Bluetooth</b> on your phone.'],['2','In the WHOOP app, tap the <b style="color:var(--ink)">strap icon</b> (top-right) → turn on <b style="color:var(--ink)">Broadcast Heart Rate</b>.'],['3','Come back here — we\'ll connect to your band automatically.']].map(([n,t])=>
         `<div style="display:flex;gap:13px;align-items:flex-start"><div style="width:26px;height:26px;border-radius:50%;border:1px solid rgba(94,234,212,.5);color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none">${n}</div><div class="muted" style="font-size:14px;line-height:1.45">${t}</div></div>`).join('')}
     </div>
-    <div class="btn" style="margin-top:24px">Connect</div>
-    <div class="center" style="margin-top:14px;display:flex;gap:5px;align-items:center;color:var(--ink3);font-size:12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7l10 10M17 7 7 17M12 3v2M12 19v2"/></svg> Bluetooth is off · <span style="color:var(--teal)">Open Settings</span></div>
+    <div class="btn btn-teal" style="margin-top:24px">Connect</div>
+    <div class="center" style="margin-top:14px;display:flex;flex-direction:row;gap:5px;align-items:center;color:var(--ink3);font-size:12px">
+      Bluetooth is off · <span style="color:var(--teal)">Open Settings</span>
+    </div>
   </div>
 </div>`);
 
-/* ② Now Playing — tracking LIVE. A clear "Stop capture" button (not a toggle)
-   saves the session and opens the results. Audio keeps playing underneath. */
-add('② Now Playing · tracking',`${SB}<div class="body"><div class="aura" style="background:radial-gradient(72% 48% at 50% 30%,rgba(94,234,212,.16),rgba(243,205,139,.12) 60%,transparent 75%),#070510"></div>
-  <div class="center" style="margin-top:12px"><div style="width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.3)"></div></div>
-  <div class="center" style="margin-top:12px">
-    <div style="position:relative;width:170px;height:170px;display:flex;align-items:center;justify-content:center">
-      <div style="position:absolute;width:126px;height:126px;border-radius:50%;background:radial-gradient(circle,#f3cd8b,#a78bfa);filter:blur(38px);opacity:.4"></div>
-      <div class="breathe">${mandala(170,'gold',0.6,0.8)}</div>
-      <div class="center" style="position:absolute"><div class="score" style="font-size:34px">528</div><div class="muted" style="letter-spacing:3px;font-size:10px">HZ</div></div></div>
-    <div class="disp" style="font-size:18px;margin-top:8px">528 Hz · Renewal</div></div>
-  <div class="pad" style="margin-top:14px"><div class="glass" style="padding:15px 16px;border-color:rgba(94,234,212,.4)">
-    <div class="between"><span class="disp" style="font-size:12px;color:var(--teal);display:flex;align-items:center;gap:7px"><span class="live" style="font-size:10px">LIVE</span> HRV · capturing</span>
-      <span class="muted3" style="font-size:11px;font-variant:tabular-nums">04:12</span></div>
-    <div class="between" style="margin-top:10px;align-items:flex-end">
-      <div style="display:flex;align-items:baseline;gap:7px"><span class="score" style="font-size:46px">64</span><span class="muted" style="font-size:13px">ms RMSSD</span></div>
-      <div style="text-align:right"><div class="disp" style="font-size:14px;color:var(--teal)">Coherent</div><div class="muted" style="font-size:12px;margin-top:1px">72 bpm</div></div></div>
-    <div style="margin-top:8px">${spark(312,40,0.6)}</div></div></div>
-  <div class="pad" style="margin-top:14px;position:relative;z-index:1"><div style="height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(120deg,#5eead4,#3aa99a);color:#04201c">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="#04201c"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>
-    <span class="disp" style="font-size:16px;font-weight:600">Stop capture &amp; save</span></div></div>
-  <div class="between pad" style="margin-top:14px;padding-left:46px;padding-right:46px;position:relative;z-index:1"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M6 6h2v12H6zM20 6 9 12l11 6z"/></svg>
-    <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(120deg,#f3cd8b,#a78bfa);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="#0a0814"><rect x="6" y="5" width="4" height="14" rx="1.4"/><rect x="14" y="5" width="4" height="14" rx="1.4"/></svg></div>
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M18 6h-2v12h2zM4 6l11 6L4 18z"/></svg></div>
-  <div class="muted3 center" style="font-size:11px;margin-top:11px;padding:0 28px">Stop capture saves your session and opens your results · audio keeps playing</div>
-</div>`);
-
-/* ③ Browsing while tracking — the mini-player shows the live HRV graphic
-   (tracking keeps running; tap the mini-player to return and Stop capture) */
-add('③ Mini-player · tracking',`${SB}<div class="body">
-  <div class="disp pad" style="font-size:30px;font-weight:600;padding-top:6px">Frequencies</div>
-  <div class="pad" style="margin-top:10px"><div class="field"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/></svg>Search frequencies</div></div>
-  <div class="sec">Explore</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 20px">
-    ${[['gold','528 Hz','Renewal'],['violet','432 Hz','Calm'],['teal','Theta','Deep sleep'],['rose','Alpha','Focus']].map(([g,t,s])=>
-      `<div class="glass" style="height:128px;padding:14px;display:flex;flex-direction:column;justify-content:flex-end">${cardWM(g,'spin')}
-        <div class="disp" style="font-size:17px;position:relative">${t}</div><div class="muted" style="font-size:12px;position:relative">${s}</div></div>`).join('')}
-  </div><div style="height:160px"></div>
-  <div class="mini" style="border-color:rgba(94,234,212,.4)"><div style="width:48px;height:48px;border-radius:13px;overflow:hidden;position:relative;background:#120e22"><div class="wm spin" style="inset:-14px">${mandala(76,'gold',0.6,0.7)}</div></div>
-    <div class="mt"><div class="a">528 Hz · Renewal</div><div class="b" style="display:flex;align-items:center;gap:5px;color:var(--teal)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="url(#teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2.5-7 4 14 2.5-7H22"/></svg> 64 ms · tracking</div></div>
+add('③ Live HRV (WHOOP)','Mini-player · tracking',[
+  'Tap → Now Playing (tracking)'
+],`${SB}<div class="body">
+  <div class="disp pad" style="font-size:30px;font-weight:600;padding-top:6px">Home</div>
+  <div class="pad" style="margin-top:14px">
+    <div class="glass" style="padding:16px;display:flex;align-items:center;gap:16px">
+      <div style="position:relative;width:92px;height:92px;display:flex;align-items:center;justify-content:center;flex:none">
+        <div class="breathe">${mandala(92,'gold',0.5,0.65)}</div>
+      </div>
+      <div style="flex:1">
+        <div class="muted disp" style="font-size:11px;font-weight:700;letter-spacing:1px">VITALITY</div>
+        <div class="disp" style="font-size:19px;margin-top:3px">Baseline not established</div>
+      </div>
+    </div>
+  </div>
+  <div style="height:240px"></div>
+  <div class="mini" style="border-color:rgba(94,234,212,.4)">
+    <div style="width:48px;height:48px;border-radius:13px;overflow:hidden;position:relative;background:#120e22">
+      <div class="wm spin" style="inset:-14px">${mandala(76,'gold',0.6,0.7)}</div>
+    </div>
+    <div class="mt">
+      <div class="a">Wellness Live</div>
+      <div class="b" style="display:flex;align-items:center;gap:5px;color:var(--teal)">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.2" stroke-linecap="round"><path d="M2 12h4l2.5-7 4 14 2.5-7H22"/></svg>
+        64 ms · tracking
+      </div>
+    </div>
     <div style="width:54px;flex:none;opacity:.92">${spark(54,24,0.6)}</div>
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--gold)"><rect x="6" y="5" width="4" height="14" rx="1.3"/><rect x="14" y="5" width="4" height="14" rx="1.3"/></svg></div>
-  ${tabbar('freq')}</div>`);
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--gold)"><rect x="6" y="5" width="4" height="14" rx="1.3"/><rect x="14" y="5" width="4" height="14" rx="1.3"/></svg>
+  </div>
+  ${tabbar('home')}</div>`);
 
-/* ④ Session summary — Stop capture saves the session and opens this */
-add('④ Session summary',`${SB}<div class="body">
-  <div class="between pad" style="padding-top:8px"><div style="width:40px"></div><div class="disp" style="font-size:16px;font-weight:500">Session complete</div><div class="disp" style="color:var(--gold);font-size:15px">Done</div></div>
+add('③ Live HRV (WHOOP)','Session summary',[
+  'Done → back'
+],`${SB}<div class="body">
+  <div class="between pad" style="padding-top:8px">
+    <div style="width:40px"></div>
+    <div class="disp" style="font-size:16px;font-weight:600">Session complete</div>
+    <div class="disp" style="color:var(--gold);font-size:15px">Done</div>
+  </div>
   <div class="center" style="margin-top:8px">
     <div style="position:relative;width:246px;height:246px;display:flex;align-items:center;justify-content:center">
       <div style="position:absolute;width:178px;height:178px;border-radius:50%;background:radial-gradient(circle,#5eead4,#a78bfa);filter:blur(44px);opacity:.32"></div>
       <div class="breathe">${mandala(246,'teal',0.6,0.78)}</div>
-      <div class="center" style="position:absolute"><div class="score" style="font-size:70px">61</div><div class="muted" style="letter-spacing:3px;font-size:10px;margin-top:2px">AVG MS · RMSSD</div></div></div>
+      <div class="center" style="position:absolute">
+        <div class="score" style="font-size:70px">61</div>
+        <div class="muted" style="letter-spacing:3px;font-size:10px;margin-top:2px">AVG MS · RMSSD</div>
+      </div>
+    </div>
     <div class="disp" style="font-size:18px;margin-top:4px">Renewal · 528 Hz</div>
-    <div style="color:var(--teal);font-size:14px;font-weight:600;margin-top:3px">▲ HRV rose 12% while you listened</div></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:22px 20px 0">
-    ${[['Low','48','violet'],['Average','61','teal'],['Peak','79','amber']].map(([t,v,g])=>`
-      <div class="glass" style="padding:13px 10px;height:104px;display:flex;flex-direction:column;justify-content:center;align-items:center">${cardWM(g,'spin')}
-        <div class="muted" style="font-size:12px;position:relative">${t}</div>
-        <div class="score" style="font-size:30px;margin-top:6px;position:relative">${v}</div></div>`).join('')}
+    <div style="color:var(--teal);font-size:14px;font-weight:600;margin-top:3px">▲ HRV rose 12% while you listened</div>
   </div>
-  <div class="between pad" style="margin-top:20px"><span class="muted" style="font-size:13px">Duration</span><span class="disp" style="font-size:14px">14 min · 1,184 beats</span></div>
-  <div class="pad" style="margin-top:14px"><div class="glass" style="padding:16px"><div class="muted" style="font-size:14px;line-height:1.55">Your HRV trended upward through the 528 Hz session — a sign of rising rest-and-restore (parasympathetic) activity. Saved to your vitality history.</div></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:18px 20px 0">
+    ${[['Low','48','violet'],['Average','61','teal'],['Peak','79','amber']].map(([t,v,g])=>`
+      <div class="glass" style="padding:13px 10px;height:100px;display:flex;flex-direction:column;justify-content:center;align-items:center">${cardWM(g,'spin')}
+        <div class="muted" style="font-size:12px;position:relative">${t}</div>
+        <div class="score" style="font-size:30px;margin-top:5px;position:relative">${v}</div></div>`).join('')}
+  </div>
+  <div class="between pad" style="margin-top:18px"><span class="muted" style="font-size:13px">Duration</span><span class="disp" style="font-size:14px">14 min · 1,184 beats</span></div>
+  <div class="pad" style="margin-top:12px">
+    <div class="glass" style="padding:15px"><div class="muted" style="font-size:13px;line-height:1.55">Your HRV trended upward through this session — a sign of rising rest-and-restore (parasympathetic) activity. Saved to your vitality history.</div></div>
+  </div>
 </div>`);
 
-/* ⑦ Settings · Wearable — durable home for the provisioned WHOOP. Two concerns:
-   Live HRV (Bluetooth pairing) and Daily sync (WHOOP account link). */
-add('Settings · Wearable (WHOOP)',`${SB}<div class="body">
-  <div class="between pad" style="padding-top:8px"><div class="disp" style="color:var(--gold);font-size:15px">‹ Settings</div><div class="disp" style="font-size:16px;font-weight:500">Wearable</div><div style="width:30px"></div></div>
-  <div class="pad" style="margin-top:14px"><div class="glass" style="padding:18px;display:flex;align-items:center;gap:15px">${cardWM('teal','spinr')}
-    <div style="position:relative;width:64px;height:64px;border-radius:16px;background:#120e22;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden"><div class="wm spin" style="inset:-20px">${mandala(104,'teal',0.6,0.75)}</div>
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="url(#teal)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="position:relative"><path d="M2 12h4l2.5-7 4 14 2.5-7H22"/></svg></div>
-    <div style="flex:1;position:relative"><div class="disp" style="font-size:19px;font-weight:600">WHOOP 5.0</div>
-      <div style="margin-top:5px"><span class="live" style="font-size:11px;color:var(--teal)">CONNECTED</span></div>
-      <div class="muted3" style="font-size:12px;margin-top:3px">Broadcast on · ready for live HRV</div></div></div></div>
+/* ══════════════════════════════════════════════════════
+   FLOW 4 — Voice check-in & Vitality score
+   ══════════════════════════════════════════════════════ */
 
-  <div class="sec">Live HRV · Bluetooth</div>
-  <div class="pad"><div class="glass" style="padding:2px 0">
-    <div class="between" style="padding:13px 16px;border-bottom:1px solid var(--hair)"><span style="font-size:14px">Connection</span><span style="font-size:13px;color:var(--teal)">Connected</span></div>
-    <div class="between" style="padding:13px 16px;border-bottom:1px solid var(--hair)"><span style="font-size:14px">Re-pair device</span><span class="muted3" style="font-size:18px">›</span></div>
-    <div class="between" style="padding:13px 16px"><span style="font-size:14px;color:#ef9a9a">Forget device</span><span class="muted3" style="font-size:18px">›</span></div>
-  </div></div>
-
-  <div class="sec">Daily sync · WHOOP account</div>
-  <div class="pad"><div class="glass" style="padding:2px 0">
-    <div class="between" style="padding:13px 16px;border-bottom:1px solid var(--hair)"><span style="font-size:14px">Account</span><span class="muted" style="font-size:13px">myowja@gmail.com</span></div>
-    <div class="between" style="padding:13px 16px;border-bottom:1px solid var(--hair)"><span style="font-size:14px">Last synced</span><span class="muted" style="font-size:13px">2 hours ago</span></div>
-    <div class="between" style="padding:13px 16px;border-bottom:1px solid var(--hair)"><span style="font-size:14px">Sync now</span><span class="muted3" style="font-size:18px">›</span></div>
-    <div class="between" style="padding:13px 16px"><span style="font-size:14px;color:#ef9a9a">Disconnect WHOOP</span><span class="muted3" style="font-size:18px">›</span></div>
-  </div></div>
-
-  <div class="pad" style="margin-top:14px"><div class="muted3" style="font-size:12px;line-height:1.55">Keep Broadcast mode on in your WHOOP app so live HRV connects instantly. Your daily recovery & HRV trends sync automatically once a day.</div></div>
+add('④ Voice check-in & Vitality','Voice · intro',[
+  'Continue → Recording 1',
+  'Cancel → back'
+],`${SB}<div class="body"><div class="aura" style="background:radial-gradient(60% 40% at 50% 32%,rgba(94,234,212,.14),rgba(167,139,250,.10) 60%,transparent 76%),#070510"></div>
+  <div class="center" style="margin-top:60px">${micGlyph}</div>
+  <div class="center" style="margin-top:22px;padding:0 32px">
+    <div class="disp" style="font-size:24px;font-weight:700;margin-bottom:12px">Record three short samples</div>
+    <div class="muted" style="font-size:14px;line-height:1.6">We'll record three short audio samples. Total time is about 90 seconds. Find a quiet space and have a glass of water nearby.</div>
+  </div>
+  <div style="position:absolute;bottom:60px;left:20px;right:20px;display:flex;flex-direction:column;gap:12px">
+    <div class="btn btn-gold" style="height:54px">Continue</div>
+    <div class="btn btn-ghost" style="height:48px">Cancel</div>
+  </div>
 </div>`);
 
-const grid=document.getElementById('grid');
-S.forEach(s=>{const c=document.createElement('div');c.className='cell';
-  c.innerHTML=`<div class="screen"><div class="aura"></div>${s.h}</div><div class="cap">${s.n}</div>`;grid.appendChild(c);});
+add('④ Voice check-in & Vitality','Recording 1 · sustained ah',[
+  'Stop (valid) → Recording 2'
+],`${SB}<div class="body"><div class="aura" style="background:radial-gradient(60% 40% at 50% 32%,rgba(94,234,212,.18),transparent 64%),#070510"></div>
+  <div class="between pad" style="padding-top:8px">
+    <div style="color:var(--teal);font-size:15px;font-family:var(--disp)">Cancel</div>
+    <div class="muted" style="font-size:14px">Recording 1 of 3</div>
+    <div style="width:44px"></div>
+  </div>
+  <div class="center" style="margin-top:14px">
+    <span class="chip chip-teal">Sustained "ah"</span>
+    <div class="disp" style="font-size:20px;font-weight:600;margin-top:16px;padding:0 28px;text-align:center;line-height:1.4">Say "ah" for 30 seconds</div>
+    <div class="muted" style="font-size:13px;margin-top:8px;padding:0 32px;text-align:center;line-height:1.5">Take a comfortable breath, then sustain the sound naturally. It's OK to pause and breathe if needed.</div>
+  </div>
+  <div class="center" style="margin-top:22px">
+    <div style="position:relative;width:250px;height:250px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,#5eead4,#a78bfa);filter:blur(42px);opacity:.28"></div>
+      <div class="breathe">${mandala(250,'teal',0.6,0.78)}</div>
+      <div class="center" style="position:absolute">
+        <div class="score" style="font-size:52px">0:17</div>
+        <div class="muted" style="font-size:12px;margin-top:2px">seconds left</div>
+      </div>
+    </div>
+  </div>
+  <div class="center" style="margin-top:20px">
+    <div style="width:72px;height:72px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center">
+      <div style="width:24px;height:24px;border-radius:6px;background:linear-gradient(120deg,#5eead4,#a78bfa)"></div>
+    </div>
+    <div class="muted3" style="font-size:13px;margin-top:12px">Tap to stop</div>
+  </div>
+</div>`);
+
+add('④ Voice check-in & Vitality','Recording 2 · reading passage',[
+  'Stop (valid) → Recording 3'
+],`${SB}<div class="body"><div class="aura" style="background:radial-gradient(60% 40% at 50% 32%,rgba(94,234,212,.14),transparent 64%),#070510"></div>
+  <div class="between pad" style="padding-top:8px">
+    <div style="color:var(--teal);font-size:15px;font-family:var(--disp)">Cancel</div>
+    <div class="muted" style="font-size:14px">Recording 2 of 3</div>
+    <div style="width:44px"></div>
+  </div>
+  <div class="center" style="margin-top:12px">
+    <span class="chip chip-teal">Reading passage</span>
+    <div class="disp" style="font-size:20px;font-weight:600;margin-top:14px;padding:0 28px;text-align:center;line-height:1.4">Read the passage below at a natural pace</div>
+  </div>
+  <div class="pad" style="margin-top:14px">
+    <div class="glass" style="padding:16px">
+      <div class="disp" style="font-size:13px;font-weight:700;margin-bottom:8px">Rainbow Passage</div>
+      <div class="muted" style="font-size:13px;line-height:1.6">When the sunlight strikes raindrops in the air, they act as a prism and form a rainbow. The rainbow is a division of white light into many beautiful colors…</div>
+    </div>
+  </div>
+  <div class="center" style="margin-top:14px">
+    <div style="position:relative;width:160px;height:160px;display:flex;align-items:center;justify-content:center">
+      <div class="breathe">${mandala(160,'teal',0.55,0.7)}</div>
+      <div class="center" style="position:absolute"><div class="score" style="font-size:36px">0:42</div><div class="muted" style="font-size:11px">left</div></div>
+    </div>
+  </div>
+  <div class="center" style="margin-top:12px">
+    <div style="width:68px;height:68px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center">
+      <div style="width:22px;height:22px;border-radius:6px;background:linear-gradient(120deg,#5eead4,#a78bfa)"></div>
+    </div>
+    <div class="muted3" style="font-size:13px;margin-top:10px">Tap to stop</div>
+  </div>
+</div>`);
+
+add('④ Voice check-in & Vitality','Recording 3 · pa-ta-ka',[
+  'Stop (valid) → Review'
+],`${SB}<div class="body"><div class="aura" style="background:radial-gradient(60% 40% at 50% 32%,rgba(94,234,212,.14),transparent 64%),#070510"></div>
+  <div class="between pad" style="padding-top:8px">
+    <div style="color:var(--teal);font-size:15px;font-family:var(--disp)">Cancel</div>
+    <div class="muted" style="font-size:14px">Recording 3 of 3</div>
+    <div style="width:44px"></div>
+  </div>
+  <div class="center" style="margin-top:14px">
+    <span class="chip chip-teal">Diadochokinesis</span>
+    <div class="disp" style="font-size:20px;font-weight:600;margin-top:16px;padding:0 28px;text-align:center;line-height:1.4">Say "pa-ta-ka" as fast as you can for 10 seconds</div>
+    <div class="muted" style="font-size:13px;margin-top:8px;padding:0 32px;text-align:center;line-height:1.5">Repeat rapidly and clearly at your maximum speed.</div>
+  </div>
+  <div class="center" style="margin-top:28px">
+    <div style="position:relative;width:250px;height:250px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,#5eead4,#a78bfa);filter:blur(42px);opacity:.28"></div>
+      <div class="breathe">${mandala(250,'teal',0.6,0.78)}</div>
+      <div class="center" style="position:absolute">
+        <div class="score" style="font-size:52px">0:06</div>
+        <div class="muted" style="font-size:12px;margin-top:2px">seconds left</div>
+      </div>
+    </div>
+  </div>
+  <div class="center" style="margin-top:20px">
+    <div style="width:72px;height:72px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center">
+      <div style="width:24px;height:24px;border-radius:6px;background:linear-gradient(120deg,#5eead4,#a78bfa)"></div>
+    </div>
+    <div class="muted3" style="font-size:13px;margin-top:12px">Tap to stop</div>
+  </div>
+</div>`);
+
+add('④ Voice check-in & Vitality','Review',[
+  'Submit all three → Uploading',
+  '↺ → re-record that take'
+],`${SB}<div class="body pad" style="padding-top:8px">
+  <div class="disp" style="font-size:24px;font-weight:700;margin-bottom:6px">Review your submission</div>
+  <div class="muted" style="font-size:13px;line-height:1.5;margin-bottom:20px">Tap to preview each recording. Re-record any that don't sound right.</div>
+  <div class="glass" style="padding:6px 0;margin-bottom:20px">
+    ${[["Sustained 'ah'","30.5s · EN-01"],["Reading passage","42.1s · EN-02"],["'pa-ta-ka'","10.2s · EN-03"]].map(([t,s])=>`
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--hair)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--teal)"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9" fill="none" stroke="var(--teal)" stroke-width="1.8"/></svg>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:600">${t}</div>
+          <div class="muted" style="font-size:12px;margin-top:2px">${s}</div>
+        </div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.8"><polygon points="5 3 19 12 5 21"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.41"/></svg>
+      </div>`).join('')}
+  </div>
+  <div class="btn btn-gold" style="height:54px;margin-bottom:12px">Submit all three</div>
+  <div class="btn btn-ghost" style="height:46px">Cancel and start over</div>
+</div>`);
+
+add('④ Voice check-in & Vitality','Uploading',[],`${SB}<div class="body">
+  <div class="center" style="height:100%;justify-content:center;gap:22px">
+    <div style="width:54px;height:54px;border-radius:50%;border:3px solid rgba(94,234,212,.3);border-top-color:var(--teal);animation:spin 1s linear infinite"></div>
+    <div class="disp" style="font-size:20px;font-weight:600">Uploading 1 of 3…</div>
+    <div class="muted" style="font-size:14px">Please keep the app open.</div>
+  </div>
+</div>`);
+
+add('④ Voice check-in & Vitality','Success',[
+  'Done → Home'
+],`${SB}<div class="body">
+  <div class="center" style="height:100%;justify-content:center;gap:18px;padding:0 32px">
+    <div style="width:80px;height:80px;border-radius:50%;background:rgba(94,234,212,.12);border:2px solid rgba(94,234,212,.4);display:flex;align-items:center;justify-content:center">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="disp" style="font-size:26px;font-weight:700">Sample submitted</div>
+    <div class="muted" style="font-size:14px;text-align:center;line-height:1.6">Your provider will review it shortly.</div>
+    <div class="btn btn-gold" style="width:100%;height:54px;margin-top:12px">Done</div>
+  </div>
+</div>`);
+
+add('④ Voice check-in & Vitality','My Vitality · ready',[
+  'Done → back'
+],`${SB}<div class="body">
+  <div class="between pad" style="padding-top:8px">
+    <div style="width:40px"></div>
+    <div class="disp" style="font-size:16px;font-weight:600">My Vitality</div>
+    <div class="disp" style="color:var(--gold);font-size:15px">Done</div>
+  </div>
+  <div class="center" style="margin-top:8px">
+    <div style="position:relative;width:268px;height:268px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,#f3cd8b,#a78bfa);filter:blur(44px);opacity:.34"></div>
+      <div class="breathe">${mandala(268,'gold',0.6,0.78)}</div>
+      <div class="center" style="position:absolute">
+        <div class="score" style="font-size:80px">82</div>
+        <div class="muted" style="letter-spacing:3px;font-size:11px;margin-top:2px">VITALITY</div>
+      </div>
+    </div>
+    <div style="color:var(--gold);font-size:14px;font-weight:600;margin-top:6px">▲ +5 since your last check-in</div>
+  </div>
+  <div class="sec" style="padding-top:14px">What makes up your score</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 20px">
+    ${[['Emotional Wellness','86','teal'],['Cognitive Clarity','78','violet'],['Physical Energy','84','spec'],['Voice Power','79','gold']].map(([t,v,g])=>`
+      <div class="glass" style="padding:14px;height:108px">${cardWM(g,'spin')}
+        <div class="muted" style="font-size:12px;position:relative">${t}</div>
+        <div class="score" style="font-size:32px;margin-top:8px;position:relative">${v}</div>
+      </div>`).join('')}
+  </div>
+</div>`);
+
+add('④ Voice check-in & Vitality','My Vitality · baseline not established',[
+  'Submit a voice sample → Voice flow'
+],`${SB}<div class="body">
+  <div class="between pad" style="padding-top:8px">
+    <div style="width:40px"></div>
+    <div class="disp" style="font-size:16px;font-weight:600">My Vitality</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="center" style="margin-top:20px;padding:0 28px">
+    <div class="disp" style="font-size:22px;font-weight:700;margin-bottom:8px">Baseline not established</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 20px 0">
+    ${[['Emotional Wellness','teal'],['Cognitive Clarity','violet'],['Physical Energy','spec'],['Voice Power','gold']].map(([t,g])=>`
+      <div class="glass" style="padding:14px;height:108px;display:flex;flex-direction:column;align-items:center;justify-content:center">${cardWM(g,'spin')}
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2" style="position:relative;z-index:1"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <div class="muted3" style="font-size:11px;margin-top:7px;text-align:center;position:relative;z-index:1">Unlocks after<br>3 baseline sessions</div>
+      </div>`).join('')}
+  </div>
+  <div class="pad" style="margin-top:18px">
+    <div class="glass" style="padding:16px">
+      <div class="muted" style="font-size:14px;line-height:1.55;margin-bottom:12px">Record on 3 separate days to establish your baseline — then your scores unlock.</div>
+      <span class="chip chip-teal">Day 1 of 3</span>
+    </div>
+  </div>
+  <div class="pad" style="margin-top:18px">
+    <div class="btn btn-gold" style="height:54px">Submit a voice sample</div>
+  </div>
+</div>`);
+
+/* ══════════════════════════════════════════════════════
+   FLOW 5 — Account & WHOOP cloud
+   ══════════════════════════════════════════════════════ */
+
+add('⑤ Account & WHOOP cloud','Account',[
+  'Health profile → Profile editor',
+  'WHOOP → WHOOP screen',
+  'Sign out → Welcome'
+],`${SB}<div class="body pad" style="padding-top:8px">
+  <div class="between" style="margin-bottom:24px">
+    <div class="disp" style="font-size:20px;font-weight:700">Account</div>
+    <div style="color:var(--teal);font-size:15px;font-family:var(--disp)">Done</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px">
+    <div style="width:56px;height:56px;border-radius:50%;overflow:hidden;position:relative;background:#120e22;flex:none">
+      <div class="wm spin" style="inset:-18px">${mandala(92,'violet',0.6,0.7)}</div>
+    </div>
+    <div>
+      <div class="disp" style="font-size:18px;font-weight:600">Member Name</div>
+      <div class="muted" style="font-size:13px;margin-top:2px">myowja@gmail.com</div>
+    </div>
+  </div>
+  <div class="glass" style="padding:2px 0;margin-bottom:16px">
+    <div class="srow">
+      <div>
+        <div class="srow-lbl">Health profile</div>
+        <div class="muted3" style="font-size:12px;margin-top:2px">Used to interpret your voice analysis</div>
+      </div>
+      <span class="srow-val">›</span>
+    </div>
+    <div class="srow" style="border-bottom:none">
+      <div>
+        <div class="srow-lbl">WHOOP · recovery &amp; HRV trends</div>
+        <div style="font-size:12px;margin-top:2px;color:var(--teal)">Connected — tap to view or sync</div>
+      </div>
+      <span class="srow-val">›</span>
+    </div>
+  </div>
+  <div class="btn btn-ghost" style="height:46px;color:#ef9a9a;border-color:rgba(239,154,154,.3)">Sign out</div>
+</div>`);
+
+add('⑤ Account & WHOOP cloud','Health profile (editor)',[
+  'Save → back',
+  'Cancel → back'
+],`${SB}<div class="body pad" style="padding-top:8px;overflow-y:auto">
+  <div class="disp" style="font-size:22px;font-weight:700;margin-bottom:6px">Health profile</div>
+  <div class="muted" style="font-size:13px;line-height:1.5;margin-bottom:22px">Changes to these fields may recompute your voice baseline.</div>
+  <div style="margin-bottom:16px">
+    <div class="muted" style="font-size:12px;font-weight:600;letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase">Year of birth</div>
+    <div class="field">1985</div>
+  </div>
+  ${selectChips('Biological sex',['Male','Female','Prefer not to say'],0)}
+  ${selectChips('Smoking status',['Never','Former','Current'],0)}
+  ${selectChips('Respiratory conditions',['None','Asthma','COPD','Other'],0)}
+  ${selectChips('Reading language',['English','Español'],0)}
+  <div class="btn btn-gold" style="height:54px;margin-bottom:12px;margin-top:6px">Save</div>
+  <div class="btn btn-ghost" style="height:46px">Cancel</div>
+</div>`);
+
+add('⑤ Account & WHOOP cloud','Profile setup · step 1 of 3',[
+  'Continue → Step 2 of 3',
+  'Cancel → back'
+],`${SB}<div class="body pad" style="padding-top:14px">
+  <div class="chip chip-teal" style="font-size:11px;font-weight:700;letter-spacing:.5px;margin-bottom:16px">STEP 1 OF 3</div>
+  <div class="disp" style="font-size:26px;font-weight:700;margin-bottom:8px">About you</div>
+  <div class="muted" style="font-size:14px;line-height:1.55;margin-bottom:26px">This helps your provider interpret your voice analysis accurately. You only enter it once.</div>
+  <div style="margin-bottom:16px">
+    <div class="muted" style="font-size:12px;font-weight:600;letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase">Year of birth</div>
+    <div class="field">Year</div>
+  </div>
+  ${selectChips('Biological sex',['Male','Female','Prefer not to say'],-1)}
+  <div style="position:absolute;bottom:48px;left:20px;right:20px;display:flex;flex-direction:column;gap:12px">
+    <div class="btn btn-gold" style="height:54px">Continue</div>
+    <div class="btn btn-ghost" style="height:46px">Cancel</div>
+  </div>
+</div>`);
+
+add('⑤ Account & WHOOP cloud','WHOOP · connected',[
+  'Sync now → pulls latest',
+  'Disconnect → unlink',
+  'Run BLE Diagnostic → BLE diagnostic',
+  'Done → back'
+],`${SB}<div class="body pad" style="padding-top:8px">
+  <div class="between" style="margin-bottom:18px">
+    <div class="disp" style="font-size:20px;font-weight:700">WHOOP</div>
+    <div style="color:var(--teal);font-size:15px;font-family:var(--disp)">Done</div>
+  </div>
+  <div class="glass" style="padding:16px;margin-bottom:14px">
+    <div class="between" style="margin-bottom:12px">
+      <div>
+        <div class="disp" style="font-size:16px;font-weight:600">Wearable</div>
+        <div style="color:var(--teal);font-size:13px;margin-top:3px">Connected · synced 3m ago</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="btn btn-teal" style="height:38px;font-size:14px;flex:1;border-radius:12px">Sync now</div>
+      <div class="btn btn-ghost" style="height:38px;font-size:14px;flex:1;border-radius:12px">Disconnect</div>
+    </div>
+  </div>
+  <div class="glass" style="padding:15px;margin-bottom:12px">
+    <div class="between" style="margin-bottom:8px">
+      <div class="disp" style="font-size:14px;font-weight:600">Recovery score · 30 days</div>
+      <div style="color:var(--gold);font-size:13px;font-weight:600">64 latest</div>
+    </div>
+    ${sparkGold(310,36,0.3)}
+  </div>
+  <div class="glass" style="padding:15px;margin-bottom:12px">
+    <div class="between" style="margin-bottom:8px">
+      <div class="disp" style="font-size:14px;font-weight:600">HRV (rMSSD ms) · 30 days</div>
+      <div style="color:var(--teal);font-size:13px;font-weight:600">58 ms · latest</div>
+    </div>
+    ${spark(310,36,0.6)}
+  </div>
+  <div class="glass" style="padding:15px;margin-bottom:12px">
+    <div class="between" style="margin-bottom:8px">
+      <div class="disp" style="font-size:14px;font-weight:600">Weight (kg) · 180 days</div>
+      <div style="color:var(--gold);font-size:13px;font-weight:600">82.4 kg · latest</div>
+    </div>
+    ${sparkGold(310,36,1.2)}
+  </div>
+  <div class="glass" style="padding:15px;margin-bottom:14px">
+    <div class="disp" style="font-size:13px;font-weight:700;margin-bottom:6px">About WHOOP · Tier 2</div>
+    <div class="muted" style="font-size:12px;line-height:1.55">Your recovery score, HRV, resting heart rate, sleep, and strain data are pulled once daily from your personal WHOOP account. Your WHOOP credentials are stored only on the server — never on this device.</div>
+  </div>
+  <div class="btn btn-ghost" style="height:44px;font-size:14px">Run BLE Diagnostic</div>
+</div>`);
+
+add('⑤ Account & WHOOP cloud','WHOOP · not connected',[
+  'Connect WHOOP → OAuth link',
+  'Run BLE Diagnostic → BLE diagnostic'
+],`${SB}<div class="body pad" style="padding-top:8px">
+  <div class="between" style="margin-bottom:18px">
+    <div class="disp" style="font-size:20px;font-weight:700">WHOOP</div>
+    <div style="color:var(--teal);font-size:15px;font-family:var(--disp)">Done</div>
+  </div>
+  <div class="glass" style="padding:16px;margin-bottom:14px">
+    <div class="disp" style="font-size:16px;font-weight:600;margin-bottom:6px">Wearable</div>
+    <div class="muted" style="font-size:13px;margin-bottom:16px">Not connected</div>
+    <div class="btn btn-gold" style="height:48px;font-size:15px">Connect WHOOP</div>
+  </div>
+  <div class="glass" style="padding:15px;margin-bottom:14px">
+    <div class="disp" style="font-size:13px;font-weight:700;margin-bottom:6px">About WHOOP · Tier 2</div>
+    <div class="muted" style="font-size:12px;line-height:1.55">Your recovery score, HRV, resting heart rate, sleep, and strain data are pulled once daily from your personal WHOOP account. Your WHOOP credentials are stored only on the server — never on this device.</div>
+  </div>
+  <div class="btn btn-ghost" style="height:44px;font-size:14px">Run BLE Diagnostic</div>
+</div>`);
+
+add('⑤ Account & WHOOP cloud','BLE Diagnostic',[
+  'Start → runs 60s capture',
+  '‹ Back → WHOOP'
+],`${SB}<div class="body pad" style="padding-top:8px">
+  <div style="color:var(--gold);font-size:15px;font-family:var(--disp);margin-bottom:24px">‹ Back</div>
+  <div class="disp" style="font-size:28px;font-weight:700;margin-bottom:12px">BLE Diagnostic</div>
+  <div class="muted" style="font-size:14px;line-height:1.6;margin-bottom:28px">Connects to your WHOOP, listens on every Bluetooth channel for 60 seconds, and saves the raw result to the database for analysis. Sit still and quiet during the capture.</div>
+  <div class="btn btn-teal" style="height:54px;margin-bottom:18px">Start 60-second capture</div>
+  <div class="muted3" style="font-size:13px;line-height:1.5;margin-bottom:22px">Make sure Broadcast Heart Rate is ON in the WHOOP app, then start.</div>
+  <div class="glass" style="padding:16px">
+    <div class="disp" style="font-size:13px;font-weight:700;margin-bottom:10px">Capture summary</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${[['hr180d_packets_with_rr','128'],['rr_interval_count','1184'],['session_duration_s','60'],['ble_channel','HB-BCAST']].map(([k,v])=>`
+        <div class="between"><span class="muted3" style="font-size:12px;font-family:monospace">${k}</span><span class="muted" style="font-size:12px;font-family:monospace">${v}</span></div>`).join('')}
+    </div>
+  </div>
+</div>`);
+
+/* ── render ──────────────────────────────────────────── */
+const flows=document.getElementById('flows');
+const flowMap=new Map();
+S.forEach(s=>{
+  if(!flowMap.has(s.flow))flowMap.set(s.flow,[]);
+  flowMap.get(s.flow).push(s);
+});
+
+const FLOW_DESCS={
+  '① Sign in':'Provider-issued login → the app.',
+  '② Home & browse':'Tabs: Home, Radio, Library, Search. Mini-player floats above the tab bar.',
+  '③ Live HRV (WHOOP)':'Arm HRV on the station\'s Play button → connects to the WHOOP → live RMSSD on Now Playing → save.',
+  '④ Voice check-in & Vitality':'3 voice recordings → review → upload → score. Baseline needs 3 days.',
+  '⑤ Account & WHOOP cloud':'Identity, health profile, and the WHOOP cloud connection (recovery/HRV/weight trends).'
+};
+
+flowMap.forEach((screens,flowName)=>{
+  const fb=document.createElement('div');
+  fb.className='flow-block';
+
+  const fh=document.createElement('div');
+  fh.className='flow-header';
+  fh.innerHTML=`<div class="flow-title">${flowName}</div><div class="flow-desc">${FLOW_DESCS[flowName]||''}</div>`;
+  fb.appendChild(fh);
+
+  const row=document.createElement('div');
+  row.className='screen-row';
+
+  screens.forEach(s=>{
+    const c=document.createElement('div');
+    c.className='cell';
+    const tapsHtml=s.taps&&s.taps.length
+      ?`<ul class="taps">${s.taps.map(t=>`<li>${t}</li>`).join('')}</ul>`
+      :`<ul class="taps"><li style="color:#4a4760">no tap targets</li></ul>`;
+    c.innerHTML=`<div class="screen"><div class="aura"></div>${s.html}</div><div class="cap">${s.name}</div>${tapsHtml}`;
+    row.appendChild(c);
+  });
+
+  fb.appendChild(row);
+  flows.appendChild(fb);
+});
 </script>
 </body>
 </html>
