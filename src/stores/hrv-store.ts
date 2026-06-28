@@ -110,6 +110,10 @@ type HrvState = {
   /** Percentage change from baseline (positive = up, negative = down). */
   pctFromBaseline: number | null;
 
+  /** The most recently finished session, so the results screen can render from
+   *  memory (set by `endSession`; cleared when the next session arms). */
+  lastSummary: HrvSessionSummary | null;
+
   /** Station Play-button toggle on/off. Arming clears any prior session. */
   arm: (station: HrvStation) => void;
   disarm: () => void;
@@ -148,6 +152,7 @@ const INITIAL = {
   baselineRmssd: null,
   trend: null,
   pctFromBaseline: null,
+  lastSummary: null,
 };
 
 export const useHrvStore = create<HrvState>((set, get) => ({
@@ -265,7 +270,7 @@ export const useHrvStore = create<HrvState>((set, get) => ({
       baselineRmssd: s.baselineRmssd,
       pctFromBaseline: finalPct,
     };
-    set({ ...INITIAL });
+    set({ ...INITIAL, lastSummary: summary });
     return summary;
   },
 

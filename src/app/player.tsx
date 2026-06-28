@@ -10,12 +10,11 @@
  */
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayerStatus } from 'expo-audio';
-import { useRouter, type Href } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useSaveHrvSession } from '@/api/hrv';
 import { radioPlayer, togglePlayPause } from '@/audio/player';
 import { Sparkline } from '@/components/hrv/sparkline';
 import { ArtTile } from '@/components/ui/art-tile';
@@ -78,7 +77,6 @@ export default function NowPlaying() {
   const rrCount = useHrvStore((s) => s.rrAll.length);
 
   const { stopCapture, reconnect } = useLiveHrvControls();
-  const saveHrvSession = useSaveHrvSession();
 
   // Session elapsed timer (counts up from 0, driven by a 1s interval).
   const [elapsedSecs, setElapsedSecs] = useState(0);
@@ -119,29 +117,11 @@ export default function NowPlaying() {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    // endSession stashes the summary in the store (lastSummary); the results
+    // screen renders it instantly and saves to the DB in the background.
     const summary = await stopCapture();
-    if (summary) {
-      try {
-        const row = await saveHrvSession.mutateAsync(summary);
-        router.replace({
-          pathname: '/hrv-summary',
-          params: {
-            id: row.id,
-            // Pass display-only trend data that isn't in the DB row.
-            baselineRmssd:
-              summary.baselineRmssd != null ? String(summary.baselineRmssd) : '',
-            pctFromBaseline:
-              summary.pctFromBaseline != null ? String(summary.pctFromBaseline) : '',
-            durationSeconds: String(summary.durationSeconds),
-          },
-        } as Href);
-      } catch {
-        // If save fails, still navigate back rather than hanging.
-        router.back();
-      }
-    } else {
-      router.back();
-    }
+    if (summary) router.replace('/hrv-summary');
+    else router.back();
   }
 
   function handlePulsePress() {
@@ -297,7 +277,6 @@ export default function NowPlaying() {
               <Pressable
                 style={[styles.pulseBtn, armed ? styles.pulseBtnRecording : styles.pulseBtnIdle]}
                 onPress={handlePulsePress}
-                disabled={armed && saveHrvSession.isPending}
                 hitSlop={8}>
                 <Ionicons name="pulse" size={22} color={armed ? '#ef4444' : t.live} />
               </Pressable>

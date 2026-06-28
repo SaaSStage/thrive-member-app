@@ -1,19 +1,34 @@
 /**
- * HRV session summary modal — opened after "Stop capture & save" saves the
- * session and routes here with the saved row id. Matches wireframe ④:
- * breathing teal mandala dial showing avg RMSSD, low/avg/peak glass cards,
- * duration, station name, a takeaway line, and Done to dismiss.
+ * HRV session results — opened after you stop a live capture. Renders INSTANTLY
+ * from the in-memory summary (`hrv-store.lastSummary`) and saves to the DB in the
+ * background (best-effort), so results never wait on — or fail with — the network.
+ * Opened with an `id` param instead (e.g. from a future history list) it reads
+ * that saved row from the DB. Matches wireframe ④: breathing teal mandala dial
+ * (avg RMSSD), low/avg/peak cards, duration, station, a takeaway line.
  */
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useHrvSessions } from '@/api/hrv';
+import { useHrvSessions, useSaveHrvSession } from '@/api/hrv';
 import { Aura } from '@/components/ui/aura';
 import { CardMandala, Mandala } from '@/components/ui/mandala';
 import { Gradients, Radius, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useHrvStore } from '@/stores/hrv-store';
+
+/** The display fields the screen needs, from either the in-memory summary or a DB row. */
+type SummaryView = {
+  avg: number | null;
+  min: number | null;
+  max: number | null;
+  durationSeconds: number;
+  sampleCount: number;
+  stationLabel: string | null;
+  pctFromBaseline: number | null;
+};
 
 /** Format duration in seconds as "X min" or "X min Y sec". */
 function fmtDuration(secs: number): string {
@@ -43,30 +58,65 @@ function takeawayFor(
     return `Your RMSSD held steady over ${mins} min — you stayed balanced.`;
   }
   // Fallback: use avg RMSSD heuristic (no baseline data available).
-  if (avg == null) return 'Session saved to your vitality history.';
+  if (avg == null) return 'Session recorded to your vitality history.';
   if (avg >= 70)
-    return 'Strong HRV — your nervous system responded well to this frequency. Saved to your vitality history.';
+    return 'Strong HRV — your nervous system responded well to this frequency.';
   if (avg >= 50)
-    return 'Your HRV trended upward through this session — a sign of rising rest-and-restore (parasympathetic) activity. Saved to your vitality history.';
-  return 'Your HRV was recorded for this session. Over time you\'ll see how different frequencies affect your body. Saved to your vitality history.';
+    return 'Your HRV trended upward through this session — a sign of rising rest-and-restore (parasympathetic) activity.';
+  return 'Your HRV was recorded for this session. Over time you\'ll see how different frequencies affect your body.';
 }
 
 export default function HrvSummaryScreen() {
   const t = useTheme();
   const router = useRouter();
-  const { id, pctFromBaseline: pctParam, durationSeconds: durParam } =
-    useLocalSearchParams<{
-      id: string;
-      pctFromBaseline?: string;
-      durationSeconds?: string;
-    }>();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const isHistory = id != null && id !== '';
+
+  // Fresh session: render from memory; history: read the saved DB row.
+  const lastSummary = useHrvStore((s) => s.lastSummary);
   const { data: sessions, isLoading } = useHrvSessions();
+  const saveHrv = useSaveHrvSession();
 
-  // Parse display-only trend params threaded from player.tsx (not in DB).
-  const pctFromBaseline = pctParam && pctParam !== '' ? Number(pctParam) : null;
-  const durationFromParam = durParam && durParam !== '' ? Number(durParam) : null;
+  // Best-effort background save of a fresh session, exactly once. The screen
+  // never waits on it; a quiet line appears only if it fails.
+  const [saveFailed, setSaveFailed] = useState(false);
+  const savedRef = useRef(false);
+  useEffect(() => {
+    if (isHistory || !lastSummary || savedRef.current) return;
+    savedRef.current = true;
+    saveHrv
+      .mutateAsync(lastSummary)
+      .then(() => setSaveFailed(false))
+      .catch(() => setSaveFailed(true));
+  }, [isHistory, lastSummary, saveHrv]);
 
-  const session = sessions?.find((s) => s.id === id);
+  const historyRow = isHistory ? sessions?.find((s) => s.id === id) : undefined;
+
+  const view: SummaryView | null = isHistory
+    ? historyRow
+      ? {
+          avg: historyRow.avg_rmssd,
+          min: historyRow.min_rmssd,
+          max: historyRow.max_rmssd,
+          durationSeconds: historyRow.duration_seconds,
+          sampleCount: historyRow.sample_count,
+          stationLabel: historyRow.station_code,
+          pctFromBaseline: null,
+        }
+      : null
+    : lastSummary
+      ? {
+          avg: lastSummary.avgRmssd,
+          min: lastSummary.minRmssd,
+          max: lastSummary.maxRmssd,
+          durationSeconds: lastSummary.durationSeconds,
+          sampleCount: lastSummary.sampleCount,
+          stationLabel: lastSummary.station.name ?? lastSummary.station.code,
+          pctFromBaseline: lastSummary.pctFromBaseline,
+        }
+      : null;
+
+  const loading = isHistory && isLoading && !historyRow;
 
   return (
     <Aura>
@@ -80,16 +130,14 @@ export default function HrvSummaryScreen() {
           </Pressable>
         </View>
 
-        {isLoading && !session ? (
+        {loading ? (
           <View style={styles.center}>
             <ActivityIndicator color={t.primary} />
           </View>
-        ) : !session ? (
+        ) : !view ? (
           <View style={styles.center}>
             <Ionicons name="checkmark-circle-outline" size={64} color={t.live} />
-            <Text style={[styles.savedText, { color: t.textSecondary }]}>
-              Session saved to your vitality history.
-            </Text>
+            <Text style={[styles.savedText, { color: t.textSecondary }]}>Session complete.</Text>
             <Pressable onPress={() => router.back()} style={styles.doneBtn}>
               <Text style={[styles.doneBtnText, { color: t.text }]}>Done</Text>
             </Pressable>
@@ -108,25 +156,25 @@ export default function HrvSummaryScreen() {
               />
               <View style={styles.dialCenter}>
                 <Text style={[styles.avgNumeral, { color: t.text }]}>
-                  {session.avg_rmssd != null ? Math.round(session.avg_rmssd) : '–'}
+                  {view.avg != null ? Math.round(view.avg) : '–'}
                 </Text>
                 <Text style={[styles.avgLabel, { color: t.textSecondary }]}>AVG MS · RMSSD</Text>
               </View>
             </View>
 
             {/* Station name */}
-            {session.station_code ? (
+            {view.stationLabel ? (
               <Text style={[styles.stationName, { color: t.textSecondary }]}>
-                {session.station_code}
+                {view.stationLabel}
               </Text>
             ) : null}
 
             {/* Low / Avg / Peak glass cards */}
             <View style={styles.statRow}>
               {([
-                { label: 'Low', value: session.min_rmssd, grad: Gradients.violet },
-                { label: 'Average', value: session.avg_rmssd, grad: Gradients.teal },
-                { label: 'Peak', value: session.max_rmssd, grad: ['#ffd9a0', '#ff9f5a'] },
+                { label: 'Low', value: view.min, grad: Gradients.violet },
+                { label: 'Average', value: view.avg, grad: Gradients.teal },
+                { label: 'Peak', value: view.max, grad: ['#ffd9a0', '#ff9f5a'] },
               ] as const).map(({ label, value, grad }) => (
                 <View
                   key={label}
@@ -149,21 +197,24 @@ export default function HrvSummaryScreen() {
             <View style={styles.metaRow}>
               <Text style={[styles.metaLabel, { color: t.textSecondary }]}>Duration</Text>
               <Text style={[styles.metaValue, { color: t.text }]}>
-                {fmtDuration(session.duration_seconds)}
-                {session.sample_count > 0 ? ` · ${session.sample_count} beats` : ''}
+                {fmtDuration(view.durationSeconds)}
+                {view.sampleCount > 0 ? ` · ${view.sampleCount} beats` : ''}
               </Text>
             </View>
 
             {/* Takeaway card */}
             <View style={[styles.takeawayCard, styles.glass]}>
               <Text style={[styles.takeawayText, { color: t.textSecondary }]}>
-                {takeawayFor(
-                  session.avg_rmssd,
-                  pctFromBaseline,
-                  durationFromParam ?? session.duration_seconds,
-                )}
+                {takeawayFor(view.avg, view.pctFromBaseline, view.durationSeconds)}
               </Text>
             </View>
+
+            {/* Quiet, non-blocking note if the background save didn't land. */}
+            {saveFailed ? (
+              <Text style={[styles.notSaved, { color: t.textTertiary }]}>
+                Not saved to your history.
+              </Text>
+            ) : null}
           </ScrollView>
         )}
       </SafeAreaView>
@@ -236,4 +287,5 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   takeawayText: { ...Type.callout, lineHeight: 22 },
+  notSaved: { ...Type.footnote, textAlign: 'center', marginTop: 18 },
 });
