@@ -3,8 +3,8 @@
  * (Apple Music pattern). Tap opens the full Now Playing modal; the play/pause
  * button toggles without leaving the current screen.
  *
- * When HRV is actively tracking, the now-playing line is replaced with a live
- * HRV status: tiny sparkline + "{rmssd} ms · tracking" in teal (wireframe ③).
+ * The pulse-wave icon mirrors Now Playing: teal when the WHOOP is connected,
+ * red while actively tracking (with a tiny sparkline + "{rmssd} ms · tracking").
  */
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayerStatus } from 'expo-audio';
@@ -19,6 +19,7 @@ import { BottomTabInset, Radius, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useHrvStore } from '@/stores/hrv-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { useWearableStore } from '@/stores/wearable-store';
 
 export function MiniPlayer() {
   const t = useTheme();
@@ -31,6 +32,7 @@ export function MiniPlayer() {
   const hrvStatus = useHrvStore((s) => s.status);
   const liveRmssd = useHrvStore((s) => s.liveRmssd);
   const recent = useHrvStore((s) => s.recent);
+  const connected = useWearableStore((s) => s.connected);
 
   if (!activeStation) return null;
 
@@ -49,9 +51,17 @@ export function MiniPlayer() {
         </Text>
         {isTracking ? (
           <View style={styles.hrvRow}>
-            <Ionicons name="pulse-outline" size={13} color={t.live} />
-            <Text style={[styles.hrvText, { color: t.live }]} numberOfLines={1}>
+            <Ionicons name="pulse" size={13} color="#ef4444" />
+            <Text style={[styles.hrvText, { color: '#ef4444' }]} numberOfLines={1}>
               {liveRmssd != null ? `${Math.round(liveRmssd)} ms` : '– ms'} · tracking
+            </Text>
+          </View>
+        ) : connected ? (
+          <View style={styles.hrvRow}>
+            <Ionicons name="pulse" size={13} color={t.live} />
+            <Text style={[styles.sub, { color: t.textSecondary }]} numberOfLines={1}>
+              <Text style={{ color: t.live }}>● LIVE</Text>
+              {`  ${artist}`}
             </Text>
           </View>
         ) : (
