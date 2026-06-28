@@ -35,3 +35,39 @@ Two independent tiers sharing the WHOOP wearable:
 - UI: `src/app/{player,station/[id],hrv-summary,whoop}.tsx`, `src/components/hrv/*`, `src/components/mini-player.tsx`
 - Tier 2: `src/whoop/*`, `src/api/whoop.ts`, `src/stores/whoop-store.ts`
 - Backend (portal): `supabase/migrations/0062–0065`, `supabase/functions/whoop-*`, `_shared/whoop.ts`
+
+## BLE data landscape — what the band actually exposes (verified on a real WHOOP 5)
+
+Verified 2026-06-28 on **WHOOP 5 "WHOOP 5B01246771" (fw ~r52)** via `src/hrv/ble-diagnostic.ts`
+(writes the full channel dump to Supabase `user_reports.playback_stats`, `player_state='ble-diagnostic'`)
+plus an open-source reverse-engineering survey. **Corrects the earlier "R-R is all you get over BLE."**
+
+GATT map seen on the band: `0x180D`→`0x2A37` (HR+R-R), `0x180A` device info, `0x180F`→`0x2A19` battery,
+and a **proprietary service `fd4b0001-cce1-4033-93ce-002d5875f58a`** (`fd4b0002` write/command;
+`fd4b0003/4/5/7` notify). WHOOP 4.0 used `61080001`/`61080002…` instead.
+
+Three access tiers:
+
+1. **Broadcast-HR — what we use, NO bonding.** Member enables **"Broadcast Heart Rate"** in the WHOOP
+   app → `0x2A37` streams **HR + R-R** read-only, *while the band stays bonded to the member's WHOOP
+   app*. No conflict. The `fd4b` channels show 0 packets here (they need a command handshake). Captures:
+   R-R 828–913 ms at rest; first R-R ~2.5 s–40 s after connect.
+2. **Proprietary `fd4b` handshake — needs an EXCLUSIVE BLE bond.** Write an `AA…`+CRC frame to
+   `fd4b0002`, then read the notify chars. Unlocks (confirmed in code by whoop-vault, r52): live
+   **skin temperature, motion/activity, battery+charge, device events (wrist/charge/double-tap/boot/
+   alarms), a ~14-day per-second on-device history buffer (HR/temp/motion/activity)**, and **control
+   commands — set alarms, FIRE HAPTICS (`RUN_HAPTICS_PATTERN`), reboot**. ⚠️ The bond is **exclusive**:
+   the band must be unpaired from the member's WHOOP app first, which breaks their WHOOP use — so this
+   route generally isn't viable for members who also use WHOOP. Haptics/commands live ONLY here.
+3. **NOT on BLE → cloud API only.** SpO2, raw PPG/optical, raw IMU accel+gyro, per-second HRV,
+   respiratory rate, and all **scores (recovery/strain/sleep)** are server-side. Use the WHOOP cloud
+   OAuth API (Tier 2) for those.
+
+Reverse-engineering references (WHOOP DMCAs these — they disappear):
+[Sophonbot0/whoop-vault](https://github.com/Sophonbot0/whoop-vault) (WHOOP 5/r52, Python, exact match
+to our `fd4b` map — the protocol reference), [madhursatija/whoof](https://github.com/madhursatija/whoof)
+(Gen4+5, Rust+Swift/CoreBluetooth — closest to our iOS stack),
+[christianmeurer/whoop-reader](https://github.com/christianmeurer/whoop-reader) (Gen4),
+[bWanShiTong RE writeup](https://github.com/bWanShiTong/reverse-engineering-whoop-post) (Gen4 protocol).
+Cloud clients: [felixnext/whoopy](https://github.com/felixnext/whoopy) (official v2),
+[jjur/whoop-data](https://github.com/jjur/whoop-sleep-HR-data-api) (unofficial private API; ToS risk).
