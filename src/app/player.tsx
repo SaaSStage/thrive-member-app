@@ -294,22 +294,13 @@ export default function NowPlaying() {
             {/* Pulse/record icon (left) — only when WHOOP is connected in Settings.
                 Idle: teal pulse-outline. Armed/recording: red filled circle + white stop glyph. */}
             {connected ? (
-              armed ? (
-                <Pressable
-                  style={[styles.pulseBtn, styles.recordBtn]}
-                  onPress={handlePulsePress}
-                  disabled={saveHrvSession.isPending}
-                  hitSlop={8}>
-                  <Ionicons name="stop" size={20} color="#ffffff" />
-                </Pressable>
-              ) : (
-                <Pressable
-                  style={styles.pulseBtn}
-                  onPress={handlePulsePress}
-                  hitSlop={8}>
-                  <Ionicons name="pulse-outline" size={28} color={t.live} />
-                </Pressable>
-              )
+              <Pressable
+                style={[styles.pulseBtn, armed ? styles.pulseBtnRecording : styles.pulseBtnIdle]}
+                onPress={handlePulsePress}
+                disabled={armed && saveHrvSession.isPending}
+                hitSlop={8}>
+                <Ionicons name="pulse" size={22} color={armed ? '#ef4444' : t.live} />
+              </Pressable>
             ) : (
               <View style={styles.transportSpacer} />
             )}
@@ -330,7 +321,7 @@ export default function NowPlaying() {
 
           {isCapturing ? (
             <Text style={[styles.stopHint, { color: t.textTertiary }]}>
-              Tap the red button to stop &amp; save · audio keeps playing
+              Tap the red wave to stop &amp; save · audio keeps playing
             </Text>
           ) : null}
         </ScrollView>
@@ -408,13 +399,19 @@ const styles = StyleSheet.create({
   pulseBtn: {
     width: 44,
     height: 44,
+    borderRadius: 22,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  /** Filled red circle — the "recording" state of the pulse toggle. */
-  recordBtn: {
-    backgroundColor: '#ef4444',
-    borderRadius: 22,
+  /** Idle (teal) vs recording (red) tints — the red is a twin of the teal pulse. */
+  pulseBtnIdle: {
+    backgroundColor: 'rgba(94,234,212,0.08)',
+    borderColor: 'rgba(94,234,212,0.35)',
+  },
+  pulseBtnRecording: {
+    backgroundColor: 'rgba(239,68,68,0.12)',
+    borderColor: 'rgba(239,68,68,0.5)',
   },
   transportSpacer: { width: 44, height: 44 },
   stopHint: {
