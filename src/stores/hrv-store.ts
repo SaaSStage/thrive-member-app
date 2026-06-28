@@ -36,12 +36,44 @@ export type HrvSessionSummary = {
   rmssdSeries: number[];
   /** Per-tick heart-rate time-course (bpm). */
   bpmSeries: number[];
+  /**
+   * Median RMSSD computed from the 30–60s settling window (display-only;
+   * not written to DB — the migration hasn't been applied).
+   */
+  baselineRmssd: number | null;
+  /**
+   * Final smoothed RMSSD vs baseline as a percentage (display-only).
+   * Positive = rose, negative = dipped.
+   */
+  pctFromBaseline: number | null;
 };
 
 /** How many recent RMSSD samples to keep for the sparkline. */
 export const RECENT_CAP = 40;
 /** Defensive cap on stored raw R-R intervals (~14h at 60bpm; no real session hits it). */
 export const RAW_RR_CAP = 50_000;
+
+/** Elapsed time before we start collecting baseline samples (ms). */
+const BASELINE_WARMUP_MS = 30_000;
+/** Elapsed time at which we lock in the baseline from the 30–60s window (ms). */
+const BASELINE_LOCK_MS = 60_000;
+/** Number of recent samples used for the live smoothed RMSSD. */
+const SMOOTH_CAP = 8;
+/** Percent change thresholds for trend classification. */
+const TREND_HIGH = 12;
+const TREND_LOW = -12;
+
+/** Compute the median of a non-empty number array (mutates a copy). */
+function median(arr: number[]): number {
+  const sorted = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1]! + sorted[mid]!) / 2
+    : sorted[mid]!;
+}
+
+/** Live trend direction once baseline is established. */
+export type HrvTrend = 'settling' | 'steady' | 'activated';
 
 type HrvState = {
   armed: boolean;
@@ -65,6 +97,18 @@ type HrvState = {
   rrAll: number[];
   rmssdSeries: number[];
   bpmSeries: number[];
+
+  // Baseline + live trend (within-session settling readout).
+  /** Samples collected in the 30–60s window, used to compute the baseline. */
+  _baselineBuffer: number[];
+  /** Last ~8 non-null RMSSD samples used for live smoothing. */
+  _smoothBuffer: number[];
+  /** Median RMSSD from the 30–60s window. Null until the window closes. */
+  baselineRmssd: number | null;
+  /** Trend direction relative to baseline. Null until baseline is set. */
+  trend: HrvTrend | null;
+  /** Percentage change from baseline (positive = up, negative = down). */
+  pctFromBaseline: number | null;
 
   /** Station Play-button toggle on/off. Arming clears any prior session. */
   arm: (station: HrvStation) => void;
@@ -99,6 +143,11 @@ const INITIAL = {
   rrAll: [] as number[],
   rmssdSeries: [] as number[],
   bpmSeries: [] as number[],
+  _baselineBuffer: [] as number[],
+  _smoothBuffer: [] as number[],
+  baselineRmssd: null,
+  trend: null,
+  pctFromBaseline: null,
 };
 
 export const useHrvStore = create<HrvState>((set, get) => ({
@@ -131,12 +180,49 @@ export const useHrvStore = create<HrvState>((set, get) => ({
       set({ bpm, stale });
       return;
     }
+
     const recent = [...s.recent, rmssd].slice(-RECENT_CAP);
+    const _smoothBuffer = [...s._smoothBuffer, rmssd].slice(-SMOOTH_CAP);
+
+    // Baseline window logic.
+    let _baselineBuffer = s._baselineBuffer;
+    let baselineRmssd = s.baselineRmssd;
+    let trend = s.trend;
+    let pctFromBaseline = s.pctFromBaseline;
+
+    if (baselineRmssd == null && s.startedAt != null) {
+      const elapsed = Date.now() - s.startedAt;
+
+      if (elapsed >= BASELINE_WARMUP_MS && elapsed < BASELINE_LOCK_MS) {
+        // Collect samples in the 30–60s window.
+        _baselineBuffer = [..._baselineBuffer, rmssd];
+      } else if (elapsed >= BASELINE_LOCK_MS) {
+        // Lock the baseline: use the 30–60s window if it has samples,
+        // otherwise fall back to all non-null samples seen so far (incl. this one).
+        const source = _baselineBuffer.length > 0 ? _baselineBuffer : [...s.rmssdSeries, rmssd];
+        baselineRmssd = median(source);
+        _baselineBuffer = []; // no longer needed
+      }
+    }
+
+    // Compute live trend once baseline is set.
+    if (baselineRmssd != null && _smoothBuffer.length > 0) {
+      const smoothed = median(_smoothBuffer);
+      const pct = Math.round(((smoothed - baselineRmssd) / baselineRmssd) * 100);
+      pctFromBaseline = pct;
+      trend = pct >= TREND_HIGH ? 'settling' : pct <= TREND_LOW ? 'activated' : 'steady';
+    }
+
     set({
       liveRmssd: rmssd,
       bpm,
       stale,
       recent,
+      _smoothBuffer,
+      _baselineBuffer,
+      baselineRmssd,
+      trend,
+      pctFromBaseline,
       sum: s.sum + rmssd,
       sampleCount: s.sampleCount + 1,
       minRmssd: s.minRmssd == null ? rmssd : Math.min(s.minRmssd, rmssd),
@@ -155,6 +241,15 @@ export const useHrvStore = create<HrvState>((set, get) => ({
       return null;
     }
     const endedAt = Date.now();
+
+    // Final pct: use the current smooth buffer vs baseline (may differ from
+    // the last live tick if baseline was just set on this final sample).
+    let finalPct: number | null = null;
+    if (s.baselineRmssd != null && s._smoothBuffer.length > 0) {
+      const smoothed = median(s._smoothBuffer);
+      finalPct = Math.round(((smoothed - s.baselineRmssd) / s.baselineRmssd) * 100);
+    }
+
     const summary: HrvSessionSummary = {
       station: s.station,
       startedAt: s.startedAt,
@@ -167,6 +262,8 @@ export const useHrvStore = create<HrvState>((set, get) => ({
       rrIntervalsMs: s.rrAll,
       rmssdSeries: s.rmssdSeries,
       bpmSeries: s.bpmSeries,
+      baselineRmssd: s.baselineRmssd,
+      pctFromBaseline: finalPct,
     };
     set({ ...INITIAL });
     return summary;

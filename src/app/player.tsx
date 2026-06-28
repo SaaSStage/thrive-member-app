@@ -33,6 +33,28 @@ function fmtTimer(secs: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+/** Derive the right-hand state label + color for the live HRV card. */
+function liveStateLabel(
+  stale: boolean,
+  baselineRmssd: number | null,
+  trend: 'settling' | 'steady' | 'activated' | null,
+  pctFromBaseline: number | null,
+  tealColor: string,
+  mutedColor: string,
+): { text: string; color: string } {
+  if (stale) return { text: 'Hold still', color: tealColor };
+  if (baselineRmssd == null) return { text: 'Finding your baseline…', color: mutedColor };
+  if (trend === 'settling') {
+    const pct = pctFromBaseline != null ? Math.abs(pctFromBaseline) : 0;
+    return { text: `Settling ▲ +${pct}%`, color: tealColor };
+  }
+  if (trend === 'activated') {
+    const pct = pctFromBaseline != null ? Math.abs(pctFromBaseline) : 0;
+    return { text: `Activated ▼ −${pct}%`, color: mutedColor };
+  }
+  return { text: 'Holding steady', color: tealColor };
+}
+
 export default function NowPlaying() {
   const t = useTheme();
   const router = useRouter();
@@ -49,6 +71,9 @@ export default function NowPlaying() {
   const recent = useHrvStore((s) => s.recent);
   const stale = useHrvStore((s) => s.stale);
   const hrvError = useHrvStore((s) => s.error);
+  const baselineRmssd = useHrvStore((s) => s.baselineRmssd);
+  const trend = useHrvStore((s) => s.trend);
+  const pctFromBaseline = useHrvStore((s) => s.pctFromBaseline);
   // Raw R-R count — the unambiguous "live HRV has actually started" signal.
   const rrCount = useHrvStore((s) => s.rrAll.length);
 
@@ -98,7 +123,18 @@ export default function NowPlaying() {
     if (summary) {
       try {
         const row = await saveHrvSession.mutateAsync(summary);
-        router.replace({ pathname: '/hrv-summary', params: { id: row.id } } as Href);
+        router.replace({
+          pathname: '/hrv-summary',
+          params: {
+            id: row.id,
+            // Pass display-only trend data that isn't in the DB row.
+            baselineRmssd:
+              summary.baselineRmssd != null ? String(summary.baselineRmssd) : '',
+            pctFromBaseline:
+              summary.pctFromBaseline != null ? String(summary.pctFromBaseline) : '',
+            durationSeconds: String(summary.durationSeconds),
+          },
+        } as Href);
       } catch {
         // If save fails, still navigate back rather than hanging.
         router.back();
@@ -205,9 +241,19 @@ export default function NowPlaying() {
                       <Text style={[styles.hrvUnit, { color: t.textSecondary }]}>ms RMSSD</Text>
                     </View>
                     <View style={styles.hrvStateGroup}>
-                      <Text style={[styles.hrvCoherent, { color: t.live }]}>
-                        {stale ? 'Hold still' : 'Coherent'}
-                      </Text>
+                      {(() => {
+                        const { text, color } = liveStateLabel(
+                          stale,
+                          baselineRmssd,
+                          trend,
+                          pctFromBaseline,
+                          t.live,
+                          t.textSecondary,
+                        );
+                        return (
+                          <Text style={[styles.hrvCoherent, { color }]}>{text}</Text>
+                        );
+                      })()}
                       {bpm != null ? (
                         <Text style={[styles.hrvBpm, { color: t.textSecondary }]}>
                           {Math.round(bpm)} bpm
@@ -243,33 +289,27 @@ export default function NowPlaying() {
             </View>
           ) : null}
 
-          {/* Stop capture & save button — position:relative + zIndex to sit above aura */}
-          {isCapturing ? (
-            <View style={[styles.stopRow, { position: 'relative', zIndex: 1 }]}>
-              <Pressable
-                style={styles.stopBtn}
-                onPress={() => void handleStopCapture()}
-                disabled={saveHrvSession.isPending}>
-                <Ionicons name="stop" size={16} color="#04201c" />
-                <Text style={styles.stopBtnText}>Stop capture &amp; save</Text>
-              </Pressable>
-            </View>
-          ) : null}
-
           {/* Audio transport — position:relative + zIndex to sit above aura */}
           <View style={[styles.transport, { position: 'relative', zIndex: 1 }]}>
-            {/* Pulse icon (left) — only when WHOOP is connected in Settings */}
+            {/* Pulse/record icon (left) — only when WHOOP is connected in Settings.
+                Idle: teal pulse-outline. Armed/recording: red filled circle + white stop glyph. */}
             {connected ? (
-              <Pressable
-                style={styles.pulseBtn}
-                onPress={handlePulsePress}
-                hitSlop={8}>
-                <Ionicons
-                  name={armed ? 'pulse' : 'pulse-outline'}
-                  size={28}
-                  color={t.live}
-                />
-              </Pressable>
+              armed ? (
+                <Pressable
+                  style={[styles.pulseBtn, styles.recordBtn]}
+                  onPress={handlePulsePress}
+                  disabled={saveHrvSession.isPending}
+                  hitSlop={8}>
+                  <Ionicons name="stop" size={20} color="#ffffff" />
+                </Pressable>
+              ) : (
+                <Pressable
+                  style={styles.pulseBtn}
+                  onPress={handlePulsePress}
+                  hitSlop={8}>
+                  <Ionicons name="pulse-outline" size={28} color={t.live} />
+                </Pressable>
+              )
             ) : (
               <View style={styles.transportSpacer} />
             )}
@@ -290,7 +330,7 @@ export default function NowPlaying() {
 
           {isCapturing ? (
             <Text style={[styles.stopHint, { color: t.textTertiary }]}>
-              Stop capture saves your session and opens your results · audio keeps playing
+              Tap the red button to stop &amp; save · audio keeps playing
             </Text>
           ) : null}
         </ScrollView>
@@ -350,24 +390,6 @@ const styles = StyleSheet.create({
   retryRow: { marginTop: 10 },
   retryText: { ...Type.bodyStrong, fontSize: 14 },
 
-  // Stop button
-  stopRow: { paddingHorizontal: 20, marginTop: 14 },
-  stopBtn: {
-    height: 56,
-    borderRadius: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: '#5eead4',
-  },
-  stopBtnText: {
-    fontFamily: 'Sora_600SemiBold',
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#04201c',
-  },
-
   // Audio transport
   transport: {
     flexDirection: 'row',
@@ -388,6 +410,11 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  /** Filled red circle — the "recording" state of the pulse toggle. */
+  recordBtn: {
+    backgroundColor: '#ef4444',
+    borderRadius: 22,
   },
   transportSpacer: { width: 44, height: 44 },
   stopHint: {

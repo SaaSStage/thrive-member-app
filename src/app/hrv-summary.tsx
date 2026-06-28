@@ -24,8 +24,25 @@ function fmtDuration(secs: number): string {
   return `${m} min ${s} sec`;
 }
 
-/** Simple takeaway copy based on average RMSSD. */
-function takeawayFor(avg: number | null): string {
+/** Takeaway copy using the within-session baseline comparison when available,
+ *  falling back to the avg-RMSSD heuristic for older/DB-only sessions. */
+function takeawayFor(
+  avg: number | null,
+  pctFromBaseline: number | null,
+  durationSeconds: number | null,
+): string {
+  if (pctFromBaseline != null && durationSeconds != null) {
+    const mins = Math.round(durationSeconds / 60);
+    const absPct = Math.abs(pctFromBaseline);
+    if (pctFromBaseline > 12) {
+      return `Your RMSSD rose ${absPct}% over ${mins} min — you reached a calmer state.`;
+    }
+    if (pctFromBaseline < -12) {
+      return `Your RMSSD dipped ${absPct}% over ${mins} min — you stayed alert and active.`;
+    }
+    return `Your RMSSD held steady over ${mins} min — you stayed balanced.`;
+  }
+  // Fallback: use avg RMSSD heuristic (no baseline data available).
   if (avg == null) return 'Session saved to your vitality history.';
   if (avg >= 70)
     return 'Strong HRV — your nervous system responded well to this frequency. Saved to your vitality history.';
@@ -37,8 +54,17 @@ function takeawayFor(avg: number | null): string {
 export default function HrvSummaryScreen() {
   const t = useTheme();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, pctFromBaseline: pctParam, durationSeconds: durParam } =
+    useLocalSearchParams<{
+      id: string;
+      pctFromBaseline?: string;
+      durationSeconds?: string;
+    }>();
   const { data: sessions, isLoading } = useHrvSessions();
+
+  // Parse display-only trend params threaded from player.tsx (not in DB).
+  const pctFromBaseline = pctParam && pctParam !== '' ? Number(pctParam) : null;
+  const durationFromParam = durParam && durParam !== '' ? Number(durParam) : null;
 
   const session = sessions?.find((s) => s.id === id);
 
@@ -131,7 +157,11 @@ export default function HrvSummaryScreen() {
             {/* Takeaway card */}
             <View style={[styles.takeawayCard, styles.glass]}>
               <Text style={[styles.takeawayText, { color: t.textSecondary }]}>
-                {takeawayFor(session.avg_rmssd)}
+                {takeawayFor(
+                  session.avg_rmssd,
+                  pctFromBaseline,
+                  durationFromParam ?? session.duration_seconds,
+                )}
               </Text>
             </View>
           </ScrollView>
