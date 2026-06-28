@@ -6,7 +6,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from 'react-native';
@@ -18,7 +17,6 @@ import { ArtTile } from '@/components/ui/art-tile';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { usePlayerStore } from '@/stores/player-store';
-import { useHrvStore } from '@/stores/hrv-store';
 
 export default function StationDetail() {
   const t = useTheme();
@@ -27,30 +25,6 @@ export default function StationDetail() {
   const { data, isLoading } = useGrantedContent();
   const status = useAudioPlayerStatus(radioPlayer);
   const activeStation = usePlayerStore((s) => s.activeStation);
-
-  const armed = useHrvStore((s) => s.armed);
-  const hrvStatus = useHrvStore((s) => s.status);
-  const hrvError = useHrvStore((s) => s.error);
-  const arm = useHrvStore((s) => s.arm);
-  const disarm = useHrvStore((s) => s.disarm);
-
-  // Live connection feedback shown under the toggle while armed.
-  const armedMessage =
-    hrvStatus === 'scanning' || hrvStatus === 'connecting'
-      ? 'Connecting to your WHOOP…'
-      : hrvStatus === 'tracking'
-        ? 'WHOOP connected — HRV is tracking. Tap Play Live to listen along.'
-        : hrvStatus === 'no-rr'
-          ? 'Connected — turn on Broadcast Heart Rate in your WHOOP app.'
-          : hrvStatus === 'error' && hrvError === 'permission-denied'
-            ? 'Allow Bluetooth access for THRIVE in Settings, then try again.'
-            : hrvStatus === 'error' && hrvError === 'bluetooth-off'
-            ? 'Turn on Bluetooth to reach your WHOOP.'
-            : hrvStatus === 'error' && hrvError === 'not-found'
-              ? 'No WHOOP found nearby — make sure it’s on and broadcasting.'
-              : hrvStatus === 'error'
-                ? 'Couldn’t reach your WHOOP — check it’s on and broadcasting.'
-                : 'Connecting to your WHOOP…';
 
   const asset = data?.find((a) => a.id === id);
   const isThis = activeStation?.id === id;
@@ -72,15 +46,6 @@ export default function StationDetail() {
       });
     }
     router.push('/player');
-  }
-
-  function toggleHrv() {
-    if (!asset) return;
-    if (armed) {
-      disarm();
-    } else {
-      arm({ id: asset.id, code: asset.code ?? null, name: asset.name });
-    }
   }
 
   return (
@@ -112,54 +77,21 @@ export default function StationDetail() {
           </ArtTile>
 
           <View style={styles.actions}>
-            <View style={styles.actionRow}>
-              {/* Play Live — always opens Now Playing (starts the stream if needed). */}
-              <Pressable
-                style={[styles.playBtn, { backgroundColor: t.vitality }]}
-                onPress={openNowPlaying}>
-                {buffering ? (
-                  <ActivityIndicator color={t.onVitality} />
-                ) : (
-                  <View style={styles.playLeft}>
-                    <Ionicons name={playing ? 'radio' : 'play'} size={20} color={t.onVitality} />
-                    <Text style={[styles.playText, { color: t.onVitality }]}>
-                      {playing ? 'Now Playing' : 'Play Live'}
-                    </Text>
-                  </View>
-                )}
-              </Pressable>
-
-              {/* Live-HRV toggle — its own control beside the button. */}
-              <Pressable
-                style={[styles.hrvToggle, armed && styles.hrvToggleOn]}
-                onPress={toggleHrv}
-                hitSlop={6}>
-                <Ionicons name="pulse-outline" size={18} color={t.live} />
-                <Switch
-                  value={armed}
-                  onValueChange={toggleHrv}
-                  trackColor={{ false: 'rgba(255,255,255,0.14)', true: t.live }}
-                  thumbColor="#ffffff"
-                  style={styles.switch}
-                />
-              </Pressable>
-            </View>
-
-            {/* one-line explanation beneath — confirms state when armed */}
-            <View style={styles.hrvHint}>
-              <Ionicons name="pulse-outline" size={13} color={t.live} />
-              {armed ? (
-                <Text style={[styles.hrvHintText, { color: t.textSecondary }]}>
-                  <Text style={{ color: t.live, fontWeight: '700' }}>Live HRV on. </Text>
-                  {armedMessage}
-                </Text>
+            {/* Play Live — always opens Now Playing (starts the stream if needed). */}
+            <Pressable
+              style={[styles.playBtn, { backgroundColor: t.vitality }]}
+              onPress={openNowPlaying}>
+              {buffering ? (
+                <ActivityIndicator color={t.onVitality} />
               ) : (
-                <Text style={[styles.hrvHintText, { color: t.textSecondary }]}>
-                  <Text style={{ color: t.text, fontWeight: '600' }}>Track Live HRV.</Text>
-                  {' Switch this on to watch how your body responds to this frequency in real time, measured by your WHOOP.'}
-                </Text>
+                <View style={styles.playLeft}>
+                  <Ionicons name={playing ? 'radio' : 'play'} size={20} color={t.onVitality} />
+                  <Text style={[styles.playText, { color: t.onVitality }]}>
+                    {playing ? 'Now Playing' : 'Play Live'}
+                  </Text>
+                </View>
               )}
-            </View>
+            </Pressable>
           </View>
 
           {asset.description ? (
@@ -194,9 +126,7 @@ const styles = StyleSheet.create({
   heroTitle: { color: '#fff', fontSize: 30, fontWeight: '800', letterSpacing: -0.4 },
   heroSub: { color: '#fff', fontSize: 14, opacity: 0.92 },
   actions: { paddingHorizontal: 20, paddingTop: 16 },
-  actionRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   playBtn: {
-    flex: 1,
     height: 60,
     borderRadius: Radius.lg,
     flexDirection: 'row',
@@ -210,29 +140,5 @@ const styles = StyleSheet.create({
     gap: 11,
   },
   playText: { fontSize: 17, fontWeight: '700' },
-  hrvToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    height: 60,
-    paddingHorizontal: 12,
-    borderRadius: Radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-  },
-  hrvToggleOn: {
-    backgroundColor: 'rgba(94,234,212,0.12)',
-    borderColor: 'rgba(94,234,212,0.5)',
-  },
-  switch: { transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] },
-  hrvHint: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 5,
-    marginTop: 11,
-    paddingHorizontal: 2,
-  },
-  hrvHintText: { fontSize: 13, lineHeight: 19, flex: 1 },
   desc: { fontSize: 14, paddingHorizontal: 20, marginTop: 16, lineHeight: 21 },
 });

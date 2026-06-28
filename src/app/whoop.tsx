@@ -2,7 +2,8 @@
  * WHOOP · Wearable home modal.
  *
  * Shows:
- *   - Link status: Connect / Connected (last-synced) / Reconnect
+ *   - Live HRV · Bluetooth: connect/disconnect the WHOOP band for live BLE HRV
+ *   - Link status: Connect / Connected (last-synced) / Reconnect (cloud sync)
  *   - Sync now button (when linked)
  *   - Disconnect (when linked)
  *   - 30-day recovery-score + HRV sparklines (when linked and data present)
@@ -10,7 +11,9 @@
  * Glass-card aesthetic matches score.tsx / account.tsx.
  * Uses <Aura> as the animated background canvas.
  */
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter, type Href } from 'expo-router';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -28,6 +31,8 @@ import { Button } from '@/components/ui/button';
 import { Sparkline } from '@/components/hrv/sparkline';
 import { Gradients, Radius, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { BleHrClient, type BleHrErrorCode } from '@/hrv/ble-hr';
+import { useWearableStore } from '@/stores/wearable-store';
 
 // ---- Relative time helper ---------------------------------------------------
 
@@ -43,6 +48,27 @@ function relativeTime(iso: string | null): string {
   return `${diffDay}d ago`;
 }
 
+const BLE_CONNECT_TIMEOUT_MS = 30_000;
+
+const WHOOP_STEPS = [
+  'Turn on Bluetooth on your phone.',
+  'In the WHOOP app, tap the strap icon (top-right) → turn on Broadcast Heart Rate.',
+  'Keep the band on your wrist and stay still.',
+] as const;
+
+function bleErrorMessage(code: BleHrErrorCode): string {
+  switch (code) {
+    case 'permission-denied':
+      return 'Allow Bluetooth for THRIVE in Settings, then try again.';
+    case 'bluetooth-off':
+      return 'Turn on Bluetooth and try again.';
+    case 'not-found':
+      return 'No WHOOP found nearby — make sure it\'s on and broadcasting.';
+    default:
+      return 'Couldn\'t reach your WHOOP — check it\'s on and try again.';
+  }
+}
+
 // ---- Screen -----------------------------------------------------------------
 
 export default function WhoopScreen() {
@@ -55,6 +81,15 @@ export default function WhoopScreen() {
   const { data: dailyRows } = useWhoopDailyData(30);
   const { data: bodyRow } = useWhoopBody();
   const { data: weightHistory } = useWhoopWeightHistory(180);
+
+  const connected = useWearableStore((s) => s.connected);
+  const setConnected = useWearableStore((s) => s.setConnected);
+
+  // BLE connect-test state
+  const [bleConnecting, setBleConnecting] = useState(false);
+  const [bleError, setBleError] = useState<string | null>(null);
+  const bleClientRef = useRef<BleHrClient | null>(null);
+  const bleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const linked = linkStatus?.state === 'linked';
   const needsReauth = linkStatus?.state === 'reauth_required';
@@ -70,6 +105,55 @@ export default function WhoopScreen() {
     .filter((v): v is number => v != null);
   const currentWeightKg = bodyRow?.weight_kg ?? null;
 
+  function stopBleProbe() {
+    if (bleTimerRef.current) {
+      clearTimeout(bleTimerRef.current);
+      bleTimerRef.current = null;
+    }
+    if (bleClientRef.current) {
+      void bleClientRef.current.stop();
+      bleClientRef.current = null;
+    }
+  }
+
+  function startBleConnect() {
+    setBleError(null);
+    setBleConnecting(true);
+    stopBleProbe();
+
+    const client = new BleHrClient({
+      onStatus: (status) => {
+        if (status === 'tracking') {
+          // Successfully reached the HR service — band is connected.
+          stopBleProbe();
+          setConnected(true);
+          setBleConnecting(false);
+        }
+      },
+      onError: (code) => {
+        stopBleProbe();
+        setBleConnecting(false);
+        setBleError(bleErrorMessage(code));
+      },
+    });
+    bleClientRef.current = client;
+
+    // Safety timeout — if we never reach 'tracking' within the window, give up.
+    bleTimerRef.current = setTimeout(() => {
+      stopBleProbe();
+      setBleConnecting(false);
+      setBleError('No WHOOP found nearby — make sure it\'s on and broadcasting.');
+    }, BLE_CONNECT_TIMEOUT_MS);
+
+    void client.start({ deviceNameHint: 'whoop' });
+  }
+
+  function handleDisconnect() {
+    stopBleProbe();
+    setConnected(false);
+    setBleError(null);
+  }
+
   return (
     <Aura>
       <SafeAreaView style={styles.fill} edges={['top', 'bottom']}>
@@ -81,6 +165,66 @@ export default function WhoopScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+          {/* ---- Live HRV · Bluetooth card ---- */}
+          <View style={[styles.card, styles.glass]}>
+            <View style={styles.cardTitleRow}>
+              <Ionicons name="pulse-outline" size={18} color={t.live} />
+              <Text style={[styles.cardTitle, { color: t.text }]}>Live HRV · Bluetooth</Text>
+            </View>
+
+            {connected ? (
+              <>
+                <Text style={[styles.cardSub, { color: t.textSecondary }]}>
+                  WHOOP band connected — live HRV is available while you listen.
+                </Text>
+                <Button
+                  label="Disconnect"
+                  variant="ghost"
+                  onPress={handleDisconnect}
+                  style={styles.ctaBtn}
+                />
+              </>
+            ) : (
+              <>
+                <Text style={[styles.cardSub, { color: t.textSecondary }]}>
+                  Connect your WHOOP band over Bluetooth to track live HRV while you listen.
+                </Text>
+
+                {bleConnecting ? (
+                  <>
+                    <View style={styles.connectingRow}>
+                      <ActivityIndicator color={t.live} />
+                      <Text style={[styles.connectingText, { color: t.textSecondary }]}>
+                        Connecting…
+                      </Text>
+                    </View>
+                    <View style={styles.steps}>
+                      {WHOOP_STEPS.map((step, i) => (
+                        <View key={i} style={styles.stepRow}>
+                          <View style={[styles.stepNum, { borderColor: 'rgba(94,234,212,0.5)' }]}>
+                            <Text style={[styles.stepNumText, { color: t.live }]}>{i + 1}</Text>
+                          </View>
+                          <Text style={[styles.stepText, { color: t.textSecondary }]}>{step}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </>
+                ) : (
+                  <Button
+                    label="Connect your WHOOP band"
+                    variant="primary"
+                    onPress={startBleConnect}
+                    style={styles.ctaBtn}
+                  />
+                )}
+
+                {bleError ? (
+                  <Text style={[styles.errorText, { color: t.danger }]}>{bleError}</Text>
+                ) : null}
+              </>
+            )}
+          </View>
+
           {/* ---- Link status card ---- */}
           <View style={[styles.card, styles.glass]}>
             <Text style={[styles.cardTitle, { color: t.text }]}>Wearable</Text>
@@ -270,13 +414,29 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.11)',
   },
   card: { borderRadius: Radius.xxl, padding: 18, marginBottom: 14 },
-  cardTitle: { ...Type.bodyStrong, marginBottom: 4 },
+  cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 4 },
+  cardTitle: { ...Type.bodyStrong },
   cardSub: { ...Type.subhead, lineHeight: 19 },
   statusSpinner: { marginTop: 14 },
   btnRow: { flexDirection: 'row', gap: 10, marginTop: 14 },
   btnFlex: { flex: 1 },
   ctaBtn: { marginTop: 14 },
   errorText: { ...Type.footnote, marginTop: 8 },
+  connectingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14 },
+  connectingText: { ...Type.subhead },
+  steps: { marginTop: 16, gap: 12 },
+  stepRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
+  stepNum: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  stepNumText: { fontSize: 12, fontWeight: '700' },
+  stepText: { ...Type.callout, lineHeight: 20, flex: 1 },
   chartLabel: { ...Type.subhead, marginBottom: 10 },
   chartFooter: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 8 },
   chartStat: { ...Type.numeral, fontSize: 26 },

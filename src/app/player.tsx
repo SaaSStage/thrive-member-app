@@ -3,9 +3,10 @@
  * title/artist from the AzuraCast now-playing poll, LIVE indicator, play/pause.
  * No scrubber/seek — it's a live stream.
  *
- * When HRV is armed, this screen starts live tracking (once), renders an inline
- * HRV card (wireframe ②), and offers a teal "Stop capture & save" button that
- * saves the session and pushes to the hrv-summary screen.
+ * When the WHOOP band is connected (wearable-store) the transport row shows a
+ * pulse icon (left of play/pause). Tapping it arms live-HRV capture; tapping
+ * again stops and saves. The HRV inline card and "Stop capture & save" button
+ * appear while armed, exactly as before — no modal, no sheet.
  */
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayerStatus } from 'expo-audio';
@@ -16,7 +17,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useSaveHrvSession } from '@/api/hrv';
 import { radioPlayer, togglePlayPause } from '@/audio/player';
-import { ConnectWhoopSheet } from '@/components/hrv/connect-whoop-sheet';
 import { Sparkline } from '@/components/hrv/sparkline';
 import { ArtTile } from '@/components/ui/art-tile';
 import { Radius, Type } from '@/constants/theme';
@@ -24,6 +24,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useLiveHrvControls } from '@/hrv/live-hrv-provider';
 import { useHrvStore } from '@/stores/hrv-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { useWearableStore } from '@/stores/wearable-store';
 
 /** Format elapsed seconds as mm:ss for the session timer. */
 function fmtTimer(secs: number): string {
@@ -38,6 +39,7 @@ export default function NowPlaying() {
   const activeStation = usePlayerStore((s) => s.activeStation);
   const nowPlaying = usePlayerStore((s) => s.nowPlaying);
   const status = useAudioPlayerStatus(radioPlayer);
+  const connected = useWearableStore((s) => s.connected);
 
   // HRV store selectors
   const armed = useHrvStore((s) => s.armed);
@@ -52,9 +54,6 @@ export default function NowPlaying() {
 
   const { stopCapture, reconnect } = useLiveHrvControls();
   const saveHrvSession = useSaveHrvSession();
-
-  // User can dismiss the connect sheet without reconnecting.
-  const [sheetDismissed, setSheetDismissed] = useState(false);
 
   // Session elapsed timer (counts up from 0, driven by a 1s interval).
   const [elapsedSecs, setElapsedSecs] = useState(0);
@@ -109,9 +108,17 @@ export default function NowPlaying() {
     }
   }
 
-  function handleReconnect() {
-    setSheetDismissed(false);
-    void reconnect();
+  function handlePulsePress() {
+    if (!activeStation) return;
+    if (armed) {
+      void handleStopCapture();
+    } else {
+      useHrvStore.getState().arm({
+        id: activeStation.id,
+        code: activeStation.code ?? null,
+        name: activeStation.name,
+      });
+    }
   }
 
   if (!activeStation) return <View style={{ flex: 1, backgroundColor: t.background }} />;
@@ -120,21 +127,9 @@ export default function NowPlaying() {
   const artist = nowPlaying?.artist ?? 'THRIVE Radio';
   const buffering = status.isBuffering && !status.playing;
 
-  // Which mode to pass the connect sheet.
-  const sheetMode =
-    hrvError === 'permission-denied'
-      ? 'permission-denied'
-      : hrvError === 'bluetooth-off'
-        ? 'bluetooth-off'
-        : hrvError === 'not-found'
-          ? 'not-found'
-          : hrvStatus === 'no-rr'
-            ? 'no-rr'
-            : 'not-found';
-
   // Card + Stop button show through the whole working phase (incl. the ~30s
-  // "stabilising" wait before R-R starts). On a genuine failure (no-rr after the
-  // 50s window, or error) the card hides and the connect sheet takes over.
+  // "stabilising" wait before R-R starts). On a genuine failure (no-rr/error)
+  // the card hides and inline error text appears below it.
   const isCapturing = armed && (
     hrvStatus === 'scanning' ||
     hrvStatus === 'connecting' ||
@@ -143,8 +138,18 @@ export default function NowPlaying() {
   // Live HRV is actually flowing once we have enough beats to compute RMSSD.
   const liveReady = hrvStatus === 'tracking' && rrCount >= 2 && liveRmssd != null;
 
-  // Derived — show the connect sheet when BLE needs user action (unless dismissed).
-  const sheetVisible = armed && !sheetDismissed && (hrvStatus === 'no-rr' || hrvStatus === 'error');
+  // Inline error message when armed but BLE needs user action.
+  const hasError = armed && (hrvStatus === 'error' || hrvStatus === 'no-rr');
+  const inlineErrorText =
+    hrvError === 'permission-denied'
+      ? 'Allow Bluetooth for THRIVE in Settings.'
+      : hrvError === 'bluetooth-off'
+        ? 'Turn on Bluetooth to reach your WHOOP.'
+        : hrvError === 'not-found'
+          ? 'No WHOOP found — make sure it\'s on and broadcasting.'
+          : hrvStatus === 'no-rr'
+            ? 'Connected — turn on Broadcast Heart Rate in the WHOOP app.'
+            : 'Couldn\'t reach your WHOOP — check it\'s on and broadcasting.';
 
   return (
     <View style={[styles.fill, { backgroundColor: t.background }]}>
@@ -226,6 +231,18 @@ export default function NowPlaying() {
             </View>
           ) : null}
 
+          {/* Inline error — non-blocking, dismissible by stopping via the pulse icon */}
+          {hasError ? (
+            <View style={[styles.hrvCard, { borderColor: 'rgba(94,234,212,0.2)' }]}>
+              <Text style={[styles.inlineError, { color: t.textSecondary }]}>
+                {inlineErrorText}
+              </Text>
+              <Pressable onPress={() => void reconnect()} style={styles.retryRow}>
+                <Text style={[styles.retryText, { color: t.live }]}>Retry</Text>
+              </Pressable>
+            </View>
+          ) : null}
+
           {/* Stop capture & save button — position:relative + zIndex to sit above aura */}
           {isCapturing ? (
             <View style={[styles.stopRow, { position: 'relative', zIndex: 1 }]}>
@@ -241,6 +258,22 @@ export default function NowPlaying() {
 
           {/* Audio transport — position:relative + zIndex to sit above aura */}
           <View style={[styles.transport, { position: 'relative', zIndex: 1 }]}>
+            {/* Pulse icon (left) — only when WHOOP is connected in Settings */}
+            {connected ? (
+              <Pressable
+                style={styles.pulseBtn}
+                onPress={handlePulsePress}
+                hitSlop={8}>
+                <Ionicons
+                  name={armed ? 'pulse' : 'pulse-outline'}
+                  size={28}
+                  color={t.live}
+                />
+              </Pressable>
+            ) : (
+              <View style={styles.transportSpacer} />
+            )}
+
             <Pressable
               style={[styles.playBtn, { backgroundColor: t.text }]}
               onPress={togglePlayPause}>
@@ -250,6 +283,9 @@ export default function NowPlaying() {
                 color={t.background}
               />
             </Pressable>
+
+            {/* Spacer on the right to keep play/pause centered */}
+            <View style={styles.transportSpacer} />
           </View>
 
           {isCapturing ? (
@@ -259,14 +295,6 @@ export default function NowPlaying() {
           ) : null}
         </ScrollView>
       </SafeAreaView>
-
-      {/* Connect sheet slides up over the player */}
-      <ConnectWhoopSheet
-        visible={sheetVisible}
-        mode={sheetMode}
-        onConnect={handleReconnect}
-        onClose={() => setSheetDismissed(true)}
-      />
     </View>
   );
 }
@@ -317,6 +345,11 @@ const styles = StyleSheet.create({
   hrvBpm: { ...Type.subhead, marginTop: 1 },
   sparkWrap: { marginTop: 8 },
 
+  // Inline error
+  inlineError: { ...Type.body, lineHeight: 20 },
+  retryRow: { marginTop: 10 },
+  retryText: { ...Type.bodyStrong, fontSize: 14 },
+
   // Stop button
   stopRow: { paddingHorizontal: 20, marginTop: 14 },
   stopBtn: {
@@ -336,7 +369,13 @@ const styles = StyleSheet.create({
   },
 
   // Audio transport
-  transport: { alignItems: 'center', paddingTop: 14 },
+  transport: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 14,
+    paddingHorizontal: 40,
+  },
   playBtn: {
     width: 64,
     height: 64,
@@ -344,6 +383,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  pulseBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  transportSpacer: { width: 44, height: 44 },
   stopHint: {
     ...Type.footnote,
     textAlign: 'center',

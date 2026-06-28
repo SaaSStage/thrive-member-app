@@ -23,6 +23,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SupabaseProvider } from '@/api/supabase';
 import { Colors } from '@/constants/theme';
 import { LiveHrvProvider } from '@/hrv/live-hrv-provider';
+import { useWearableStore } from '@/stores/wearable-store';
 import { WhoopSyncProvider } from '@/whoop/WhoopSyncProvider';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -71,6 +72,10 @@ function RootNavigator() {
       router.replace('/(auth)/welcome');
     }
   }, [isLoaded, isSignedIn, segments, router]);
+
+  useEffect(() => {
+    void useWearableStore.getState().hydrate();
+  }, []);
 
   if (!isLoaded || !fontsLoaded) return <Splash />;
 
