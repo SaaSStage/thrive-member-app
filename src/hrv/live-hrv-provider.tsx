@@ -57,7 +57,9 @@ export function LiveHrvProvider({ children }: { children: ReactNode }) {
   //     a failure (drop vs. no R-R delivery) is diagnosable without guesswork. ---
   const supabase = useSupabase();
   const supabaseRef = useRef(supabase);
-  supabaseRef.current = supabase;
+  useEffect(() => {
+    supabaseRef.current = supabase;
+  }, [supabase]);
   const telemetryRef = useRef<{ t: number; e: string }[]>([]);
   const sessionStartRef = useRef(0);
   const hrCountRef = useRef(0);
@@ -88,7 +90,9 @@ export function LiveHrvProvider({ children }: { children: ReactNode }) {
     }
   };
   const writeTelemetryRef = useRef(writeTelemetry);
-  writeTelemetryRef.current = writeTelemetry;
+  useEffect(() => {
+    writeTelemetryRef.current = writeTelemetry;
+  });
 
   const teardown = useCallback(async () => {
     void writeTelemetryRef.current?.();
