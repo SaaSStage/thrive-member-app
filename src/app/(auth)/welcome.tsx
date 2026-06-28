@@ -49,9 +49,6 @@ export default function Welcome() {
 
         <View style={styles.actions}>
           <Button label="Tune in" onPress={() => router.push('/(auth)/sign-in' as Href)} />
-          <Text style={[styles.fine, { color: t.textTertiary }]}>
-            Access is provided by your care provider.
-          </Text>
         </View>
       </SafeAreaView>
     </Aura>

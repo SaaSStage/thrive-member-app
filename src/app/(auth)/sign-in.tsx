@@ -104,7 +104,7 @@ export default function SignIn() {
               <>
                 <Text style={[styles.title, { color: t.text }]}>Sign in</Text>
                 <Text style={[styles.sub, { color: t.textSecondary }]}>
-                  Use the email or username and password from your provider.
+                  Use your email or username and password to log in.
                 </Text>
                 <TextInput
                   value={identifier}

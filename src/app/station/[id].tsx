@@ -13,9 +13,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useGrantedContent } from '@/api/content';
-import { playStation, radioPlayer, togglePlayPause } from '@/audio/player';
+import { playStation, radioPlayer } from '@/audio/player';
 import { ArtTile } from '@/components/ui/art-tile';
-import { SectionHeader } from '@/components/ui/section-header';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { usePlayerStore } from '@/stores/player-store';
@@ -58,13 +57,12 @@ export default function StationDetail() {
   const playing = isThis && status.playing;
   const buffering = isThis && status.isBuffering && !status.playing;
 
-  function togglePlay() {
+  // Play Live always opens Now Playing (starting the stream if it isn't already
+  // this station). Pause/resume lives on the player + mini-player, not here —
+  // so the station button has exactly one job.
+  function openNowPlaying() {
     if (!asset?.stream_url) return;
-    if (isThis) {
-      togglePlayPause();
-      // The live-HRV card lives on Now Playing — surface it when HRV is armed.
-      if (armed) router.push('/player');
-    } else {
+    if (!isThis) {
       void playStation({
         id: asset.id,
         code: asset.code,
@@ -72,8 +70,8 @@ export default function StationDetail() {
         stream_url: asset.stream_url,
         description: asset.description,
       });
-      router.push('/player');
     }
+    router.push('/player');
   }
 
   function toggleHrv() {
@@ -114,44 +112,38 @@ export default function StationDetail() {
           </ArtTile>
 
           <View style={styles.actions}>
-            {/* Play Live button with embedded HRV toggle */}
-            <Pressable
-              style={[styles.playBtn, { backgroundColor: t.vitality }]}
-              onPress={togglePlay}>
-              {buffering ? (
-                <ActivityIndicator color={t.onVitality} style={{ flex: 1 }} />
-              ) : (
-                <>
-                  {/* Left side: play icon + label */}
+            <View style={styles.actionRow}>
+              {/* Play Live — always opens Now Playing (starts the stream if needed). */}
+              <Pressable
+                style={[styles.playBtn, { backgroundColor: t.vitality }]}
+                onPress={openNowPlaying}>
+                {buffering ? (
+                  <ActivityIndicator color={t.onVitality} />
+                ) : (
                   <View style={styles.playLeft}>
-                    <Ionicons
-                      name={playing ? 'pause' : 'play'}
-                      size={20}
-                      color={t.onVitality}
-                    />
+                    <Ionicons name={playing ? 'radio' : 'play'} size={20} color={t.onVitality} />
                     <Text style={[styles.playText, { color: t.onVitality }]}>
-                      {playing ? 'Pause' : 'Play Live'}
+                      {playing ? 'Now Playing' : 'Play Live'}
                     </Text>
                   </View>
+                )}
+              </Pressable>
 
-                  {/* Right side: HRV toggle pill — stops event propagation */}
-                  <Pressable
-                    style={[styles.hrvPill, armed && { backgroundColor: 'rgba(94,234,212,0.18)' }]}
-                    onPress={(e) => { e.stopPropagation(); toggleHrv(); }}
-                    hitSlop={6}>
-                    {/* ECG / heartbeat glyph — teal, matching the description icon */}
-                    <Ionicons name="pulse-outline" size={17} color={t.live} />
-                    <Switch
-                      value={armed}
-                      onValueChange={toggleHrv}
-                      trackColor={{ false: 'rgba(10,8,20,0.30)', true: t.live }}
-                      thumbColor="#ffffff"
-                      style={styles.switch}
-                    />
-                  </Pressable>
-                </>
-              )}
-            </Pressable>
+              {/* Live-HRV toggle — its own control beside the button. */}
+              <Pressable
+                style={[styles.hrvToggle, armed && styles.hrvToggleOn]}
+                onPress={toggleHrv}
+                hitSlop={6}>
+                <Ionicons name="pulse-outline" size={18} color={t.live} />
+                <Switch
+                  value={armed}
+                  onValueChange={toggleHrv}
+                  trackColor={{ false: 'rgba(255,255,255,0.14)', true: t.live }}
+                  thumbColor="#ffffff"
+                  style={styles.switch}
+                />
+              </Pressable>
+            </View>
 
             {/* one-line explanation beneath — confirms state when armed */}
             <View style={styles.hrvHint}>
@@ -173,11 +165,6 @@ export default function StationDetail() {
           {asset.description ? (
             <Text style={[styles.desc, { color: t.textSecondary }]}>{asset.description}</Text>
           ) : null}
-
-          <SectionHeader title="On-Demand Episodes" />
-          <Text style={[styles.empty, { color: t.textTertiary }]}>
-            No on-demand episodes yet.
-          </Text>
         </ScrollView>
       )}
     </View>
@@ -207,14 +194,15 @@ const styles = StyleSheet.create({
   heroTitle: { color: '#fff', fontSize: 30, fontWeight: '800', letterSpacing: -0.4 },
   heroSub: { color: '#fff', fontSize: 14, opacity: 0.92 },
   actions: { paddingHorizontal: 20, paddingTop: 16 },
+  actionRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   playBtn: {
+    flex: 1,
     height: 60,
     borderRadius: Radius.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingLeft: 22,
-    paddingRight: 8,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
   },
   playLeft: {
     flexDirection: 'row',
@@ -222,14 +210,20 @@ const styles = StyleSheet.create({
     gap: 11,
   },
   playText: { fontSize: 17, fontWeight: '700' },
-  hrvPill: {
+  hrvToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 9,
-    backgroundColor: 'rgba(10,8,20,0.20)',
-    borderRadius: 13,
-    height: 46,
+    gap: 6,
+    height: 60,
     paddingHorizontal: 12,
+    borderRadius: Radius.lg,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  hrvToggleOn: {
+    backgroundColor: 'rgba(94,234,212,0.12)',
+    borderColor: 'rgba(94,234,212,0.5)',
   },
   switch: { transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] },
   hrvHint: {
@@ -241,5 +235,4 @@ const styles = StyleSheet.create({
   },
   hrvHintText: { fontSize: 13, lineHeight: 19, flex: 1 },
   desc: { fontSize: 14, paddingHorizontal: 20, marginTop: 16, lineHeight: 21 },
-  empty: { fontSize: 14, paddingHorizontal: 20, paddingBottom: 8 },
 });
