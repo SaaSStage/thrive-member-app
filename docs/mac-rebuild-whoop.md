@@ -50,8 +50,10 @@ npx expo run:ios --device   # pick your connected iPhone; rebuilds + installs
 ```
 - If `npm install` reports native dep changes, or you're unsure your `ios/` is current, do a clean
   regen instead: `npx expo prebuild -p ios --clean` (runs `pod install`), then `npx expo run:ios --device`.
-- **No version bump needed** for a device/dev build (`buildNumber` only matters for TestFlight/App
-  Store). It's currently `9` in `app.json`.
+- **Version / build number:** `ios.buildNumber` is now **`10`** (`version` stays `2.6.0`) for this
+  App Store / TestFlight submission. App Store Connect rejects a re-used build number under the same
+  marketing version, so **increment `buildNumber` again for every later upload** (10 → 11 → …). A raw
+  local sideload to your own device doesn't care, but the App Store does.
 - Signing: if auto-sign fails, open `ios/thrivememberapp.xcworkspace` in Xcode → target → Signing &
   Capabilities → set your Team.
 
