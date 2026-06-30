@@ -34,19 +34,25 @@ export function useSaveHrvSession() {
       const { data: id, error: idErr } = await supabase.rpc('current_user_id');
       if (idErr || !id) throw idErr ?? new Error('Not signed in.');
 
-      // Best-effort practice link for analytics (column is nullable).
-      const { data: pm } = await supabase
+      // Resolve the member's active practice. hrv_sessions.practice_id is NOT NULL
+      // (every member belongs to a practice — same invariant voice_submissions
+      // enforces). The one-active-practice constraint makes "the active one"
+      // unambiguous; with none we throw rather than write a tenant-less row. The
+      // save is best-effort/background, so this just surfaces as "not saved".
+      const { data: pm, error: pmErr } = await supabase
         .from('practice_memberships')
         .select('practice_id')
         .eq('user_id', id)
         .eq('status', 'active')
         .maybeSingle();
+      if (pmErr) throw pmErr;
+      if (!pm?.practice_id) throw new Error('No active practice membership found for this account.');
 
       const { data, error } = await supabase
         .from('hrv_sessions')
         .insert({
           client_id: id,
-          practice_id: pm?.practice_id ?? null,
+          practice_id: pm.practice_id,
           content_asset_id: summary.station.id,
           station_code: summary.station.code,
           started_at: new Date(summary.startedAt).toISOString(),

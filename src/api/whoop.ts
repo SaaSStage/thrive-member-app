@@ -99,15 +99,18 @@ export function useWhoopLinkStatus() {
 
       if (!data) return { state: 'unlinked' };
 
-      const row = data as {
+      // whoop_link_status() RETURNS TABLE(...), so PostgREST returns an ARRAY of
+      // rows — take the first (or none = unlinked).
+      const rows = data as Array<{
         linked: boolean;
         scope: string | null;
         last_synced_at: string | null;
         last_sync_status: string | null;
         whoop_user_id: string | null;
-      };
+      }>;
+      const row = Array.isArray(rows) ? rows[0] : (rows as (typeof rows)[number] | undefined);
 
-      if (!row.linked) return { state: 'unlinked' };
+      if (!row || !row.linked) return { state: 'unlinked' };
       if (row.last_sync_status === 'reauth_required') return { state: 'reauth_required' };
 
       return {

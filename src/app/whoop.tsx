@@ -50,6 +50,9 @@ function relativeTime(iso: string | null): string {
 
 const BLE_CONNECT_TIMEOUT_MS = 30_000;
 
+/** WHOOP stores weight in kilograms; the app displays pounds (US). */
+const KG_TO_LB = 2.20462;
+
 const WHOOP_STEPS = [
   'Turn on Bluetooth on your phone.',
   'In the WHOOP app, tap the strap icon (top-right) → turn on Broadcast Heart Rate.',
@@ -100,10 +103,11 @@ export default function WhoopScreen() {
   const hrvData = (dailyRows ?? [])
     .map((r) => r.hrv_rmssd_ms)
     .filter((v): v is number => v != null);
+  // WHOOP stores weight in kg; convert to pounds for display.
   const weightData = (weightHistory ?? [])
-    .map((r) => r.weight_kg)
+    .map((r) => (r.weight_kg != null ? r.weight_kg * KG_TO_LB : null))
     .filter((v): v is number => v != null);
-  const currentWeightKg = bodyRow?.weight_kg ?? null;
+  const currentWeightLb = bodyRow?.weight_kg != null ? bodyRow.weight_kg * KG_TO_LB : null;
 
   function stopBleProbe() {
     if (bleTimerRef.current) {
@@ -327,7 +331,7 @@ export default function WhoopScreen() {
           {linked && weightData.length >= 2 ? (
             <View style={[styles.card, styles.glass]}>
               <Text style={[styles.chartLabel, { color: t.textSecondary }]}>
-                Weight (kg) · 180 days
+                Weight (lb) · 180 days
               </Text>
               <Sparkline
                 data={weightData}
@@ -337,12 +341,12 @@ export default function WhoopScreen() {
                 strokeWidth={2.4}
               />
               <View style={styles.chartFooter}>
-                {currentWeightKg != null ? (
+                {currentWeightLb != null ? (
                   <>
                     <Text style={[styles.chartStat, { color: t.text }]}>
-                      {currentWeightKg.toFixed(1)}
+                      {currentWeightLb.toFixed(1)}
                     </Text>
-                    <Text style={[styles.chartUnit, { color: t.textTertiary }]}>kg · latest</Text>
+                    <Text style={[styles.chartUnit, { color: t.textTertiary }]}>lb · latest</Text>
                   </>
                 ) : null}
               </View>
@@ -350,14 +354,14 @@ export default function WhoopScreen() {
           ) : null}
 
           {/* ---- Weight: current reading only (no sparkline yet) ---- */}
-          {linked && weightData.length < 2 && currentWeightKg != null ? (
+          {linked && weightData.length < 2 && currentWeightLb != null ? (
             <View style={[styles.card, styles.glass]}>
               <Text style={[styles.chartLabel, { color: t.textSecondary }]}>Weight</Text>
               <View style={styles.chartFooter}>
                 <Text style={[styles.chartStat, { color: t.text }]}>
-                  {currentWeightKg.toFixed(1)}
+                  {currentWeightLb.toFixed(1)}
                 </Text>
-                <Text style={[styles.chartUnit, { color: t.textTertiary }]}>kg</Text>
+                <Text style={[styles.chartUnit, { color: t.textTertiary }]}>lb</Text>
               </View>
               <Text style={[styles.cardSub, { color: t.textTertiary, marginTop: 6 }]}>
                 Trend builds after a few daily syncs.

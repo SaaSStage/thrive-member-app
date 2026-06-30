@@ -94,6 +94,7 @@ function RootNavigator() {
         <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
         <Stack.Screen name="hrv-summary" options={{ presentation: 'modal' }} />
         <Stack.Screen name="whoop" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="whoop-callback" options={{ animation: 'none' }} />
       </Stack>
     </LiveHrvProvider>
   );

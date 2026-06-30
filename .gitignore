@@ -49,6 +49,9 @@ example
 # Local Claude Code permission overrides (machine-specific)
 .claude/settings.local.json
 
+# MCP config holds a Supabase access token — never commit
+.mcp.json
+
 # Local Expo module build artifacts
 modules/*/android/build/
 modules/*/android/.cxx/
