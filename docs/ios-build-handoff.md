@@ -1,3 +1,7 @@
+> ⚠️ **STALE (2026-06-30).** This predates the working WHOOP cloud tier. Sections claiming the
+> cloud tier is "not functional / ignore it," that `EXPO_PUBLIC_WHOOP_CLIENT_ID` isn't needed, and
+> that DB migrations aren't applied are **all outdated**. Use **`docs/mac-rebuild-whoop.md`** instead.
+
 # iOS build handoff — live-HRV (WHOOP) on iPhone
 
 **For a fresh Claude session on the Mac.** Goal: build the THRIVE member app on a **physical iPhone** and verify the live-HRV feature (read R-R intervals from a WHOOP over Bluetooth) now that the wearable is in hand. Branch: **`feat/whoop-hrv`** (both repos).
